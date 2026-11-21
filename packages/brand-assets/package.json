@@ -1,0 +1,77 @@
+{
+  "name": "@tigawanna/brand-assets",
+  "version": "0.1.0",
+  "description": "Generate a complete favicon set and OG image from a single SVG icon path, with pluggable React components.",
+  "keywords": [
+    "cli",
+    "favicon",
+    "icons",
+    "og-image",
+    "open-graph",
+    "svg",
+    "takumi"
+  ],
+  "homepage": "https://github.com/tigawanna/brand-assets#readme",
+  "bugs": {
+    "url": "https://github.com/tigawanna/brand-assets/issues"
+  },
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/brand-assets.git"
+  },
+  "bin": {
+    "brand-assets": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "start": "node dist/cli.mjs",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
+    "prepublishOnly": "pnpm run build && pnpm run check-exports",
+    "pubish": "bumpp",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix"
+  },
+  "dependencies": {
+    "jiti": "^2.7.0",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.5",
+    "takumi-js": "^2.20.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.4",
+    "@types/node": "^25.9.9",
+    "@types/react": "^19.2.14",
+    "bumpp": "^12.3.0",
+    "react": "^19.2.0",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.27.0"
+}

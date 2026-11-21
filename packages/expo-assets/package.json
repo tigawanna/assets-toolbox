@@ -1,0 +1,65 @@
+{
+  "name": "@tigawanna/expo-assets",
+  "version": "0.1.0",
+  "description": "Generate the complete Expo icon, adaptive icon and splash screen set from one SVG or PNG.",
+  "keywords": [
+    "adaptive-icon",
+    "app-icon",
+    "assets",
+    "cli",
+    "expo",
+    "react-native",
+    "splash-screen"
+  ],
+  "homepage": "https://github.com/tigawanna/assets-toolbox/tree/main/packages/expo-assets#readme",
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/expo-assets"
+  },
+  "bin": {
+    "expo-assets": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "start": "node dist/cli.mjs",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
+    "prepublishOnly": "pnpm run build && pnpm run check-exports"
+  },
+  "dependencies": {
+    "sharp": "0.35.5"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@types/node": "^25.9.9",
+    "bumpp": "^12.3.0",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

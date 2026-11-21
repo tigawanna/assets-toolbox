@@ -1,0 +1,7 @@
+node_modules
+dist
+*.env
+*.tsbuildinfo
+app/src/routeTree.gen.ts
+app/.vite
+.vitest/

@@ -1,0 +1,79 @@
+{
+  "name": "@tigawanna/play-screenshots",
+  "version": "0.1.0",
+  "description": "Fit raw app screenshots to Google Play Console sizes, with a path to composed marketing frames.",
+  "keywords": [
+    "android",
+    "cli",
+    "feature-graphic",
+    "google-play",
+    "play-store",
+    "screenshots"
+  ],
+  "homepage": "https://github.com/tigawanna/assets-toolbox/tree/main/packages/play-screenshots#readme",
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/play-screenshots"
+  },
+  "bin": {
+    "play-screenshots": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./policy": {
+      "types": "./dist/policy.d.mts",
+      "import": "./dist/policy.mjs"
+    },
+    "./sizes": {
+      "types": "./dist/sizes.d.mts",
+      "import": "./dist/sizes.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "start": "node dist/cli.mjs",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "check-exports": "attw --pack . --ignore-rules cjs-resolves-to-esm no-resolution",
+    "prepublishOnly": "pnpm run build && pnpm run check-exports"
+  },
+  "dependencies": {
+    "jiti": "^2.7.0",
+    "sharp": "0.35.5",
+    "takumi-js": "^2.20.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@types/node": "^25.9.9",
+    "@types/react": "^19.2.14",
+    "bumpp": "^12.3.0",
+    "react": "^19.2.0",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

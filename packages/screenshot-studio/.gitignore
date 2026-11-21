@@ -1,0 +1,11 @@
+node_modules
+dist
+.output
+.nitro
+.tanstack
+.screenshot-studio
+*.sqlite
+*.env
+*.tsbuildinfo
+.vite
+.vitest/

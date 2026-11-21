@@ -1,0 +1,21 @@
+packages:
+  - "packages/*"
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+catalog:
+  "@arethetypeswrong/cli": 0.18.5
+  "@shadcn/lint": 0.2.5
+  typescript: 7.0.2
+  vite-plus: 1.6.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
+
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"
+overrides:
+  vite@*: "catalog:"

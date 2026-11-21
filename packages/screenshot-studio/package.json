@@ -1,0 +1,74 @@
+{
+  "name": "@tigawanna/screenshot-studio",
+  "version": "0.1.0",
+  "description": "Local TanStack Start canvas for placing Play and App Store screenshot frames. Edits are an event log the Node server can read.",
+  "keywords": [
+    "app-store",
+    "canvas",
+    "google-play",
+    "screenshots",
+    "tanstack-start"
+  ],
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/screenshot-studio"
+  },
+  "bin": {
+    "screenshot-studio": "./bin/screenshot-studio.mjs"
+  },
+  "files": [
+    "bin",
+    ".output"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev --port 4320",
+    "build": "vp build",
+    "preview": "vp preview",
+    "start": "node bin/screenshot-studio.mjs --no-open",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "@tanstack/db": "1.0.0-rc.1.5",
+    "@tanstack/react-db": "1.0.0-rc.1.5",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "@vitejs/plugin-react": "5.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "1.0.0-rc.6",
+    "lucide-react": "^0.554.0",
+    "nitro": "3.0.261103-rc",
+    "open": "^11.0.0",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.17",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.9",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "drizzle-kit": "1.0.0-rc.6",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

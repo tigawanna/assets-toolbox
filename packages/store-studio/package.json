@@ -1,0 +1,80 @@
+{
+  "name": "@tigawanna/store-studio",
+  "version": "0.1.0",
+  "description": "A local, template-driven screenshot editor for Google Play and the App Store.",
+  "keywords": [
+    "app-store",
+    "editor",
+    "google-play",
+    "screen-studio",
+    "screenshots",
+    "store-studio"
+  ],
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/store-studio"
+  },
+  "bin": {
+    "store-studio": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "vp pack && vp build",
+    "dev": "vp dev",
+    "start": "node dist/cli.mjs",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.11",
+    "@tanstack/db": "^1.0.0-rc.1.5",
+    "@tanstack/query-db-collection": "^1.5.2",
+    "@tanstack/react-db": "^1.0.0-rc.1.5",
+    "@tanstack/react-query": "^5.90.0",
+    "@tigawanna/appstore-screenshots": "workspace:*",
+    "@tigawanna/play-screenshots": "workspace:*",
+    "chokidar": "^5.0.0",
+    "hono": "^4.13.19",
+    "konva": "^9.3.22",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-konva": "^19.3.2",
+    "sharp": "0.35.5",
+    "zod": "^4.6.7",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@types/node": "^25.9.9",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "playwright": "^1.55.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

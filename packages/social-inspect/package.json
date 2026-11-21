@@ -1,0 +1,82 @@
+{
+  "name": "@tigawanna/social-inspect",
+  "version": "0.1.0",
+  "description": "Local-first Open Graph and social preview inspector. npx it, open localhost, inspect any local or remote URL.",
+  "keywords": [
+    "cli",
+    "og-image",
+    "open-graph",
+    "seo",
+    "social-preview",
+    "tanstack-start",
+    "twitter-card"
+  ],
+  "homepage": "https://github.com/tigawanna/social-inspect#readme",
+  "bugs": {
+    "url": "https://github.com/tigawanna/social-inspect/issues"
+  },
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/social-inspect.git"
+  },
+  "bin": {
+    "social-inspect": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "app"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "node scripts/dev.mjs",
+    "start": "node dist/cli.mjs",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p app/tsconfig.json",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
+    "prepublishOnly": "pnpm run build && pnpm run check-exports",
+    "pubish": "bumpp",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "5.2.9",
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "@vitejs/plugin-react": "5.2.0",
+    "cheerio": "1.1.2",
+    "image-size": "2.0.2",
+    "open": "11.0.4",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.4",
+    "@types/node": "^25.9.9",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "bumpp": "^12.3.0",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.27.0"
+}

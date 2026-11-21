@@ -1,0 +1,15 @@
+node_modules
+dist
+*.env
+*.tsbuildinfo
+.turbo
+*.log
+.output
+.nitro
+.tanstack
+.vite
+.vitest
+*.sqlite
+routeTree.gen.ts
+store/
+references

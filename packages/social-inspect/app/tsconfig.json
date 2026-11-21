@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "types": ["node", "vite/client"],
+    "lib": ["esnext", "dom", "dom.iterable"],
+
+    "sourceMap": true,
+    "declaration": false,
+
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@inspect": ["./../src/index.ts"],
+      "@inspect/*": ["./../src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
