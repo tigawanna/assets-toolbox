@@ -31,13 +31,15 @@ export function StudioSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side={side}
-        className="z-50 w-full gap-0 border-border bg-background p-0 text-foreground sm:max-w-md"
+        className="w-full gap-0 border-border bg-background p-0 text-foreground sm:max-w-md"
       >
-        <SheetHeader className="border-b border-border px-4 py-3 pr-12">
-          <SheetTitle className="text-sm text-foreground">{title}</SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">{description}</SheetDescription>
+        <SheetHeader className="shrink-0 border-b border-border bg-background/60 px-4 py-3 pr-12">
+          <SheetTitle className="text-sm font-medium text-foreground">{title}</SheetTitle>
+          <SheetDescription className="text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </SheetDescription>
         </SheetHeader>
-        <div className="min-h-0 flex-1 overflow-auto p-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">{children}</div>
       </SheetContent>
     </Sheet>
   );

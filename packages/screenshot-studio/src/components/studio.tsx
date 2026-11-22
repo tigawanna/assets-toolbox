@@ -4,12 +4,14 @@ import { useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import {
   Download,
+  Library,
   LocateFixed,
   PanelLeft,
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
   RotateCw,
+  SlidersHorizontal,
   Undo2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -682,10 +684,7 @@ function StudioShell({ projectId }: { projectId: string }) {
     markBusy("export");
     setError("");
     try {
-      await downloadSnapshotsZip(
-        [{ board, nodes, events, assets }],
-        `${fileSlug(board.name)}.zip`,
-      );
+      await downloadSnapshotsZip([{ board, nodes, events, assets }], `${fileSlug(board.name)}.zip`);
     } catch (cause: unknown) {
       setError(cause instanceof Error ? cause.message : "Could not export");
     } finally {
@@ -701,9 +700,7 @@ function StudioShell({ projectId }: { projectId: string }) {
     const slice = parseSliceSelection(id);
     if (slice !== null) {
       const covering = bandCovering(
-        collectionFill(
-          selectionCollection(board, nodes, id),
-        ).bands,
+        collectionFill(selectionCollection(board, nodes, id)).bands,
         slice.index,
       );
       setSelectedId(covering === undefined ? id : bandSelectionId(covering.id));
@@ -932,9 +929,12 @@ function StudioShell({ projectId }: { projectId: string }) {
           </div>
         )}
         {leftOpen ? (
-          <aside className="flex w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-popover">
-            <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border px-2">
-              <span className="px-1 text-xs font-medium text-foreground">Library</span>
+          <aside className="flex w-66 shrink-0 flex-col overflow-hidden border-r border-border bg-linear-to-b from-popover to-background/95">
+            <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/70 bg-background/25 px-2.5">
+              <span className="flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-foreground/90 uppercase">
+                <Library className="size-3.5 text-primary" aria-hidden />
+                Library
+              </span>
               <div className="flex items-center">
                 <AssetsDrawer
                   assets={assets}
@@ -1028,12 +1028,14 @@ function StudioShell({ projectId }: { projectId: string }) {
         ) : (
           <button
             type="button"
-            className="flex w-8 shrink-0 items-start justify-center border-r border-border bg-popover pt-3 text-muted-foreground hover:text-foreground"
+            className="flex w-9 shrink-0 items-start justify-center border-r border-border bg-popover pt-3 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-primary"
             title={`Show library (${leftHint})`}
             aria-label={`Show library (${leftHint})`}
             onClick={() => setLeftOpen(true)}
           >
-            <PanelLeft className="size-4" />
+            <span className="grid size-7 place-items-center rounded-md">
+              <PanelLeft className="size-4" />
+            </span>
           </button>
         )}
         <main className="canvas-grid min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -1059,9 +1061,12 @@ function StudioShell({ projectId }: { projectId: string }) {
           />
         </main>
         {rightOpen ? (
-          <aside className="flex w-72 shrink-0 flex-col overflow-auto border-l border-border bg-popover">
-            <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border px-2">
-              <span className="px-1 text-xs font-medium text-foreground">Inspector</span>
+          <aside className="flex w-74 shrink-0 flex-col overflow-auto border-l border-border bg-linear-to-b from-popover to-background/95">
+            <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/70 bg-background/25 px-2.5">
+              <span className="flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-foreground/90 uppercase">
+                <SlidersHorizontal className="size-3.5 text-primary" aria-hidden />
+                Inspector
+              </span>
               <div className="flex items-center">
                 <HistoryDrawer
                   events={events}
@@ -1106,12 +1111,14 @@ function StudioShell({ projectId }: { projectId: string }) {
         ) : (
           <button
             type="button"
-            className="flex w-8 shrink-0 items-start justify-center border-l border-border bg-popover pt-3 text-muted-foreground hover:text-foreground"
+            className="flex w-9 shrink-0 items-start justify-center border-l border-border bg-popover pt-3 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-primary"
             title={`Show inspector (${rightHint})`}
             aria-label={`Show inspector (${rightHint})`}
             onClick={() => setRightOpen(true)}
           >
-            <PanelRight className="size-4" />
+            <span className="grid size-7 place-items-center rounded-md">
+              <PanelRight className="size-4" />
+            </span>
           </button>
         )}
       </div>

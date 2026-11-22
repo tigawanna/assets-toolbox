@@ -1,8 +1,11 @@
-import { useRef } from "react";
+import { Check, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ColorPicker } from "@/components/ui/color-picker";
+import { ImageDropzone } from "@/components/ui/file-dropzone";
+import { Label } from "@/components/ui/label";
 import type { AssetRow } from "@/lib/studio";
+import { cn } from "@/lib/utils";
 
 export function FillPicker({
   label,
@@ -23,61 +26,92 @@ export function FillPicker({
   onImport: (file: File) => void;
   onClearImage: () => void;
 }) {
-  const input = useRef<HTMLInputElement>(null);
   const current = assets.find((asset) => asset.id === imageId);
+  const hasImage = imageId !== undefined && imageId !== "";
+
   return (
-    <div className="grid gap-2">
-      <p className="text-xs tracking-wide text-muted-foreground uppercase">{label}</p>
-      <label className="grid gap-1 text-xs text-muted-foreground">
-        Color
-        <Input
-          type="color"
-          value={color.startsWith("#") && color.length === 7 ? color : "#2a332c"}
-          className="h-8 border-border bg-background"
-          onChange={(event) => onColor(event.target.value)}
-        />
-      </label>
-      <div className="flex flex-wrap gap-1">
-        <Button size="xs" variant="outline" onClick={() => input.current?.click()}>
-          Upload image
-        </Button>
-        {imageId === undefined || imageId === "" ? null : (
-          <Button size="xs" variant="ghost" onClick={onClearImage}>
-            Clear image
-          </Button>
-        )}
+    <div className="grid gap-3">
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+          {label}
+        </p>
+        <div className="grid gap-3 rounded-lg border border-border/70 bg-background/25 p-2.5">
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Color</Label>
+            <ColorPicker value={color} onChange={onColor} label={`${label} color`} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Image</Label>
+            <ImageDropzone
+              compact
+              onFiles={(files) => {
+                const file = files[0];
+                if (file !== undefined) onImport(file);
+              }}
+            />
+          </div>
+          {current === undefined ? null : (
+            <div className="flex items-center gap-2 rounded-md border border-border/70 bg-background/60 p-1.5">
+              <img
+                src={current.data}
+                alt=""
+                className="size-8 shrink-0 rounded object-cover ring-1 ring-border"
+              />
+              <span
+                className="min-w-0 flex-1 truncate text-xs text-foreground"
+                title={current.name}
+              >
+                {current.name}
+              </span>
+              {hasImage ? (
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  title="Clear image"
+                  aria-label="Clear image"
+                  onClick={onClearImage}
+                >
+                  <X />
+                </Button>
+              ) : null}
+            </div>
+          )}
+        </div>
       </div>
-      <input
-        ref={input}
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-        hidden
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file !== undefined) onImport(file);
-          event.target.value = "";
-        }}
-      />
-      {current === undefined ? null : (
-        <p className="truncate text-xs text-muted-foreground">Using {current.name}</p>
-      )}
       {assets.length === 0 ? null : (
-        <div className="grid grid-cols-4 gap-1">
-          {assets.map((asset) => (
-            <button
-              key={asset.id}
-              type="button"
-              title={asset.name}
-              className={
-                asset.id === imageId
-                  ? "overflow-hidden rounded-md ring-2 ring-primary"
-                  : "overflow-hidden rounded-md ring-1 ring-border hover:ring-muted-foreground"
-              }
-              onClick={() => onPickAsset(asset.id)}
-            >
-              <img src={asset.data} alt={asset.name} className="h-12 w-full object-cover" />
-            </button>
-          ))}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+              From library
+            </p>
+            <span className="text-xs tabular-nums text-muted-foreground">{assets.length}</span>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {assets.map((asset) => {
+              const selected = asset.id === imageId;
+              return (
+                <button
+                  key={asset.id}
+                  type="button"
+                  title={asset.name}
+                  aria-pressed={selected}
+                  className={cn(
+                    "relative aspect-square overflow-hidden rounded-md bg-background ring-1 ring-border transition-all hover:ring-muted-foreground",
+                    selected && "ring-2 ring-primary ring-offset-1 ring-offset-popover",
+                  )}
+                  onClick={() => onPickAsset(asset.id)}
+                >
+                  <img src={asset.data} alt={asset.name} className="size-full object-cover" />
+                  {selected ? (
+                    <span className="absolute right-0.5 bottom-0.5 grid size-3.5 place-items-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="size-2.5" aria-hidden />
+                    </span>
+                  ) : null}
+                  <span className="sr-only">{asset.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
