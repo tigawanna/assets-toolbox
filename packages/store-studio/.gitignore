@@ -1,5 +1,0 @@
-dist
-examples/**/*.png
-examples/**/assets/
-examples/**/store/
-.vitest/

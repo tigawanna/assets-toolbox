@@ -1,7 +1,7 @@
 {
   "name": "assets-toolbox",
   "private": true,
-  "description": "CLI tools for generating brand, social-preview, Expo and Google Play listing assets.",
+  "description": "CLI and local-app tools for brand, social-preview, Expo, and store-listing assets.",
   "type": "module",
   "scripts": {
     "build": "turbo run build",

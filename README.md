@@ -1,79 +1,67 @@
 # assets-toolbox
 
-A pnpm + Turborepo monorepo for local-first asset generators. Every package is an `npx`-able CLI with a programmatic API, built with `tsdown`, checked with `attw`, and tested with `vitest`.
+Local-first tools for brand, social, Expo, and store-listing assets. Each package is an `npx` CLI (or a local app) you can run from this pnpm + Turborepo workspace.
 
-| Package                                                              | What it does                                                                                                                                                                                                     |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@tigawanna/brand-assets`](./packages/brand-assets)                 | Favicon set + OG image from one SVG icon and, optionally, your own React OG component.                                                                                                                           |
-| [`@tigawanna/social-inspect`](./packages/social-inspect)             | Boots a local TanStack Start inspector for any URL: OG tags, favicons, social preview cards, scored issues, and copyable agent-ready fixes.                                                                      |
-| [`@tigawanna/expo-assets`](./packages/expo-assets)                   | Expo app icon, Android adaptive/monochrome icons, splash icon, web favicon and notification icon from one logo, plus an `app.json` fragment.                                                                     |
-| [`@tigawanna/play-screenshots`](./packages/play-screenshots)         | Fit raw app captures to Google Play Console sizes (phone, tablet, feature graphic, …) and write a JSON inventory. Marketing frames are specified in that package's `PLAN.md`.                                    |
-| [`@tigawanna/appstore-screenshots`](./packages/appstore-screenshots) | Fit simulator captures to App Store Connect sizes and write a deliver inventory.                                                                                                                                 |
-| [`@tigawanna/screenshot-studio`](./packages/screenshot-studio)       | Local canvas for Play and App Store screenshot strips. Boards are SQLite files; **Settings** shows the data folder and Cursor MCP snippet (`http://127.0.0.1:4320/mcp`). See the [package README](./packages/screenshot-studio/README.md). |
+Store screenshots used to live in three packages (`play-screenshots`, `appstore-screenshots`, `store-studio`). Those are gone. Play and App Store strips now live in **screenshot studio**.
+
+| Package | What it does |
+| --- | --- |
+| [`@tigawanna/brand-assets`](./packages/brand-assets) | Favicon set plus an OG image from one SVG icon. Optional custom React OG component. |
+| [`@tigawanna/social-inspect`](./packages/social-inspect) | Local TanStack Start inspector for any URL: OG tags, favicons, social cards, scored issues, copyable fixes. |
+| [`@tigawanna/expo-assets`](./packages/expo-assets) | Expo app icon, Android adaptive/monochrome icons, splash, web favicon, notification icon, and an `app.json` fragment from one logo. |
+| [`@tigawanna/screenshot-studio`](./packages/screenshot-studio) | Local Konva canvas for **Google Play** and **App Store** listing screenshots. Boards are SQLite files. Clone scene strips per store, export PNGs, talk to the same server over MCP. |
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm build          # turbo → all packages
-pnpm test           # turbo → all packages
+pnpm build
+pnpm test
 pnpm check-types
 pnpm lint
 pnpm format
-pnpm check-exports  # attw for every package
-pnpm quality        # lint + format + types + tests
+pnpm check-exports
+pnpm quality
 ```
 
-Per-package work:
+Per package:
 
 ```bash
-pnpm --filter @tigawanna/expo-assets build
+pnpm --filter @tigawanna/brand-assets build
 pnpm --filter @tigawanna/social-inspect dev
+pnpm --filter @tigawanna/expo-assets build
 pnpm --filter @tigawanna/screenshot-studio dev
 ```
 
 ## Quick use
 
 ```bash
-# brand assets
 npx @tigawanna/brand-assets --icon ./public/logo.svg --out ./public \
   --title "My site" --component ./src/og/OgImage.tsx
 
-# social inspector
 npx @tigawanna/social-inspect https://example.com
 
-# expo assets
 npx @tigawanna/expo-assets --icon ./logo.svg --out ./assets/images \
   --brand-color '#0f100f' --splash-bg '#ffffff' --image-width 200
 
-# play store screenshots
-npx @tigawanna/play-screenshots --shot ./shots/home.png --shot ./shots/search.png \
-  --preset phone-portrait --feature-graphic --out ./store/google
-
-# screenshot canvas — `vp dev` while iterating, the Node launcher once it's packaged
 pnpm --filter @tigawanna/screenshot-studio dev
+# http://127.0.0.1:4320
 npx @tigawanna/screenshot-studio
-# MCP: keep it running, then add { "url": "http://127.0.0.1:4320/mcp" } in Cursor MCP settings
 ```
+
+Keep screenshot studio running if you want Cursor MCP (`http://127.0.0.1:4320/mcp`). Board files default to `.screenshot-studio/projects/`. Details: [screenshot-studio README](./packages/screenshot-studio/README.md).
 
 ## Conventions
 
-- One tsdown build per package, with explicit `exports` so `attw` stays green.
-- `oxfmt` / `oxlint` for formatting and linting, `vitest` for tests.
-- CLIs are thin; the real logic lives in importable library modules.
-- Generated config is written as plain JSON so both humans and coding agents can consume the same artifact.
+- CLI packages build with Vite+ (`vp pack`), keep explicit `exports`, and stay `attw`-clean.
+- Screenshot studio is a TanStack Start app (`vp dev` / `vp build`); its bin serves the built output.
+- `oxfmt` / `oxlint` (plus `@shadcn/lint` on the studio UI) and `vitest`.
+- Generated config is plain JSON so humans and agents read the same file.
 
 ## References
 
-Expo package:
-
 - [Expo — splash screen and app icon](https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/)
-- [isalin/expo-icon-generator](https://github.com/isalin/expo-icon-generator) — asset filename/size conventions and adaptive icon guidance
-- [WebNaresh/expo-icon-generator](https://github.com/WebNaresh/expo-icon-generator) — sharp-based generation and `app.json` integration
-
-Play screenshots package:
-
 - [Play Console Help — preview assets](https://support.google.com/googleplay/android-developer/answer/9866151)
-- [Capture screenshots with the Android CLI](https://developer.android.com/google/play/requirements/screenshots-android-cli)
+- [App Store screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)
 
-Node `>=22.12.0` (TanStack Start requirement for the inspector; the other packages support `>=20`).
+Node `>=22.12.0` (TanStack Start). Other CLIs also run on Node 20 if you only use those packages.

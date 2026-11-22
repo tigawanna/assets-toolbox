@@ -42,21 +42,6 @@ export default defineConfig({
         rules: { "shadcn/no-inline-styles": "off" },
       },
       {
-        // Takumi marketing frames use the same flexbox-in-JS style dialect.
-        files: ["packages/play-screenshots/**"],
-        rules: { "shadcn/no-inline-styles": "off" },
-      },
-      {
-        // The editor draws with Konva and ships its own stylesheet, not Tailwind.
-        files: ["packages/store-studio/**"],
-        rules: {
-          "shadcn/no-inline-styles": "off",
-          "shadcn/no-unknown-classes": "off",
-          "shadcn/no-raw-colors": "off",
-          "shadcn/no-arbitrary-values": "off",
-        },
-      },
-      {
         // Vendored shadcn primitives set width tokens and use the sidebar's own utilities.
         files: ["packages/screenshot-studio/src/components/ui/**"],
         rules: {
