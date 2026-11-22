@@ -8,6 +8,8 @@ import {
   addAsset as addAssetFn,
   addDevice as addDeviceFn,
   addDevicePair as addDevicePairFn,
+  addLine as addLineFn,
+  addOverlay as addOverlayFn,
   addShape as addShapeFn,
   addText as addTextFn,
   applyBoardStore as applyBoardStoreFn,
@@ -113,9 +115,7 @@ export const removeCollection = createServerFn({ method: "POST" })
     if (data.collectionId.trim() === "") throw new Error("A collection id is required");
     return data;
   })
-  .handler(async ({ data }) =>
-    removeCollectionFn(data.collectionId, pathOf(data.projectId)),
-  );
+  .handler(async ({ data }) => removeCollectionFn(data.collectionId, pathOf(data.projectId)));
 
 export const loadStudio = createServerFn({ method: "GET" })
   .validator((data: { projectId?: string } = {}) => data)
@@ -177,6 +177,55 @@ export const addShape = createServerFn({ method: "POST" })
     addShapeFn(data.slice ?? 0, pathOf(data.projectId), data.collectionId),
   );
 
+export const addOverlay = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      projectId?: string;
+      kind: "shape" | "image";
+      slice?: number;
+      collectionId?: string;
+      targetId?: string;
+      imageId?: string;
+      assetName?: string;
+      shape?: import("@/lib/studio").ShapeKind;
+    }) => {
+      if (data.kind !== "shape" && data.kind !== "image") throw new Error("Unknown overlay kind");
+      return data;
+    },
+  )
+  .handler(async ({ data }) =>
+    addOverlayFn({
+      kind: data.kind,
+      slice: data.slice ?? 0,
+      collectionId: data.collectionId,
+      targetId: data.targetId,
+      imageId: data.imageId,
+      assetName: data.assetName,
+      shape: data.shape,
+      path: pathOf(data.projectId),
+    }),
+  );
+
+export const addLine = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      projectId?: string;
+      smooth?: boolean;
+      slice?: number;
+      collectionId?: string;
+      targetId?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) =>
+    addLineFn({
+      smooth: data.smooth ?? false,
+      slice: data.slice ?? 0,
+      collectionId: data.collectionId,
+      targetId: data.targetId,
+      path: pathOf(data.projectId),
+    }),
+  );
+
 export const patchNode = createServerFn({ method: "POST" })
   .validator(
     (data: {
@@ -212,7 +261,14 @@ export const addAsset = createServerFn({ method: "POST" })
 
 export const patchBoard = createServerFn({ method: "POST" })
   .validator(
-    (data: Partial<BoardRow> & { projectId?: string; collectionId?: string; x?: number; y?: number }) => {
+    (
+      data: Partial<BoardRow> & {
+        projectId?: string;
+        collectionId?: string;
+        x?: number;
+        y?: number;
+      },
+    ) => {
       if (data.store !== undefined && !isStore(data.store)) throw new Error("Unknown store");
       return data;
     },
@@ -225,7 +281,8 @@ export const patchBoard = createServerFn({ method: "POST" })
 export const deleteSlices = createServerFn({ method: "POST" })
   .validator(
     (data: { projectId?: string; start: number; count?: number; collectionId?: string }) => {
-      if (!Number.isFinite(data.start) || data.start < 0) throw new Error("A slice index is required");
+      if (!Number.isFinite(data.start) || data.start < 0)
+        throw new Error("A slice index is required");
       return data;
     },
   )
@@ -243,7 +300,8 @@ export const cloneSelectedNode = createServerFn({ method: "POST" })
 export const cloneSlices = createServerFn({ method: "POST" })
   .validator(
     (data: { projectId?: string; start: number; count?: number; collectionId?: string }) => {
-      if (!Number.isFinite(data.start) || data.start < 0) throw new Error("A slice index is required");
+      if (!Number.isFinite(data.start) || data.start < 0)
+        throw new Error("A slice index is required");
       return data;
     },
   )

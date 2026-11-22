@@ -12,6 +12,7 @@ import {
   stackNodes,
   type AssetRow,
   type BoardRow,
+  type LinePointEdit,
   type StudioNode,
 } from "@/lib/studio";
 
@@ -23,6 +24,8 @@ export function BoardContent({
   panning = false,
   collectionId,
   onSelect,
+  selectedId,
+  onLineEdit,
 }: {
   board: BoardRow;
   nodes: StudioNode[];
@@ -31,6 +34,8 @@ export function BoardContent({
   panning?: boolean;
   collectionId?: string;
   onSelect: (id: string | null) => void;
+  selectedId?: string | null;
+  onLineEdit?: (id: string, edit: LinePointEdit) => void;
 }) {
   const preset = boardSize(board);
   const boardWidth = preset.width * board.sliceCount;
@@ -99,6 +104,8 @@ export function BoardContent({
           assets={assets}
           panning={panning || !interactive}
           onSelect={pick}
+          selected={node.id === selectedId}
+          onLineEdit={onLineEdit}
         />
       ))}
     </>

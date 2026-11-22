@@ -1,11 +1,11 @@
 import { Circle, Group, Image as KonvaImage, Line, Rect } from "react-konva";
 
 import { useImage } from "@/canvas/use-image";
-import { assetUrl, type AssetRow, type DeviceNode } from "@/lib/studio";
+import { assetUrl, deviceRadii, type AssetRow, type DeviceNode } from "@/lib/studio";
 
 import { deviceModel, type DeviceModel } from "./catalog";
 
-function roundedClip(
+export function roundedClip(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -124,12 +124,13 @@ export function DeviceFrame({ node, assets }: { node: DeviceNode; assets: AssetR
   const scheme = model.colours[node.color];
   const screenImage = useImage(assetUrl(assets, node.screenAssetId));
   const { w, h } = model.frame;
+  const radii = deviceRadii(node);
   const screen = {
     x: (model.screen.x / w) * node.width,
     y: (model.screen.y / h) * node.height,
     width: (model.screen.w / w) * node.width,
     height: (model.screen.h / h) * node.height,
-    radius: (model.screen.radius / w) * node.width,
+    radius: radii.screen,
   };
   return (
     <Group>
@@ -138,7 +139,7 @@ export function DeviceFrame({ node, assets }: { node: DeviceNode; assets: AssetR
         y={0}
         width={node.width}
         height={node.height}
-        cornerRadius={model.frame.radius * (node.width / w)}
+        cornerRadius={radii.frame}
         fill={scheme.frame}
         stroke={scheme.edge}
         strokeWidth={2}

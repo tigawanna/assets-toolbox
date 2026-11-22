@@ -5,7 +5,24 @@ import { findPreset, type PresetChoice, type StoreName } from "@/lib/presets";
 export type { StoreName };
 export type { SliceBand };
 export type EventKind = "add" | "move" | "transform" | "edit" | "remove" | "board";
-export type NodeType = "device" | "text" | "shape";
+export type NodeType = "device" | "text" | "shape" | "line";
+
+export interface LinePoint {
+  x: number;
+  y: number;
+}
+
+/** A link pins one endpoint of a line to a point on another line. */
+export interface LineLink {
+  point: number;
+  nodeId: string;
+  nodePoint: number;
+}
+
+export type LinePointEdit =
+  | { type: "move"; index: number; point: LinePoint }
+  | { type: "insert"; index: number; point: LinePoint }
+  | { type: "remove"; index: number };
 
 export interface BoardFill {
   color: string;
@@ -53,6 +70,9 @@ export interface DeviceNode extends BaseNode {
   color: "black" | "white" | "silver";
   screenColor?: string;
   screenAssetId?: string;
+  /** Node-space corner radii. Missing means use the catalog defaults. */
+  frameRadius?: number;
+  screenRadius?: number;
   /** When false, width and height can change independently. Missing means locked. */
   aspectLocked?: boolean;
 }
@@ -66,14 +86,30 @@ export interface TextNode extends BaseNode {
   color: string;
 }
 
+export const SHAPE_KINDS = ["rect", "rounded", "pill", "ellipse", "triangle", "star"] as const;
+export type ShapeKind = (typeof SHAPE_KINDS)[number];
+
 export interface ShapeNode extends BaseNode {
   type: "shape";
-  shape: "rect" | "ellipse";
+  shape: ShapeKind;
   fill: string;
   radius: number;
+  /** When set, the asset fills the shape instead of a flat colour. */
+  imageId?: string;
 }
 
-export type StudioNode = DeviceNode | TextNode | ShapeNode;
+export interface LineNode extends BaseNode {
+  type: "line";
+  /** Points in node-local coordinates. */
+  points: LinePoint[];
+  stroke: string;
+  strokeWidth: number;
+  smooth: boolean;
+  tension?: number;
+  links?: LineLink[];
+}
+
+export type StudioNode = DeviceNode | TextNode | ShapeNode | LineNode;
 
 export interface EventRow {
   id: string;
@@ -275,6 +311,16 @@ export function deviceFrameRatio(modelId: DeviceModelId): number {
   return frame.w / frame.h;
 }
 
+/** Effective node-space corner radii, with per-node overrides falling back to the catalog. */
+export function deviceRadii(node: DeviceNode): { frame: number; screen: number } {
+  const model = deviceModel(node.model);
+  const scale = node.width / model.frame.w;
+  return {
+    frame: Math.max(0, node.frameRadius ?? model.frame.radius * scale),
+    screen: Math.max(0, node.screenRadius ?? model.screen.radius * scale),
+  };
+}
+
 /** Old nodes without the flag stay locked. */
 export function deviceAspectLocked(node: DeviceNode): boolean {
   return node.aspectLocked !== false;
@@ -376,6 +422,133 @@ export function createShapeNode(board: BoardRow, slice = 0): ShapeNode {
     locked: false,
     hidden: false,
     collectionId: board.collections?.[0]?.id,
+  };
+}
+
+/**
+ * A shape or image placed as its own layer above a device screen. It is never
+ * written to the device's screen background or the board/slice fill.
+ */
+export function createOverlayNode(
+  board: BoardRow,
+  options: {
+    kind: "shape" | "image";
+    slice: number;
+    imageId?: string;
+    assetName?: string;
+    shape?: ShapeKind;
+    target?: StudioNode | null;
+  },
+): ShapeNode {
+  const preset = boardSize(board);
+  const index = Math.max(0, Math.min(board.sliceCount - 1, options.slice));
+  let width: number;
+  let height: number;
+  let centerX: number;
+  let centerY: number;
+
+  if (options.target?.type === "device") {
+    const device = options.target;
+    const model = deviceModel(device.model);
+    const sx = device.width / model.frame.w;
+    const sy = device.height / model.frame.h;
+    const screenWidth = model.screen.w * sx;
+    const screenHeight = model.screen.h * sy;
+    centerX = device.x + (model.screen.x + model.screen.w / 2) * sx;
+    centerY = device.y + (model.screen.y + model.screen.h / 2) * sy;
+    width = Math.round(options.kind === "image" ? screenWidth * 0.36 : screenWidth * 0.48);
+    height = Math.round(
+      options.kind === "image"
+        ? screenWidth * 0.36
+        : Math.min(screenHeight * 0.28, screenWidth * 0.28),
+    );
+  } else {
+    centerX = index * preset.width + preset.width / 2;
+    centerY = preset.height / 2;
+    width = Math.round(preset.width * (options.kind === "image" ? 0.22 : 0.3));
+    height = Math.round(preset.width * (options.kind === "image" ? 0.22 : 0.18));
+  }
+
+  return {
+    id: uid("shape"),
+    name: options.kind === "image" ? (options.assetName ?? "Image") : "Shape",
+    type: "shape",
+    shape: options.shape ?? (options.kind === "image" ? "rounded" : "rect"),
+    fill: "#1f8a4c",
+    radius: options.kind === "image" ? 12 : 16,
+    imageId: options.kind === "image" ? options.imageId : undefined,
+    x: Math.round(centerX - width / 2),
+    y: Math.round(centerY - height / 2),
+    width: Math.max(24, width),
+    height: Math.max(24, height),
+    rotation: 0,
+    opacity: 1,
+    locked: false,
+    hidden: false,
+    collectionId:
+      options.target?.collectionId ??
+      board.collections?.find((collection) => collection.id === board.id)?.id ??
+      board.collections?.[0]?.id,
+  };
+}
+
+export function createLineNode(
+  board: BoardRow,
+  options: { smooth: boolean; slice: number; target?: StudioNode | null },
+): LineNode {
+  const preset = boardSize(board);
+  const index = Math.max(0, Math.min(board.sliceCount - 1, options.slice));
+  let centerX: number;
+  let centerY: number;
+  let width: number;
+  if (options.target?.type === "device") {
+    const device = options.target;
+    const model = deviceModel(device.model);
+    const sx = device.width / model.frame.w;
+    const sy = device.height / model.frame.h;
+    const screenWidth = model.screen.w * sx;
+    centerX = device.x + (model.screen.x + model.screen.w / 2) * sx;
+    centerY = device.y + (model.screen.y + model.screen.h / 2) * sy;
+    width = Math.round(screenWidth * 0.5);
+  } else {
+    centerX = index * preset.width + preset.width / 2;
+    centerY = preset.height / 2;
+    width = Math.round(preset.width * 0.36);
+  }
+  const half = width / 2;
+  const height = Math.max(24, Math.round(width * (options.smooth ? 0.36 : 0.02)));
+  const points: LinePoint[] = options.smooth
+    ? [
+        { x: -half, y: height / 2 },
+        { x: -half / 3, y: -height / 2 },
+        { x: half / 3, y: height / 2 },
+        { x: half, y: -height / 2 },
+      ]
+    : [
+        { x: -half, y: 0 },
+        { x: half, y: 0 },
+      ];
+  return {
+    id: uid("line"),
+    name: options.smooth ? "Curve" : "Line",
+    type: "line",
+    points,
+    stroke: "#bef264",
+    strokeWidth: 8,
+    smooth: options.smooth,
+    tension: 0.4,
+    x: Math.round(centerX - half),
+    y: Math.round(centerY - height / 2),
+    width,
+    height,
+    rotation: 0,
+    opacity: 1,
+    locked: false,
+    hidden: false,
+    collectionId:
+      options.target?.collectionId ??
+      board.collections?.find((collection) => collection.id === board.id)?.id ??
+      board.collections?.[0]?.id,
   };
 }
 

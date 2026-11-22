@@ -1,8 +1,4 @@
-import {
-  DEVICE_PAIRS,
-  deviceFamily,
-  type DeviceModelId,
-} from "@/devices/catalog";
+import { DEVICE_PAIRS, deviceFamily, type DeviceModelId } from "@/devices/catalog";
 import { findPreset, type StoreName } from "@/lib/presets";
 import {
   boardCollections,
@@ -81,7 +77,12 @@ export function storeLabel(store: StoreName): string {
 const VARIANT_SUFFIX = / · (Apple|Android|Play|iOS|App Store)$/i;
 
 export function boardBaseName(name: string): string {
-  return name.replace(VARIANT_SUFFIX, "").replace(/ copy$/i, "").trim() || "Untitled";
+  return (
+    name
+      .replace(VARIANT_SUFFIX, "")
+      .replace(/ copy$/i, "")
+      .trim() || "Untitled"
+  );
 }
 
 export function variantBoardName(name: string, store: StoreName): string {
@@ -159,10 +160,33 @@ function scaleNode(
       fontSize: Math.max(8, Math.round(node.fontSize * sy)),
     };
   }
-  if (node.type === "shape") {
-    return { ...node, x, y, width, height };
+  if (node.type === "line") {
+    return {
+      ...node,
+      x,
+      y,
+      width,
+      height,
+      points: node.points.map((point) => ({
+        x: Math.round(point.x * sx),
+        y: Math.round(point.y * sy),
+      })),
+    };
   }
-  const scaled: DeviceNode = { ...node, x, y, width, height };
+  if (node.type === "shape") {
+    return { ...node, x, y, width, height, radius: Math.max(0, Math.round(node.radius * sx)) };
+  }
+  const scaled: DeviceNode = {
+    ...node,
+    x,
+    y,
+    width,
+    height,
+    frameRadius:
+      node.frameRadius === undefined ? undefined : Math.max(0, Math.round(node.frameRadius * sx)),
+    screenRadius:
+      node.screenRadius === undefined ? undefined : Math.max(0, Math.round(node.screenRadius * sx)),
+  };
   const target = deviceForStore(node.model, store);
   const swapped = { ...scaled, ...retargetDevice(scaled, target) };
   if (!deviceAspectLocked(node)) return swapped;
@@ -224,11 +248,13 @@ export function applyStoreToCollection(
   const fallback = boardCollections(board)[0]?.id ?? DEFAULT_COLLECTION_ID;
   const local = nodesInCollection(nodes, collection.id, fallback);
   const others = nodes.filter((node) => nodeCollectionId(node, fallback) !== collection.id);
-  const applied = applyStoreRules({ board: collectionAsBoard(board, collection), nodes: local }, store);
+  const applied = applyStoreRules(
+    { board: collectionAsBoard(board, collection), nodes: local },
+    store,
+  );
   const nextCollection: SceneCollection = {
     ...collection,
-    name:
-      collection.store === store ? collection.name : variantBoardName(collection.name, store),
+    name: collection.store === store ? collection.name : variantBoardName(collection.name, store),
     store: applied.board.store,
     presetId: applied.board.presetId,
     sliceCount: applied.board.sliceCount,
@@ -252,7 +278,8 @@ export function cloneSceneCollection(
   let collection: SceneCollection = remintCollectionFill({
     ...source,
     id,
-    name: store === undefined ? duplicateBoardName(source.name) : variantBoardName(source.name, store),
+    name:
+      store === undefined ? duplicateBoardName(source.name) : variantBoardName(source.name, store),
   });
   let copies = nodesInCollection(nodes, source.id, fallback).map((node) => ({
     ...cloneNode(node),

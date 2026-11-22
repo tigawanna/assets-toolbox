@@ -1,13 +1,17 @@
 # assets-toolbox
 
+<p align="center">
+  <img src="./packages/screenshot-studio/assets/banner.svg" alt="Screenshot Studio — one canvas for Play and App Store listings" width="720" />
+</p>
+
 Tools for most of a product’s asset needs: React on the web, React Native, React on the server, then Google Play and App Store listing screenshots.
 
-| Package | What it does |
-| --- | --- |
-| [`@tigawanna/brand-assets`](./packages/brand-assets) | Favicon set plus an OG image from one SVG icon. Optional custom React OG component. |
-| [`@tigawanna/social-inspect`](./packages/social-inspect) | Local inspector for any URL: OG tags, favicons, social cards, scored issues, copyable fixes. |
-| [`@tigawanna/expo-assets`](./packages/expo-assets) | Expo app icon, Android adaptive/monochrome icons, splash, web favicon, notification icon, and an `app.json` fragment from one logo. |
-| [`@tigawanna/screenshot-studio`](./packages/screenshot-studio) | **MCP.** Local canvas for Google Play and App Store listing screenshots. Boards are SQLite files; clone scene strips per store and export PNGs. Needs **Node.js with `node:sqlite`** (Node 22.12+). |
+| Package                                                                                                                                     | What it does                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@tigawanna/brand-assets`](./packages/brand-assets)                                                                                        | Favicon set plus an OG image from one SVG icon. Optional custom React OG component.                                                                                                                 |
+| [`@tigawanna/social-inspect`](./packages/social-inspect)                                                                                    | Local inspector for any URL: OG tags, favicons, social cards, scored issues, copyable fixes.                                                                                                        |
+| [`@tigawanna/expo-assets`](./packages/expo-assets)                                                                                          | Expo app icon, Android adaptive/monochrome icons, splash, web favicon, notification icon, and an `app.json` fragment from one logo.                                                                 |
+| <img src="./packages/screenshot-studio/assets/icon.svg" alt="" width="20" /> [`@tigawanna/screenshot-studio`](./packages/screenshot-studio) | **MCP.** Local canvas for Google Play and App Store listing screenshots. Boards are SQLite files; clone scene strips per store and export PNGs. Needs **Node.js with `node:sqlite`** (Node 22.12+). |
 
 ## Commands
 

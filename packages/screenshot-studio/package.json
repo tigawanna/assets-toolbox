@@ -21,7 +21,9 @@
   },
   "files": [
     "bin",
-    ".output"
+    ".output",
+    "assets",
+    "README.md"
   ],
   "type": "module",
   "scripts": {

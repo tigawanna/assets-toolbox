@@ -1,6 +1,40 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
+  --background: oklch(0.985 0.006 145);
+  --foreground: oklch(0.21 0.02 145);
+  --primary: oklch(0.58 0.15 145);
+  --primary-foreground: oklch(0.985 0.01 145);
+  --secondary: oklch(0.95 0.008 145);
+  --secondary-foreground: oklch(0.25 0.02 145);
+  --muted: oklch(0.95 0.008 145);
+  --muted-foreground: oklch(0.5 0.02 145);
+  --accent: oklch(0.92 0.015 145);
+  --accent-foreground: oklch(0.25 0.02 145);
+  --destructive: oklch(0.58 0.2 25);
+  --border: oklch(0.88 0.01 145);
+  --input: oklch(0.88 0.01 145);
+  --ring: oklch(0.58 0.15 145);
+  --popover: oklch(0.995 0.004 145);
+  --popover-foreground: oklch(0.21 0.02 145);
+  --sidebar: oklch(0.98 0.006 145);
+  --sidebar-foreground: oklch(0.21 0.02 145);
+  --sidebar-primary: oklch(0.58 0.15 145);
+  --sidebar-primary-foreground: oklch(0.985 0.01 145);
+  --sidebar-accent: oklch(0.92 0.015 145);
+  --sidebar-accent-foreground: oklch(0.25 0.02 145);
+  --sidebar-border: oklch(0.88 0.01 145);
+  --sidebar-ring: oklch(0.58 0.15 145);
+  --canvas-bg: oklch(0.965 0.005 145);
+  --canvas-dot: oklch(0.86 0.012 145);
+  --scrollbar-thumb: oklch(0.8 0.012 145);
+  --scrollbar-thumb-hover: oklch(0.7 0.02 145);
+  --radius: 0.5rem;
+}
+
+.dark {
+  color-scheme: dark;
   --background: oklch(0.16 0.012 145);
   --foreground: oklch(0.93 0.01 140);
   --primary: oklch(0.82 0.18 135);
@@ -25,7 +59,10 @@
   --sidebar-accent-foreground: oklch(0.93 0.01 140);
   --sidebar-border: oklch(0.32 0.012 145);
   --sidebar-ring: oklch(0.82 0.18 135);
-  --radius: 0.5rem;
+  --canvas-bg: oklch(0.16 0.012 145);
+  --canvas-dot: oklch(0.32 0.012 145);
+  --scrollbar-thumb: oklch(0.36 0.012 145);
+  --scrollbar-thumb-hover: oklch(0.48 0.02 145);
 }
 
 @theme inline {
@@ -65,14 +102,28 @@ body {
 
 body {
   margin: 0;
-  background: #0d0f0e;
-  color: #eef1ec;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.canvas-grid {
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.36 0.012 145) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -85,20 +136,14 @@ body {
   }
 
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.36 0.012 145);
+    background: var(--scrollbar-thumb);
     background-clip: content-box;
     border: 2px solid transparent;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.48 0.02 145);
+    background: var(--scrollbar-thumb-hover);
     background-clip: content-box;
   }
-}
-
-.canvas-grid {
-  background-color: #0d0f0e;
-  background-image: radial-gradient(#2a2f2b 1px, transparent 1px);
-  background-size: 22px 22px;
 }

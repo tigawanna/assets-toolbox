@@ -6,6 +6,8 @@ import {
   cloneNode,
   createAsset,
   createDeviceNode,
+  createLineNode,
+  createOverlayNode,
   createShapeNode,
   createTextNode,
   defaultBoard,
@@ -22,11 +24,7 @@ import {
 } from "@/lib/studio";
 import type { DeviceModelId } from "@/devices/catalog";
 import { findPreset, type StoreName } from "@/lib/presets";
-import {
-  applyStoreToCollection,
-  cloneSceneCollection,
-  storeLabel,
-} from "@/lib/store-rules";
+import { applyStoreToCollection, cloneSceneCollection, storeLabel } from "@/lib/store-rules";
 import {
   boardCollections,
   collectionAsBoard,
@@ -110,11 +108,7 @@ function change(database: StudioDb, work: (tx: StudioDb) => void): StudioSnapsho
   });
   const snapshot = readSnapshot(database);
   const last = snapshot.events.at(-1);
-  publishLive(
-    projectIdFromDatabasePath(pathOfStudio(database)),
-    last?.seq ?? 0,
-    last?.label ?? "",
-  );
+  publishLive(projectIdFromDatabasePath(pathOfStudio(database)), last?.seq ?? 0, last?.label ?? "");
   return snapshot;
 }
 
@@ -215,6 +209,69 @@ export function addShape(
   });
 }
 
+/** Add a shape or image as its own layer above a device screen. */
+export function addOverlay(options: {
+  kind: "shape" | "image";
+  slice?: number;
+  collectionId?: string;
+  targetId?: string;
+  imageId?: string;
+  assetName?: string;
+  shape?: import("@/lib/studio").ShapeKind;
+  path?: string;
+}): StudioSnapshot {
+  const database = openStudio(options.path ?? defaultDatabasePath());
+  return change(database, (tx) => {
+    const board = currentBoard(tx);
+    const { frame, collection } = frameFor(board, options.collectionId);
+    const target = options.targetId === undefined ? undefined : findNode(tx, options.targetId);
+    const node = {
+      ...createOverlayNode(frame, {
+        kind: options.kind,
+        slice: options.slice ?? 0,
+        imageId: options.imageId,
+        assetName: options.assetName,
+        shape: options.shape,
+        target: target ?? null,
+      }),
+      collectionId: collection.id,
+      z: nextStackZ(listNodes(tx)),
+    };
+    writeNode(tx, node);
+    tx.insert(events)
+      .values(eventFor(latestSeq(tx) + 1, "add", `Add ${node.name}`, node))
+      .run();
+  });
+}
+
+export function addLine(options: {
+  smooth?: boolean;
+  slice?: number;
+  collectionId?: string;
+  targetId?: string;
+  path?: string;
+}): StudioSnapshot {
+  const database = openStudio(options.path ?? defaultDatabasePath());
+  return change(database, (tx) => {
+    const board = currentBoard(tx);
+    const { frame, collection } = frameFor(board, options.collectionId);
+    const target = options.targetId === undefined ? undefined : findNode(tx, options.targetId);
+    const node = {
+      ...createLineNode(frame, {
+        smooth: options.smooth ?? false,
+        slice: options.slice ?? 0,
+        target: target ?? null,
+      }),
+      collectionId: collection.id,
+      z: nextStackZ(listNodes(tx)),
+    };
+    writeNode(tx, node);
+    tx.insert(events)
+      .values(eventFor(latestSeq(tx) + 1, "add", `Add ${node.name}`, node))
+      .run();
+  });
+}
+
 export function updateNode(
   id: string,
   patch: Record<string, unknown>,
@@ -277,7 +334,8 @@ export function duplicateNode(
     const { collection } = frameFor(board, current.collectionId);
     const preset = collectionFrame(collection);
     const nextX = current.x + preset.width;
-    const fits = nextX + Math.min(current.width, preset.width) <= preset.width * collection.sliceCount;
+    const fits =
+      nextX + Math.min(current.width, preset.width) <= preset.width * collection.sliceCount;
     const copy = {
       ...cloneNode(current, fits ? preset.width : 48, fits ? 0 : 48),
       z: nextStackZ(listNodes(tx)),
@@ -439,15 +497,24 @@ export function updateBoard(
       if (findPreset(board.store, board.presetId) === undefined) {
         throw new Error(`Unknown preset ${board.store}/${board.presetId}`);
       }
-      if (rest.store !== undefined || rest.presetId !== undefined || rest.sliceCount !== undefined || rest.background !== undefined) {
+      if (
+        rest.store !== undefined ||
+        rest.presetId !== undefined ||
+        rest.sliceCount !== undefined ||
+        rest.background !== undefined
+      ) {
         const collection = findCollection(board);
-        board = patchCollection(board, collection.id, writeCollectionFill({
-          ...collection,
-          store: rest.store ?? collection.store,
-          presetId: rest.presetId ?? collection.presetId,
-          sliceCount: rest.sliceCount ?? collection.sliceCount,
-          background: rest.background ?? collection.background,
-        }));
+        board = patchCollection(
+          board,
+          collection.id,
+          writeCollectionFill({
+            ...collection,
+            store: rest.store ?? collection.store,
+            presetId: rest.presetId ?? collection.presetId,
+            sliceCount: rest.sliceCount ?? collection.sliceCount,
+            background: rest.background ?? collection.background,
+          }),
+        );
       }
       board.name = board.name.trim() === "" ? "Untitled" : board.name.trim();
     }

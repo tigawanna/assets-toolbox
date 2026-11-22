@@ -20,8 +20,11 @@ import {
 } from "../src/lib/scenes";
 import {
   createDeviceNode,
+  createLineNode,
+  createOverlayNode,
   defaultBoard,
   deviceAspectLocked,
+  deviceRadii,
   deviceLooksStretched,
   layerOrder,
   moveLayer,
@@ -162,8 +165,12 @@ describe("store rules", () => {
     expect(bounds.minX).toBe(800);
     expect(bounds.minY).toBe(400 - COLLECTION_HANDLE);
     const camera = fitCamera(bounds, { width: 1000, height: 800 }, 0);
-    expect(camera.pan.x + bounds.minX * camera.zoom).toBeCloseTo((1000 - bounds.width * camera.zoom) / 2);
-    expect(camera.pan.y + bounds.minY * camera.zoom).toBeCloseTo((800 - bounds.height * camera.zoom) / 2);
+    expect(camera.pan.x + bounds.minX * camera.zoom).toBeCloseTo(
+      (1000 - bounds.width * camera.zoom) / 2,
+    );
+    expect(camera.pan.y + bounds.minY * camera.zoom).toBeCloseTo(
+      (800 - bounds.height * camera.zoom) / 2,
+    );
   });
 
   it("folds title-bar drag into the filmstrip origin", () => {
@@ -183,6 +190,81 @@ describe("store rules", () => {
     const next = applyStoreRules({ board, nodes: [last] }, "play");
     expect(next.board.sliceCount).toBe(8);
     expect(next.nodes).toEqual([]);
+  });
+});
+
+describe("device corners and screen overlays", () => {
+  it("falls back to catalog radii and honours per-node overrides", () => {
+    const board = defaultBoard();
+    const device = createDeviceNode("phone-punch", board);
+    const fallback = deviceRadii(device);
+    expect(fallback.frame).toBeGreaterThan(0);
+    expect(fallback.screen).toBeGreaterThan(0);
+    expect(deviceRadii({ ...device, frameRadius: 60, screenRadius: 42 })).toEqual({
+      frame: 60,
+      screen: 42,
+    });
+  });
+
+  it("places an image as its own layer over a device without touching its screen", () => {
+    const board = defaultBoard();
+    const device = { ...createDeviceNode("phone-punch", board), id: "device-1" };
+    const overlay = createOverlayNode(board, {
+      kind: "image",
+      slice: 0,
+      imageId: "asset-1",
+      assetName: "sticker.png",
+      target: device,
+    });
+    expect(overlay.type).toBe("shape");
+    expect(overlay.imageId).toBe("asset-1");
+    expect(overlay.name).toBe("sticker.png");
+    expect(overlay.collectionId).toBe(device.collectionId);
+    expect(
+      Math.abs(overlay.x + overlay.width / 2 - (device.x + device.width / 2)),
+    ).toBeLessThanOrEqual(1);
+    expect(device.screenAssetId).toBeUndefined();
+    expect(device.screenColor).toBeUndefined();
+  });
+
+  it("creates a plain shape overlay when no image is given", () => {
+    const overlay = createOverlayNode(defaultBoard(), { kind: "shape", slice: 0 });
+    expect(overlay.type).toBe("shape");
+    expect(overlay.imageId).toBeUndefined();
+    expect(overlay.radius).toBeGreaterThan(0);
+  });
+});
+
+describe("line nodes", () => {
+  it("creates straight and smooth lines with editable points", () => {
+    const board = defaultBoard();
+    const line = createLineNode(board, { smooth: false, slice: 0 });
+    const curve = createLineNode(board, { smooth: true, slice: 0 });
+    expect(line.type).toBe("line");
+    expect(line.points).toHaveLength(2);
+    expect(line.smooth).toBe(false);
+    expect(curve.points).toHaveLength(4);
+    expect(curve.smooth).toBe(true);
+    expect(
+      curve.points.every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)),
+    ).toBe(true);
+  });
+
+  it("scales line points when store rules are applied", () => {
+    const board = {
+      ...defaultBoard("Wide"),
+      store: "app-store" as const,
+      presetId: "iphone-6-9",
+      sliceCount: 10,
+    };
+    const line = createLineNode(board, { smooth: true, slice: 0 });
+    const next = applyStoreRules({ board, nodes: [line] }, "play");
+    const scaled = next.nodes[0];
+    expect(scaled?.type).toBe("line");
+    if (scaled?.type === "line") {
+      expect(scaled.points).toHaveLength(line.points.length);
+      expect(scaled.points).not.toEqual(line.points);
+    }
   });
 });
 

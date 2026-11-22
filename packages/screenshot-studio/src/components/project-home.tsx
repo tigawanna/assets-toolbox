@@ -3,12 +3,21 @@ import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRight, Download, Plus } from "lucide-react";
 
 import { downloadSnapshotsZip } from "@/canvas/export-slices";
+import { ScreenshotStudioIcon } from "@/components/brand-icon";
 import { BoardCloneMenu } from "@/components/board-clone-menu";
 import { SettingsDrawer } from "@/components/settings-drawer";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { fileSlug, storeLabel } from "@/lib/store-rules";
 import type { StoreName } from "@/lib/studio";
-import { cloneBoard, createBoard, deleteBoard, focusBoard, listBoards, loadStudio } from "@/server/fns";
+import {
+  cloneBoard,
+  createBoard,
+  deleteBoard,
+  focusBoard,
+  listBoards,
+  loadStudio,
+} from "@/server/fns";
 import type { ProjectSummary } from "@/server/projects";
 
 function relativeTime(iso: string): string {
@@ -114,8 +123,14 @@ export function ProjectHome() {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="flex h-12 items-center justify-between border-b border-border px-6">
-        <strong className="text-sm tracking-tight">Screenshot Studio</strong>
-        <SettingsDrawer />
+        <strong className="flex items-center gap-2 text-sm tracking-tight">
+          <ScreenshotStudioIcon className="size-6" />
+          Screenshot Studio
+        </strong>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <SettingsDrawer />
+        </div>
       </header>
       <main className="mx-auto w-full max-w-3xl px-6 py-16">
         <p className="text-xs font-medium tracking-widest text-primary uppercase">Boards</p>

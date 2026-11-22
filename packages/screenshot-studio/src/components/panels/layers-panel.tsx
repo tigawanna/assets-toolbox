@@ -5,12 +5,15 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  Image as ImageIcon,
   Layers3,
   Lock,
   LockOpen,
   Monitor,
   Smartphone,
+  Spline,
   Square,
+  Trash2,
   Type,
 } from "lucide-react";
 
@@ -24,8 +27,10 @@ import { cn } from "@/lib/utils";
 import { Panel } from "./panel";
 
 function nodeIcon(node: StudioNode) {
+  if (node.type === "line") return Spline;
   if (node.type === "text") return Type;
-  if (node.type === "shape") return Square;
+  if (node.type === "shape")
+    return node.imageId !== undefined && node.imageId !== "" ? ImageIcon : Square;
   return DEVICE_MODELS[node.model]?.formFactor === "desktop" ? Monitor : Smartphone;
 }
 
@@ -202,6 +207,16 @@ export function LayersPanel({
                         }
                       >
                         {node.hidden ? <EyeOff /> : <Eye />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title={`Delete ${node.name}`}
+                        aria-label={`Delete ${node.name}`}
+                        onClick={() => onRemoveNode(node.id)}
+                      >
+                        <Trash2 />
                       </Button>
                     </div>
                   </li>

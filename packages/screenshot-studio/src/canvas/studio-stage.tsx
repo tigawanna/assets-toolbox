@@ -31,6 +31,9 @@ import {
   deviceFrameRatio,
   type AssetRow,
   type BoardRow,
+  type LineLink,
+  type LinePoint,
+  type LinePointEdit,
   type StudioNode,
 } from "@/lib/studio";
 
@@ -184,6 +187,7 @@ export function StudioStage({
     if (
       selectedId === null ||
       boardSelected ||
+      selectedNode?.type === "line" ||
       parseBandSelection(selectedId) !== null ||
       parseSliceSelection(selectedId) !== null ||
       parseCollectionSelection(selectedId) !== null
@@ -253,6 +257,76 @@ export function StudioStage({
     );
   }, [menu]);
 
+  function handleLineEdit(id: string, edit: LinePointEdit): void {
+    const node = nodes.find((candidate) => candidate.id === id);
+    if (node === undefined || node.type !== "line") return;
+    const points = [...node.points];
+    let index = edit.index;
+    if (edit.type === "insert") {
+      points.splice(edit.index + 1, 0, edit.point);
+      index = edit.index + 1;
+    } else if (edit.type === "remove") {
+      if (points.length <= 2) return;
+      points.splice(edit.index, 1);
+      index = Math.min(edit.index, points.length - 1);
+    } else {
+      points[edit.index] = edit.point;
+    }
+
+    let snapped = points[index] ?? { x: 0, y: 0 };
+    let link: LineLink | undefined;
+    if (edit.type !== "remove") {
+      const here = { x: node.x + snapped.x, y: node.y + snapped.y };
+      let closest = 18;
+      for (const other of nodes) {
+        if (other.id === id || other.type !== "line") continue;
+        for (let pointIndex = 0; pointIndex < other.points.length; pointIndex += 1) {
+          const point = other.points[pointIndex]!;
+          const distance = Math.hypot(other.x + point.x - here.x, other.y + point.y - here.y);
+          if (distance < closest) {
+            closest = distance;
+            snapped = {
+              x: Math.round(other.x + point.x - node.x),
+              y: Math.round(other.y + point.y - node.y),
+            };
+            link = { point: index, nodeId: other.id, nodePoint: pointIndex };
+          }
+        }
+      }
+      points[index] = snapped;
+    }
+
+    const links = (node.links ?? []).filter((candidate) => candidate.point !== index);
+    if (link !== undefined) links.push(link);
+    onPatchNode(id, { points, links }, "Edit line");
+
+    if (edit.type === "remove") return;
+    const absolute = { x: node.x + snapped.x, y: node.y + snapped.y };
+    const updates = new Map<string, LinePoint[]>();
+    const queue = (targetId: string, pointIndex: number, point: LinePoint) => {
+      const target = nodes.find((candidate) => candidate.id === targetId);
+      if (target === undefined || target.type !== "line" || pointIndex >= target.points.length)
+        return;
+      const next = updates.get(targetId) ?? [...target.points];
+      next[pointIndex] = { x: Math.round(point.x - target.x), y: Math.round(point.y - target.y) };
+      updates.set(targetId, next);
+    };
+    for (const candidate of links) {
+      if (candidate.point === index) queue(candidate.nodeId, candidate.nodePoint, absolute);
+    }
+    for (const other of nodes) {
+      if (other.type !== "line" || other.links === undefined) continue;
+      for (const candidate of other.links) {
+        if (candidate.nodeId === id && candidate.nodePoint === index) {
+          queue(other.id, candidate.point, absolute);
+        }
+      }
+    }
+    for (const [targetId, nextPoints] of updates) {
+      onPatchNode(targetId, { points: nextPoints }, "Edit linked line");
+    }
+  }
+
   const menuActions = {
     duplicateHint,
     onDuplicateNode,
@@ -290,7 +364,12 @@ export function StudioStage({
             return;
           }
           const id = event.target.id();
-          if (id === "" || id === board.id || id.startsWith("collection:") || id.startsWith("slice:"))
+          if (
+            id === "" ||
+            id === board.id ||
+            id.startsWith("collection:") ||
+            id.startsWith("slice:")
+          )
             return;
           onMove(id, event.target.x(), event.target.y());
         }}
@@ -351,7 +430,8 @@ export function StudioStage({
                   }}
                   onMouseLeave={(event) => {
                     const stage = event.target.getStage();
-                    if (stage !== null) stage.container().style.cursor = panning ? "grab" : "default";
+                    if (stage !== null)
+                      stage.container().style.cursor = panning ? "grab" : "default";
                   }}
                   onDragStart={(event) => {
                     event.cancelBubble = true;
@@ -415,6 +495,8 @@ export function StudioStage({
                   panning={panning}
                   collectionId={collection.id}
                   onSelect={onSelect}
+                  selectedId={selectedId}
+                  onLineEdit={handleLineEdit}
                 />
                 <Rect
                   x={0}
@@ -552,8 +634,8 @@ export function StudioStage({
           Recenter
         </Button>
         <p className="rounded-md bg-background/50 px-2 py-1 text-xs text-foreground">
-          {collections.length} collection{collections.length === 1 ? "" : "s"} · {Math.round(zoom * 100)}%
-          · Drag the strip title · 0 recenters
+          {collections.length} collection{collections.length === 1 ? "" : "s"} ·{" "}
+          {Math.round(zoom * 100)}% · Drag the strip title · 0 recenters
         </p>
       </div>
     </div>

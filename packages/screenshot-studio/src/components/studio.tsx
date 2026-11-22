@@ -19,6 +19,7 @@ import { flushSync } from "react-dom";
 
 import { downloadSnapshotsZip } from "@/canvas/export-slices";
 import { CanvasHost } from "@/canvas/canvas-host";
+import { ScreenshotStudioIcon } from "@/components/brand-icon";
 import { BoardCloneMenu } from "@/components/board-clone-menu";
 import { SettingsDrawer } from "@/components/settings-drawer";
 import { AssetsDrawer } from "@/components/panels/assets-panel";
@@ -29,6 +30,7 @@ import { Inspector } from "@/components/panels/inspector";
 import { LayersPanel } from "@/components/panels/layers-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { DeviceModelId } from "@/devices/catalog";
 import {
   bandCovering,
@@ -62,6 +64,7 @@ import {
   layerOrder,
   moveLayer,
   writeBoardFill,
+  type ShapeKind,
   type StoreName,
   type StudioNode,
   type StudioSnapshot,
@@ -85,7 +88,8 @@ import {
   addAsset,
   addDevice,
   addDevicePair,
-  addShape,
+  addLine,
+  addOverlay,
   addText,
   applyStore,
   cloneCollection,
@@ -188,6 +192,9 @@ function StudioShell({ projectId }: { projectId: string }) {
       collectionSelected);
   const selected =
     boardSelected || span !== null ? null : (nodes.find((node) => node.id === selectedId) ?? null);
+  let assetActiveId = span?.imageId ?? fill.imageId;
+  if (selected?.type === "device") assetActiveId = selected.screenAssetId;
+  if (selected?.type === "shape") assetActiveId = selected.imageId;
   const events = recentEvents.data ?? [];
   const total = eventTotal.data[0]?.total ?? 0;
   const playPresets = presets.filter((preset) => preset.store === "play");
@@ -433,9 +440,61 @@ function StudioShell({ projectId }: { projectId: string }) {
     );
   }
 
+  async function createOverlay(
+    kind: "shape" | "image",
+    imageId?: string,
+    assetName?: string,
+    shape?: ShapeKind,
+  ) {
+    try {
+      const snapshot = await persist(() =>
+        addOverlay({
+          data: {
+            ...pid,
+            kind,
+            shape,
+            slice: span?.start ?? 0,
+            collectionId: activeCollection.id,
+            targetId: selected?.type === "device" ? selected.id : undefined,
+            imageId,
+            assetName,
+          },
+        }),
+      );
+      const addedId = snapshot.events.at(-1)?.nodeId;
+      if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : `Could not add ${kind}`);
+    }
+  }
+
+  async function createLine(smooth: boolean) {
+    try {
+      const snapshot = await persist(() =>
+        addLine({
+          data: {
+            ...pid,
+            smooth,
+            slice: span?.start ?? 0,
+            collectionId: activeCollection.id,
+            targetId: selected?.type === "device" ? selected.id : undefined,
+          },
+        }),
+      );
+      const addedId = snapshot.events.at(-1)?.nodeId;
+      if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : "Could not add line");
+    }
+  }
+
   function applyAsset(id: string) {
+    if (selected !== null && selected.type === "shape") {
+      void commitNode(selected.id, { imageId: id }, "Overlay image");
+      return;
+    }
     if (selected !== null && selected.type === "device") {
-      void commitNode(selected.id, { screenAssetId: id }, "Screen image");
+      void createOverlay("image", id, assets.find((asset) => asset.id === id)?.name);
       return;
     }
     if (span !== null) {
@@ -709,7 +768,11 @@ function StudioShell({ projectId }: { projectId: string }) {
     setSelectedId(id);
   }
 
-  async function importImage(file: File, apply?: "board" | "device" | "band") {
+  async function importImage(
+    file: File,
+    apply?: "board" | "device" | "band" | "overlay",
+    shape?: ShapeKind,
+  ) {
     try {
       const data = await readImageFile(file);
       const snapshot = (await addAsset({
@@ -727,6 +790,17 @@ function StudioShell({ projectId }: { projectId: string }) {
       if (apply === "device" && selected !== null && selected.type === "device") {
         await commitNode(selected.id, { screenAssetId: assetId }, "Screen image");
       }
+      if (apply === "overlay") {
+        if (selected !== null && selected.type === "shape") {
+          await commitNode(
+            selected.id,
+            { imageId: assetId, ...(shape === undefined ? {} : { shape }) },
+            "Overlay image",
+          );
+        } else {
+          await createOverlay("image", assetId, file.name, shape);
+        }
+      }
     } catch (cause: unknown) {
       setError(cause instanceof Error ? cause.message : "Could not import");
     }
@@ -734,15 +808,18 @@ function StudioShell({ projectId }: { projectId: string }) {
 
   if (!hydrated) {
     return (
-      <div className="grid h-svh place-items-center bg-background text-sm text-muted-foreground">
+      <div className="grid h-screen place-items-center bg-background text-sm text-muted-foreground">
         {error === "" ? "Opening board…" : error}
       </div>
     );
   }
 
   return (
-    <div className="flex h-svh min-h-0 flex-col bg-background text-foreground">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
+    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-background text-foreground">
+      <header className="no-scrollbar flex h-12 shrink-0 items-center gap-3 overflow-x-auto border-b border-border px-3">
+        <Link to="/" title="Screenshot Studio boards" aria-label="Screenshot Studio boards">
+          <ScreenshotStudioIcon className="size-6" />
+        </Link>
         <Link
           to="/"
           className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -912,6 +989,7 @@ function StudioShell({ projectId }: { projectId: string }) {
           <RotateCw className={reloading ? "animate-spin" : undefined} />
           {reloading ? "Reloading" : "Reload"}
         </Button>
+        <ThemeToggle />
         <SettingsDrawer projectId={projectId} align="header" />
       </header>
       {error === "" ? null : (
@@ -938,11 +1016,7 @@ function StudioShell({ projectId }: { projectId: string }) {
               <div className="flex items-center">
                 <AssetsDrawer
                   assets={assets}
-                  activeId={
-                    selected?.type === "device"
-                      ? selected.screenAssetId
-                      : (span?.imageId ?? fill.imageId)
-                  }
+                  activeId={assetActiveId}
                   onImport={(file) => void importImage(file)}
                   onPick={applyAsset}
                 />
@@ -972,58 +1046,48 @@ function StudioShell({ projectId }: { projectId: string }) {
               onDuplicateCollection={(id) => void cloneCurrent(undefined, id)}
               onRemoveCollection={(id) => void deleteCurrentStrip(id)}
             />
-            <div className="max-h-1/2 shrink-0 overflow-auto">
-              <DevicesPanel
-                onDevice={(model: DeviceModelId) =>
-                  void persist(() =>
-                    addDevice({
-                      data: {
-                        ...pid,
-                        model,
-                        slice: span?.start ?? 0,
-                        collectionId: activeCollection.id,
-                      },
-                    }),
-                  )
-                }
-                onPair={(android, apple) =>
-                  void persist(() =>
-                    addDevicePair({
-                      data: {
-                        ...pid,
-                        android,
-                        apple,
-                        slice: span?.start ?? 0,
-                        collectionId: activeCollection.id,
-                      },
-                    }),
-                  )
-                }
-                onText={(role) =>
-                  void persist(() =>
-                    addText({
-                      data: {
-                        ...pid,
-                        role,
-                        slice: span?.start ?? 0,
-                        collectionId: activeCollection.id,
-                      },
-                    }),
-                  )
-                }
-                onShape={() =>
-                  void persist(() =>
-                    addShape({
-                      data: {
-                        ...pid,
-                        slice: span?.start ?? 0,
-                        collectionId: activeCollection.id,
-                      },
-                    }),
-                  )
-                }
-              />
-            </div>
+            <DevicesPanel
+              onDevice={(model: DeviceModelId) =>
+                void persist(() =>
+                  addDevice({
+                    data: {
+                      ...pid,
+                      model,
+                      slice: span?.start ?? 0,
+                      collectionId: activeCollection.id,
+                    },
+                  }),
+                )
+              }
+              onPair={(android, apple) =>
+                void persist(() =>
+                  addDevicePair({
+                    data: {
+                      ...pid,
+                      android,
+                      apple,
+                      slice: span?.start ?? 0,
+                      collectionId: activeCollection.id,
+                    },
+                  }),
+                )
+              }
+              onText={(role) =>
+                void persist(() =>
+                  addText({
+                    data: {
+                      ...pid,
+                      role,
+                      slice: span?.start ?? 0,
+                      collectionId: activeCollection.id,
+                    },
+                  }),
+                )
+              }
+              onShape={(shape) => void createOverlay("shape", undefined, undefined, shape)}
+              onImage={(file, shape) => void importImage(file, "overlay", shape)}
+              onLine={(smooth) => void createLine(smooth)}
+            />
           </aside>
         ) : (
           <button
@@ -1061,7 +1125,7 @@ function StudioShell({ projectId }: { projectId: string }) {
           />
         </main>
         {rightOpen ? (
-          <aside className="flex w-74 shrink-0 flex-col overflow-auto border-l border-border bg-linear-to-b from-popover to-background/95">
+          <aside className="flex w-74 shrink-0 flex-col overflow-hidden border-l border-border bg-linear-to-b from-popover to-background/95">
             <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/70 bg-background/25 px-2.5">
               <span className="flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-foreground/90 uppercase">
                 <SlidersHorizontal className="size-3.5 text-primary" aria-hidden />
@@ -1104,6 +1168,9 @@ function StudioShell({ projectId }: { projectId: string }) {
               onDuplicateSlice={() => void duplicateSelectedSlice()}
               onDuplicateNode={(id) => void duplicateSelectedNode(id)}
               duplicateHint={duplicateHint}
+              onStack={(where) => {
+                if (selected !== null) stackNode(selected.id, where);
+              }}
               onImport={(file, apply) => void importImage(file, apply)}
               onApplyStore={(store) => void applyStoreRules(store)}
             />

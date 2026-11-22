@@ -1,5 +1,9 @@
 # @tigawanna/screenshot-studio
 
+<p align="center">
+  <img src="./assets/banner.svg" alt="Screenshot Studio — one canvas for Play and App Store listings" width="720" />
+</p>
+
 Local canvas for **Google Play** and **App Store** listing screenshots. One board can hold several scene strips (five-up phone rows). Clone a strip for Apple or Android, edit each independently, then export every strip as PNGs.
 
 The studio is a TanStack Start app. Boards are SQLite files on disk. An MCP endpoint on the same server lets Cursor (or any MCP client) list boards and mutate scene strips while you watch the canvas.
@@ -66,15 +70,15 @@ If you changed `--port` / `PORT` / `HOST`, copy the URL from Settings instead of
 
 ### Tools
 
-| Tool | What it does |
-| --- | --- |
-| `list_boards` | Names, ids, store, slice counts |
-| `get_open_board` | The board currently open in the studio tab |
-| `get_board` | Scene strips and layers for one `projectId` (no image bytes). Omit `projectId` to use the open board |
-| `create_board` | New empty board |
-| `clone_collection` | Duplicate a strip on that board; optional `store`: `app-store` or `play` |
-| `delete_collection` | Remove a strip (not the last one) |
-| `apply_store_rules` | Resize / swap device family on a strip |
+| Tool                | What it does                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `list_boards`       | Names, ids, store, slice counts                                                                      |
+| `get_open_board`    | The board currently open in the studio tab                                                           |
+| `get_board`         | Scene strips and layers for one `projectId` (no image bytes). Omit `projectId` to use the open board |
+| `create_board`      | New empty board                                                                                      |
+| `clone_collection`  | Duplicate a strip on that board; optional `store`: `app-store` or `play`                             |
+| `delete_collection` | Remove a strip (not the last one)                                                                    |
+| `apply_store_rules` | Resize / swap device family on a strip                                                               |
 
 Probe without Cursor:
 

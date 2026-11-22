@@ -1,10 +1,47 @@
-import { Check, Copy, Settings } from "lucide-react";
+import { Check, Copy, Moon, Settings, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { StudioSheet } from "@/components/studio-sheet";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { loadSettings } from "@/server/fns";
 import type { StudioSettings } from "@/server/settings";
+
+function AppearanceRow() {
+  const [theme, setTheme] = useTheme();
+  return (
+    <section className="grid gap-2">
+      <h3 className="text-sm font-medium text-foreground">Appearance</h3>
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Follows your system preference until you pick one.
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {(["light", "dark"] as const).map((option) => {
+          const Icon = option === "light" ? Sun : Moon;
+          const active = option === theme;
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setTheme(option)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium capitalize shadow-xs transition-colors",
+                active
+                  ? "border-primary/60 bg-primary/10 text-primary"
+                  : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4" aria-hidden />
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 function CopyRow({
   label,
@@ -93,45 +130,48 @@ export function SettingsDrawer({
       }
     >
       {error === "" ? null : <p className="mb-3 text-sm text-destructive">{error}</p>}
-      {settings === null ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      ) : (
-        <div className="flex flex-col gap-6">
-          <section className="grid gap-3">
-            <h3 className="text-sm text-foreground">Files</h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Each board is its own SQLite file. Override the folder with the{" "}
-              <code className="text-foreground">{settings.dataRootEnv}</code> environment variable,
-              then restart the studio.
-            </p>
-            <CopyRow label="Data folder" value={settings.dataRoot} />
-            <CopyRow label="Boards folder" value={settings.projectsDir} />
-            {settings.boardFile === undefined ? null : (
-              <CopyRow label="This board file" value={settings.boardFile} />
-            )}
-            <p className="text-xs text-muted-foreground">
-              {settings.dataRootOverridden
-                ? "Using SCREENSHOT_STUDIO_DATA from the environment."
-                : "Default: .screenshot-studio next to the process working directory."}
-            </p>
-          </section>
-          <section className="grid gap-3">
-            <h3 className="text-sm text-foreground">MCP</h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Keep this studio running, then add the snippet to Cursor MCP settings (or{" "}
-              <code className="text-foreground">.cursor/mcp.json</code>). Agents call tools on the
-              same boards you edit here.
-            </p>
-            <CopyRow label="MCP URL" value={mcpUrl} />
-            <CopyRow label="Cursor snippet" value={mcpJson} multiline />
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Tools: list_boards, get_open_board, get_board, create_board, clone_collection,
-              delete_collection, apply_store_rules. get_open_board is the board in the focused
-              studio tab. Live updates: GET /api/live?projectId=… (SSE).
-            </p>
-          </section>
-        </div>
-      )}
+      <div className="flex flex-col gap-6">
+        <AppearanceRow />
+        {settings === null ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <>
+            <section className="grid gap-3">
+              <h3 className="text-sm text-foreground">Files</h3>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Each board is its own SQLite file. Override the folder with the{" "}
+                <code className="text-foreground">{settings.dataRootEnv}</code> environment
+                variable, then restart the studio.
+              </p>
+              <CopyRow label="Data folder" value={settings.dataRoot} />
+              <CopyRow label="Boards folder" value={settings.projectsDir} />
+              {settings.boardFile === undefined ? null : (
+                <CopyRow label="This board file" value={settings.boardFile} />
+              )}
+              <p className="text-xs text-muted-foreground">
+                {settings.dataRootOverridden
+                  ? "Using SCREENSHOT_STUDIO_DATA from the environment."
+                  : "Default: .screenshot-studio next to the process working directory."}
+              </p>
+            </section>
+            <section className="grid gap-3">
+              <h3 className="text-sm text-foreground">MCP</h3>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Keep this studio running, then add the snippet to Cursor MCP settings (or{" "}
+                <code className="text-foreground">.cursor/mcp.json</code>). Agents call tools on the
+                same boards you edit here.
+              </p>
+              <CopyRow label="MCP URL" value={mcpUrl} />
+              <CopyRow label="Cursor snippet" value={mcpJson} multiline />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Tools: list_boards, get_open_board, get_board, create_board, clone_collection,
+                delete_collection, apply_store_rules. get_open_board is the board in the focused
+                studio tab. Live updates: GET /api/live?projectId=… (SSE).
+              </p>
+            </section>
+          </>
+        )}
+      </div>
     </StudioSheet>
   );
 }
