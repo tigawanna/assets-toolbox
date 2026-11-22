@@ -156,18 +156,15 @@ importers:
       '@tanstack/react-db':
         specifier: 1.0.0-rc.1.5
         version: 1.0.0-rc.1.5(react@19.2.5)(typescript@7.0.2)
+      '@tanstack/react-hotkeys':
+        specifier: ^0.27.2
+        version: 0.27.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tanstack/react-router':
         specifier: 1.170.41
         version: 1.170.41(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tanstack/react-start':
         specifier: 1.168.60
         version: 1.168.60(@voidzero-dev/vite-plus-core@1.6.0(@arethetypeswrong/core@0.18.5)(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))(crossws@0.4.17(srvx@1.0.8))(esbuild@0.28.2)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(rolldown@1.2.19)(rollup@4.68.7)
-      '@tigawanna/appstore-screenshots':
-        specifier: workspace:*
-        version: link:../appstore-screenshots
-      '@tigawanna/play-screenshots':
-        specifier: workspace:*
-        version: link:../play-screenshots
       '@vitejs/plugin-react':
         specifier: 5.2.0
         version: 5.2.0(@voidzero-dev/vite-plus-core@1.6.0(@arethetypeswrong/core@0.18.5)(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))
@@ -180,6 +177,9 @@ importers:
       drizzle-orm:
         specifier: 1.0.0-rc.6
         version: 1.0.0-rc.6(zod@4.6.7)
+      konva:
+        specifier: 9.3.22
+        version: 9.3.22
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.2.5)
@@ -198,6 +198,9 @@ importers:
       react-dom:
         specifier: 19.2.5
         version: 19.2.5(react@19.2.5)
+      react-konva:
+        specifier: 19.2.0
+        version: 19.2.0(@types/react@19.2.14)(konva@9.3.22)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.7.1
@@ -2372,6 +2375,10 @@ packages:
     resolution: {integrity: sha512-utTS5L2OkeYUzXGohL1Z8sefu1GLNOJcxe8Hd6iIdc/Xo1K1nDB2JEp4iSFhvYh33xKC9V91TxrS8qfrpoKobQ==}
     engines: {node: '>=20.19'}
 
+  '@tanstack/hotkeys@0.33.1':
+    resolution: {integrity: sha512-8lTyzrwAKIQm/8Ml938RXMSDBy/6wsIlavczmjDec4hsXkSPys0SbQ59kYboC6cBOfR2T1jFBQ1P0J3A06szsA==}
+    engines: {node: '>=20'}
+
   '@tanstack/pacer-lite@0.3.0':
     resolution: {integrity: sha512-+YeHKWX5Zd1Irga2smwAolGtzOcf8VVYhM2QI5XEA5TN58iKKufTjhvrbTCEgLLglR1ynHMGVT/l4m5PkwOdaw==}
     engines: {node: '>=20'}
@@ -2390,6 +2397,13 @@ packages:
     resolution: {integrity: sha512-6IDdNA8iNYtEAfbFkI/32gKC2INlV6b17CweaDpyfLdkQ+LyX/qWxDFBL6rKsS29crkAitepPkG3zXDHZpFBEw==}
     peerDependencies:
       react: '>=18.0.0'
+
+  '@tanstack/react-hotkeys@0.27.2':
+    resolution: {integrity: sha512-VpnIlDQ1t21G2scxjsvdxsg4hhj9R1gZMjJxEitVS6f4+PAz78fA5W/Q0iBythZH/gBSvqp0Aj2HLRyEvHcm/g==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   '@tanstack/react-query@5.108.2':
     resolution: {integrity: sha512-wV6hEjVGTfh9rvu3uREYW0hgBfS9klDejGelhPY575jD5jg6qbAb1nzT7hR1Q+wemR66ZjtE5p9pAGUwqK8zbg==}
@@ -2609,6 +2623,11 @@ packages:
 
   '@types/react-reconciler@0.28.9':
     resolution: {integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==}
+    peerDependencies:
+      '@types/react': '*'
+
+  '@types/react-reconciler@0.32.3':
+    resolution: {integrity: sha512-cMi5ZrLG7UtbL7LTK6hq9w/EZIRk4Mf1Z5qHoI+qBh7/WkYkFXQ7gOto2yfUvPzF5ERMAhaXS5eTQ2SAnHjLzA==}
     peerDependencies:
       '@types/react': '*'
 
@@ -3836,12 +3855,25 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
+  react-konva@19.2.0:
+    resolution: {integrity: sha512-Ofifq/rdNvff50+Lj8x86WSfoeQDvdysOlsXMMrpD2uWmDxUPrEYSRLt27iCfdovQZL6xinKRpX9VaL9xDwXDQ==}
+    peerDependencies:
+      konva: ^8.0.1 || ^7.2.5 || ^9.0.0 || ^10.0.0
+      react: ^19.2.0
+      react-dom: ^19.2.0
+
   react-konva@19.3.2:
     resolution: {integrity: sha512-Uv0xlWoRSCByHinqs/03SFL8E28fYbe59sQ+2EJpwa1O4Zlz0+T+8DaKwlma9C2rkYwYj6j8eHD41F5oJafagg==}
     peerDependencies:
       konva: ^8.0.1 || ^7.2.5 || ^9.0.0 || ^10.0.0
       react: ^19.3.0
       react-dom: ^19.3.0
+
+  react-reconciler@0.33.0:
+    resolution: {integrity: sha512-KetWRytFv1epdpJc3J4G75I4WrplZE5jOL7Yq0p34+OVOKF4Se7WrdIdVC45XsSSmUTlht2FM/fM1FZb1mfQeA==}
+    engines: {node: '>=0.10.0'}
+    peerDependencies:
+      react: ^19.2.0
 
   react-reconciler@0.34.0:
     resolution: {integrity: sha512-eVibvB1fc9j5Qf1KRkiM3GzRPBdjg2P6G6QV2f3P6Eb3OGMxRBhdg2rrUwjbV5JrQaJj8nOa8uajmmJA5tJWjQ==}
@@ -5986,6 +6018,8 @@ snapshots:
 
   '@tanstack/history@1.162.4': {}
 
+  '@tanstack/hotkeys@0.33.1': {}
+
   '@tanstack/pacer-lite@0.3.0': {}
 
   '@tanstack/query-core@5.108.2': {}
@@ -6010,6 +6044,12 @@ snapshots:
       react: 19.3.1
     transitivePeerDependencies:
       - typescript
+
+  '@tanstack/react-hotkeys@0.27.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@tanstack/hotkeys': 0.33.1
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
 
   '@tanstack/react-query@5.108.2(@types/react@19.2.14)(react@19.3.1)':
     dependencies:
@@ -6313,6 +6353,10 @@ snapshots:
       '@types/react': 19.2.14
 
   '@types/react-reconciler@0.28.9(@types/react@19.2.14)':
+    dependencies:
+      '@types/react': 19.2.14
+
+  '@types/react-reconciler@0.32.3(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
 
@@ -6916,6 +6960,13 @@ snapshots:
 
   isbot@5.2.3: {}
 
+  its-fine@2.1.1(@types/react@19.2.14)(react@19.2.5):
+    dependencies:
+      '@types/react-reconciler': 0.28.9(@types/react@19.2.14)
+      react: 19.2.5
+    transitivePeerDependencies:
+      - '@types/react'
+
   its-fine@2.1.1(@types/react@19.2.14)(react@19.3.1):
     dependencies:
       '@types/react-reconciler': 0.28.9(@types/react@19.2.14)
@@ -7291,6 +7342,18 @@ snapshots:
 
   react-is@17.0.2: {}
 
+  react-konva@19.2.0(@types/react@19.2.14)(konva@9.3.22)(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+    dependencies:
+      '@types/react-reconciler': 0.32.3(@types/react@19.2.14)
+      its-fine: 2.1.1(@types/react@19.2.14)(react@19.2.5)
+      konva: 9.3.22
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
+      react-reconciler: 0.33.0(react@19.2.5)
+      scheduler: 0.27.0
+    transitivePeerDependencies:
+      - '@types/react'
+
   react-konva@19.3.2(@types/react@19.2.14)(konva@9.3.22)(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
       '@types/react-reconciler': 0.34.0(@types/react@19.2.14)
@@ -7302,6 +7365,11 @@ snapshots:
       scheduler: 0.28.0
     transitivePeerDependencies:
       - '@types/react'
+
+  react-reconciler@0.33.0(react@19.2.5):
+    dependencies:
+      react: 19.2.5
+      scheduler: 0.27.0
 
   react-reconciler@0.34.0(react@19.3.1):
     dependencies:

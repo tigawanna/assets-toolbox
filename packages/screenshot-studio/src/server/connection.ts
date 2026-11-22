@@ -11,10 +11,20 @@ const studios = new Map<string, StudioDb>();
 
 const migrationsFolder = fileURLToPath(new URL("./migrations", import.meta.url));
 
+/** Folder for studio files. Override with `SCREENSHOT_STUDIO_DATA`. */
+export function studioRoot(): string {
+  return process.env.SCREENSHOT_STUDIO_DATA ?? join(process.cwd(), ".screenshot-studio");
+}
+
 /** SQLite file for this studio. Override with `SCREENSHOT_STUDIO_DATA`. */
 export function defaultDatabasePath(): string {
-  const root = process.env.SCREENSHOT_STUDIO_DATA ?? join(process.cwd(), ".screenshot-studio");
-  return resolve(root, "studio.sqlite");
+  return resolve(studioRoot(), "studio.sqlite");
+}
+
+/** One sqlite file per board. */
+export function projectDatabasePath(id: string): string {
+  if (id === "studio") return defaultDatabasePath();
+  return resolve(studioRoot(), "projects", `${id}.sqlite`);
 }
 
 /** Open the file with `node:sqlite`, wrap it in Drizzle, and apply migrations from `schema.ts`. */
@@ -24,7 +34,52 @@ function openFresh(path: string): StudioDb {
   try {
     client.exec("PRAGMA journal_mode = WAL");
     const database = drizzle({ client });
-    migrate(database, { migrationsFolder });
+    try {
+      migrate(database, { migrationsFolder });
+    } catch {
+      /* Older studio files already have the init tables. */
+    }
+    client.exec(`
+      CREATE TABLE IF NOT EXISTS boards (
+        id text PRIMARY KEY NOT NULL,
+        name text NOT NULL DEFAULT 'Untitled',
+        store text NOT NULL,
+        preset_id text NOT NULL,
+        slice_count integer NOT NULL,
+        background text NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS nodes (
+        id text PRIMARY KEY NOT NULL,
+        body text NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS assets (
+        id text PRIMARY KEY NOT NULL,
+        name text NOT NULL,
+        mime text NOT NULL,
+        data text NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS edit_log (
+        id text PRIMARY KEY NOT NULL,
+        seq integer NOT NULL,
+        ts text NOT NULL,
+        kind text NOT NULL,
+        label text NOT NULL,
+        node_id text NOT NULL,
+        x real NOT NULL,
+        y real NOT NULL,
+        detail text NOT NULL
+      );
+    `);
+    try {
+      client.exec("ALTER TABLE boards ADD COLUMN name text NOT NULL DEFAULT 'Untitled'");
+    } catch {
+      /* Column already exists on newer files. */
+    }
+    try {
+      client.exec("ALTER TABLE boards ADD COLUMN collections text");
+    } catch {
+      /* Column already exists on newer files. */
+    }
     return database;
   } catch (error) {
     client.close();
@@ -42,6 +97,13 @@ export function openStudio(path = defaultDatabasePath()): StudioDb {
 }
 
 /** Drop the cached database and close the file. The next open starts a new connection. */
+export function pathOfStudio(database: StudioDb): string {
+  for (const [path, open] of studios) {
+    if (open === database) return path;
+  }
+  return defaultDatabasePath();
+}
+
 export function closeStudio(path = defaultDatabasePath()): void {
   const database = studios.get(path);
   if (database === undefined) return;

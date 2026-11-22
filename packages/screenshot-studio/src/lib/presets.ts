@@ -1,4 +1,4 @@
-import type { StoreName } from "./events";
+export type StoreName = "play" | "app-store";
 
 export interface PresetChoice {
   store: StoreName;

@@ -21,7 +21,7 @@ const config = defineConfig({
     tsconfigPaths: true,
   },
   ssr: {
-    external: ["drizzle-orm"],
+    external: ["drizzle-orm", "konva", "react-konva", "canvas"],
   },
   optimizeDeps: {
     include: [

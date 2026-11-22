@@ -9,7 +9,7 @@ A pnpm + Turborepo monorepo for local-first asset generators. Every package is a
 | [`@tigawanna/expo-assets`](./packages/expo-assets)                   | Expo app icon, Android adaptive/monochrome icons, splash icon, web favicon and notification icon from one logo, plus an `app.json` fragment.                                                                     |
 | [`@tigawanna/play-screenshots`](./packages/play-screenshots)         | Fit raw app captures to Google Play Console sizes (phone, tablet, feature graphic, …) and write a JSON inventory. Marketing frames are specified in that package's `PLAN.md`.                                    |
 | [`@tigawanna/appstore-screenshots`](./packages/appstore-screenshots) | Fit simulator captures to App Store Connect sizes and write a deliver inventory.                                                                                                                                 |
-| [`@tigawanna/screenshot-studio`](./packages/screenshot-studio)       | Local TanStack Start canvas for placing Play and App Store screenshot frames. Moves are stored in an event log the Node server can read. `pnpm dev` runs the dev server; the published package starts with Node. |
+| [`@tigawanna/screenshot-studio`](./packages/screenshot-studio)       | Local canvas for Play and App Store screenshot strips. Boards are SQLite files; **Settings** shows the data folder and Cursor MCP snippet (`http://127.0.0.1:4320/mcp`). See the [package README](./packages/screenshot-studio/README.md). |
 
 ## Commands
 
@@ -53,6 +53,7 @@ npx @tigawanna/play-screenshots --shot ./shots/home.png --shot ./shots/search.pn
 # screenshot canvas — `vp dev` while iterating, the Node launcher once it's packaged
 pnpm --filter @tigawanna/screenshot-studio dev
 npx @tigawanna/screenshot-studio
+# MCP: keep it running, then add { "url": "http://127.0.0.1:4320/mcp" } in Cursor MCP settings
 ```
 
 ## Conventions

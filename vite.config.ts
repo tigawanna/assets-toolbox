@@ -62,11 +62,12 @@ export default defineConfig({
         rules: {
           "shadcn/no-inline-styles": "off",
           "shadcn/no-arbitrary-values": "off",
+          "shadcn/no-unknown-classes": "off",
         },
       },
       {
-        // Frame positions are runtime coordinates, not a design-system scale.
-        files: ["packages/screenshot-studio/src/components/canvas/**"],
+        // Canvas overlays use runtime pointer coordinates.
+        files: ["packages/screenshot-studio/src/canvas/**"],
         rules: { "shadcn/no-inline-styles": "off" },
       },
     ],

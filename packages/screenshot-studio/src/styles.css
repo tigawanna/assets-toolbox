@@ -1,28 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: oklch(0.985 0.002 100);
-  --foreground: oklch(0.22 0.01 140);
-  --primary: oklch(0.48 0.12 150);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.01 90);
-  --secondary-foreground: oklch(0.22 0.01 140);
-  --muted: oklch(0.96 0.004 100);
-  --muted-foreground: oklch(0.5 0.02 140);
-  --accent: oklch(0.95 0.02 70);
-  --accent-foreground: oklch(0.4 0.12 50);
-  --destructive: oklch(0.55 0.18 40);
-  --border: oklch(0.9 0.01 140);
-  --input: oklch(0.9 0.01 140);
-  --ring: oklch(0.48 0.12 150);
-  --sidebar: oklch(0.985 0.002 100);
-  --sidebar-foreground: oklch(0.22 0.01 140);
-  --sidebar-primary: oklch(0.48 0.12 150);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.03 150);
-  --sidebar-accent-foreground: oklch(0.22 0.01 140);
-  --sidebar-border: oklch(0.9 0.01 140);
-  --sidebar-ring: oklch(0.48 0.12 150);
+  --background: oklch(0.16 0.012 145);
+  --foreground: oklch(0.93 0.01 140);
+  --primary: oklch(0.82 0.18 135);
+  --primary-foreground: oklch(0.18 0.02 140);
+  --secondary: oklch(0.24 0.012 145);
+  --secondary-foreground: oklch(0.93 0.01 140);
+  --muted: oklch(0.24 0.01 145);
+  --muted-foreground: oklch(0.7 0.02 140);
+  --accent: oklch(0.28 0.02 145);
+  --accent-foreground: oklch(0.93 0.01 140);
+  --destructive: oklch(0.63 0.18 25);
+  --border: oklch(0.32 0.012 145);
+  --input: oklch(0.32 0.012 145);
+  --ring: oklch(0.82 0.18 135);
+  --popover: oklch(0.2 0.012 145);
+  --popover-foreground: oklch(0.93 0.01 140);
+  --sidebar: oklch(0.2 0.012 145);
+  --sidebar-foreground: oklch(0.93 0.01 140);
+  --sidebar-primary: oklch(0.82 0.18 135);
+  --sidebar-primary-foreground: oklch(0.18 0.02 140);
+  --sidebar-accent: oklch(0.28 0.02 145);
+  --sidebar-accent-foreground: oklch(0.93 0.01 140);
+  --sidebar-border: oklch(0.32 0.012 145);
+  --sidebar-ring: oklch(0.82 0.18 135);
   --radius: 0.5rem;
 }
 
@@ -41,6 +43,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -52,7 +56,6 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
 }
 
 html,
@@ -62,12 +65,12 @@ body {
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: #0d0f0e;
+  color: #eef1ec;
 }
 
 .canvas-grid {
-  background-color: var(--muted);
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-color: #0d0f0e;
+  background-image: radial-gradient(#2a2f2b 1px, transparent 1px);
+  background-size: 22px 22px;
 }
