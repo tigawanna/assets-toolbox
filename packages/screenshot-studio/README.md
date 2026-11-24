@@ -8,6 +8,11 @@ Local canvas for **Google Play** and **App Store** listing screenshots. One boar
 
 The studio is a TanStack Start app. Boards are SQLite files on disk. An MCP endpoint on the same server lets Cursor (or any MCP client) list boards and mutate scene strips while you watch the canvas.
 
+> [!WARNING]
+> **The MCP endpoint is experimental and not production ready.** Tool names and schemas may change, there is no authentication, and CORS is open. Keep it bound to `127.0.0.1` and treat boards as disposable. The editor and PNG export are the stable, supported surface. See [docs/mcp.md](./docs/mcp.md).
+
+> **Usage guide:** [docs/usage.md](./docs/usage.md) covers the editor workflow, board files, export, and live updates. Release notes: [CHANGELOG.md](./CHANGELOG.md).
+
 ```bash
 pnpm --filter @tigawanna/screenshot-studio dev
 # http://127.0.0.1:4320
@@ -45,9 +50,11 @@ SCREENSHOT_STUDIO_DATA=/path/to/studio-data pnpm --filter @tigawanna/screenshot-
 
 Open **Settings** on the board list or inside a board to copy the live paths. Changing the folder requires a restart.
 
-## MCP (agents)
+## MCP (agents) — experimental
 
-The studio must be **running**. MCP is Streamable HTTP on the same origin — it does not open SQLite itself, so it uses the same files as the UI.
+> **Not production ready.** See the warning at the top of this README and the [MCP guide](./docs/mcp.md) for the full status, tool reference, and limitations.
+
+The studio must be **running**. MCP is Streamable HTTP on the same origin (`http://127.0.0.1:4320/mcp` by default) — it does not open SQLite itself, so it uses the same files as the UI.
 
 ### Cursor
 
@@ -68,31 +75,7 @@ If you changed `--port` / `PORT` / `HOST`, copy the URL from Settings instead of
 
 3. Reload MCP in Cursor. Ask the agent to list boards or clone a strip for Apple.
 
-### Tools
-
-| Tool                | What it does                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `list_boards`       | Names, ids, store, slice counts                                                                      |
-| `get_open_board`    | The board currently open in the studio tab                                                           |
-| `get_board`         | Scene strips and layers for one `projectId` (no image bytes). Omit `projectId` to use the open board |
-| `create_board`      | New empty board                                                                                      |
-| `clone_collection`  | Duplicate a strip on that board; optional `store`: `app-store` or `play`                             |
-| `delete_collection` | Remove a strip (not the last one)                                                                    |
-| `apply_store_rules` | Resize / swap device family on a strip                                                               |
-
-Probe without Cursor:
-
-```bash
-curl -s http://127.0.0.1:4320/mcp
-curl -s -X POST http://127.0.0.1:4320/mcp \
-  -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-curl -N "http://127.0.0.1:4320/api/live?projectId=606e334d"
-```
-
-`GET /api/live` is SSE. Open a board in the browser, subscribe with curl, then clone or delete a strip (UI or MCP) — the stream emits `{ type: "change", projectId, seq, label }`.
-
-Mutating tools take `projectId` from `list_boards`. `clone_collection` / `delete_collection` also need `collectionId` from `get_board`.
+The full tool list, JSON-RPC probe commands, and known limitations are in [docs/mcp.md](./docs/mcp.md). `GET /api/live?projectId=<id>` is an SSE stream of changes made from either the UI or MCP.
 
 ## CLI
 

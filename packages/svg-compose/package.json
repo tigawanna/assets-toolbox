@@ -1,0 +1,42 @@
+{
+  "name": "@tigawanna/svg-compose",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local SVG compositor: import, flatten, edit and export small SVG assets.",
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/svg-compose"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev --port 4330",
+    "build": "vp build",
+    "preview": "vp preview",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "fmt:check": "vp fmt --check"
+  },
+  "dependencies": {
+    "dompurify": "3.5.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.2.0",
+    "jsdom": "29.1.1",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

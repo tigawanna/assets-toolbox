@@ -12,6 +12,9 @@
     "splash-screen"
   ],
   "homepage": "https://github.com/tigawanna/assets-toolbox/tree/main/packages/expo-assets#readme",
+  "bugs": {
+    "url": "https://github.com/tigawanna/assets-toolbox/issues"
+  },
   "license": "MIT",
   "author": "tigawanna <tigawanna@gmail.com>",
   "repository": {
@@ -23,9 +26,14 @@
     "expo-assets": "./dist/cli.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "type": "module",
+  "sideEffects": false,
   "types": "./dist/index.d.mts",
   "exports": {
     ".": {
@@ -33,6 +41,10 @@
       "import": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "vp pack",
@@ -48,7 +60,8 @@
     "fmt": "vp fmt",
     "fmt:check": "vp fmt --check",
     "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
-    "prepublishOnly": "pnpm run build && pnpm run check-exports"
+    "prepublishOnly": "pnpm run build && pnpm run check-exports",
+    "release": "bumpp"
   },
   "dependencies": {
     "sharp": "0.35.5"

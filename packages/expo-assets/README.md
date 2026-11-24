@@ -7,6 +7,8 @@ npx @tigawanna/expo-assets --icon ./logo.svg --out ./assets/images \
   --brand-color '#0f100f' --splash-bg '#ffffff' --image-width 200
 ```
 
+> **Usage guide:** [docs/usage.md](./docs/usage.md) covers every CLI flag, how to merge the generated `app.json` fragment, source image prep, and troubleshooting. Release notes: [CHANGELOG.md](./CHANGELOG.md).
+
 ## Generated files
 
 | File                          |      Size | Purpose                                                      |

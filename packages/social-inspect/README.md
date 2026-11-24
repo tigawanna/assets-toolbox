@@ -29,6 +29,8 @@ It opens `http://127.0.0.1:4310` (configurable), fetches the target page **serve
 
 Remote URLs are guarded against private-network addresses by default; local URLs (`localhost`, `127.0.0.1`, etc.) are always allowed so you can preview your own dev server.
 
+> **Usage guide:** [docs/usage.md](./docs/usage.md) covers the full CLI, how the local server works, the programmatic API, and troubleshooting. Release notes: [CHANGELOG.md](./CHANGELOG.md).
+
 ## Programmatic API
 
 ```ts

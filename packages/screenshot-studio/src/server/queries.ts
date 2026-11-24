@@ -77,12 +77,19 @@ export function listEvents(database: StudioDb): EventRow[] {
 }
 
 export function latestSeq(database: StudioDb): number {
-  const row = database.select({ latest: max(events.seq) }).from(events).get();
+  const row = database
+    .select({ latest: max(events.seq) })
+    .from(events)
+    .get();
   return row?.latest ?? 0;
 }
 
 export function listAssets(database: StudioDb): AssetRow[] {
-  return database.select().from(assets).all().map((row) => row as AssetRow);
+  return database
+    .select()
+    .from(assets)
+    .all()
+    .map((row) => row as AssetRow);
 }
 
 export function readSnapshot(database: StudioDb): StudioSnapshot {

@@ -45,7 +45,13 @@ describe("slice bands", () => {
   });
 
   it("splits a band when another span lands in the middle", () => {
-    const next = setBandSpan([band("wide", 0, 6, "#abcdef")], band("new", 2, 1, "#ff0000"), 2, 2, 6);
+    const next = setBandSpan(
+      [band("wide", 0, 6, "#abcdef")],
+      band("new", 2, 1, "#ff0000"),
+      2,
+      2,
+      6,
+    );
     expect(next.map((item) => ({ id: item.id, start: item.start, count: item.count }))).toEqual([
       { id: "wide", start: 0, count: 2 },
       { id: "new", start: 2, count: 2 },
@@ -99,7 +105,9 @@ describe("slice bands", () => {
       1,
       3,
     );
-    expect(next.map((item) => ({ start: item.start, count: item.count, color: item.color }))).toEqual([
+    expect(
+      next.map((item) => ({ start: item.start, count: item.count, color: item.color })),
+    ).toEqual([
       { start: 0, count: 1, color: "#ff7700" },
       { start: 1, count: 1, color: "#ff7700" },
       { start: 2, count: 1, color: "#222222" },

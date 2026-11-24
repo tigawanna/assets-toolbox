@@ -102,7 +102,9 @@ export const DEVICE_MODELS: Record<DeviceModelId, DeviceModel> = {
   "iphone-notch": model("iphone-notch", "iPhone · notch", "phone", 9 / 19.5, 0.025, [
     { kind: "notch", x: 500, y: 0, size: 110 },
   ]),
-  ipad: model("ipad", "iPad", "tablet", 3 / 4, 0.022, [{ kind: "camera", x: 500, y: 24, size: 10 }]),
+  ipad: model("ipad", "iPad", "tablet", 3 / 4, 0.022, [
+    { kind: "camera", x: 500, y: 24, size: 10 },
+  ]),
 };
 
 export const DEVICE_MODEL_IDS = Object.keys(DEVICE_MODELS) as DeviceModelId[];

@@ -1,9 +1,7 @@
 {
   "dialect": "sqlite",
   "id": "75ce5041-d63d-46ab-9e4a-b3f52916d55c",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "version": "7",
   "ddl": [
     {
@@ -227,18 +225,14 @@
     {
       "table": "events",
       "name": "events_pk",
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "entityType": "pks"
     },
     {
       "table": "frames",
       "name": "frames_pk",
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "entityType": "pks"
     }

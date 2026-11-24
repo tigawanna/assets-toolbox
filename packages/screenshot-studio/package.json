@@ -9,6 +9,10 @@
     "screenshots",
     "tanstack-start"
   ],
+  "homepage": "https://github.com/tigawanna/assets-toolbox/tree/main/packages/screenshot-studio#readme",
+  "bugs": {
+    "url": "https://github.com/tigawanna/assets-toolbox/issues"
+  },
   "license": "MIT",
   "author": "tigawanna <tigawanna@gmail.com>",
   "repository": {
@@ -23,9 +27,16 @@
     "bin",
     ".output",
     "assets",
-    "README.md"
+    "docs",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "dev": "vp dev --port 4320",
     "build": "vp build",

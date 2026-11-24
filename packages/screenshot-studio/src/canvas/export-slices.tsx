@@ -4,11 +4,7 @@ import Konva from "konva";
 import { Layer, Stage } from "react-konva";
 
 import { BoardContent } from "@/canvas/board-content";
-import {
-  boardCollections,
-  collectionAsBoard,
-  nodesInCollection,
-} from "@/lib/scenes";
+import { boardCollections, collectionAsBoard, nodesInCollection } from "@/lib/scenes";
 import { fileSlug } from "@/lib/store-rules";
 import { boardSize, type StudioSnapshot } from "@/lib/studio";
 import { dataUrlToBytes, downloadBlob, zipStore } from "@/lib/zip";

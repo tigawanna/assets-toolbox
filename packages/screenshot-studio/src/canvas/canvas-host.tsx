@@ -29,13 +29,17 @@ export function CanvasHost(props: CanvasHostProps) {
   }, []);
   if (!ready) {
     return (
-      <div className="grid h-full place-items-center text-sm text-muted-foreground">Loading canvas…</div>
+      <div className="grid h-full place-items-center text-sm text-muted-foreground">
+        Loading canvas…
+      </div>
     );
   }
   return (
     <Suspense
       fallback={
-        <div className="grid h-full place-items-center text-sm text-muted-foreground">Loading canvas…</div>
+        <div className="grid h-full place-items-center text-sm text-muted-foreground">
+          Loading canvas…
+        </div>
       }
     >
       <StudioStage {...props} />

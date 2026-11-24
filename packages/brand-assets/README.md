@@ -9,6 +9,8 @@ Generate a complete brand asset set from **one SVG icon path**:
 
 Point it at an icon and a component file, and it figures out the rest. The SVG is also injected into the OG component as an `iconDataUrl` prop automatically.
 
+> **Usage guide:** [docs/usage.md](./docs/usage.md) covers every CLI flag, the custom OG component contract, the programmatic API, and troubleshooting. Release notes: [CHANGELOG.md](./CHANGELOG.md).
+
 ## Install
 
 ```bash

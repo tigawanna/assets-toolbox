@@ -25,9 +25,14 @@
     "brand-assets": "./dist/cli.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "type": "module",
+  "sideEffects": false,
   "types": "./dist/index.d.mts",
   "exports": {
     ".": {
@@ -35,6 +40,10 @@
       "import": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "vp pack",
@@ -49,7 +58,7 @@
     "fmt:check": "vp fmt --check",
     "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
     "prepublishOnly": "pnpm run build && pnpm run check-exports",
-    "pubish": "bumpp",
+    "release": "bumpp",
     "format": "vp fmt",
     "format:fix": "vp fmt --fix"
   },

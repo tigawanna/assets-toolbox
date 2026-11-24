@@ -90,9 +90,11 @@ export async function replaceNode(node: StudioNode): Promise<void> {
     q.from({ row: nodesCollection }).select(({ row }) => ({ id: row.id })),
   );
   if (current.some((row) => row.id === node.id)) {
-    await nodesCollection.update(node.id, (draft) => {
-      Object.assign(draft, node);
-    }).when("settled");
+    await nodesCollection
+      .update(node.id, (draft) => {
+        Object.assign(draft, node);
+      })
+      .when("settled");
   } else {
     await nodesCollection.insert(node).when("settled");
   }
@@ -119,9 +121,11 @@ export async function replaceBoard(board: BoardRow): Promise<void> {
     await boardCollection.insert(board).when("settled");
     return;
   }
-  await boardCollection.update(board.id, (draft) => {
-    Object.assign(draft, board);
-  }).when("settled");
+  await boardCollection
+    .update(board.id, (draft) => {
+      Object.assign(draft, board);
+    })
+    .when("settled");
 }
 
 export async function appendEvents(all: EventRow[]): Promise<void> {

@@ -56,9 +56,12 @@ function asCollection(value: unknown, fallback: SceneCollection): SceneCollectio
   const id = typeof row.id === "string" && row.id !== "" ? row.id : fallback.id;
   const name = typeof row.name === "string" && row.name !== "" ? row.name : fallback.name;
   const store = isStore(row.store) ? row.store : fallback.store;
-  const presetId = typeof row.presetId === "string" && row.presetId !== "" ? row.presetId : fallback.presetId;
+  const presetId =
+    typeof row.presetId === "string" && row.presetId !== "" ? row.presetId : fallback.presetId;
   const sliceCount =
-    typeof row.sliceCount === "number" && row.sliceCount > 0 ? Math.floor(row.sliceCount) : fallback.sliceCount;
+    typeof row.sliceCount === "number" && row.sliceCount > 0
+      ? Math.floor(row.sliceCount)
+      : fallback.sliceCount;
   const background = typeof row.background === "string" ? row.background : fallback.background;
   const x = typeof row.x === "number" && Number.isFinite(row.x) ? row.x : fallback.x;
   const y = typeof row.y === "number" && Number.isFinite(row.y) ? row.y : fallback.y;
@@ -157,7 +160,10 @@ export function findCollection(board: BoardRow, id?: string | null): SceneCollec
   return collections[0] ?? defaultCollection();
 }
 
-export function findCollectionForBand(board: BoardRow, bandId: string): SceneCollection | undefined {
+export function findCollectionForBand(
+  board: BoardRow,
+  bandId: string,
+): SceneCollection | undefined {
   return boardCollections(board).find((collection) =>
     collectionFill(collection).bands.some((band) => band.id === bandId),
   );
@@ -283,7 +289,10 @@ export function fitCamera(
 ): { zoom: number; pan: { x: number; y: number } } {
   const availW = Math.max(64, viewport.width - padding * 2);
   const availH = Math.max(64, viewport.height - padding * 2);
-  const zoom = Math.min(2.5, Math.max(0.08, Math.min(availW / bounds.width, availH / bounds.height)));
+  const zoom = Math.min(
+    2.5,
+    Math.max(0.08, Math.min(availW / bounds.width, availH / bounds.height)),
+  );
   return {
     zoom,
     pan: {

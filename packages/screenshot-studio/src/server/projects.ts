@@ -83,7 +83,10 @@ export function createProject(name: string): ProjectSummary {
   const path = projectDatabasePath(id);
   const title = name.trim() === "" ? "Untitled" : name.trim();
   const database = openStudio(path);
-  database.insert(boards).values(serializeBoard(defaultBoard(title))).run();
+  database
+    .insert(boards)
+    .values(serializeBoard(defaultBoard(title)))
+    .run();
   const row = summaryFrom(id, path);
   if (row === null) throw new Error("Could not create the board");
   return row;
@@ -127,7 +130,10 @@ export function cloneProject(
   const board = { ...adapted.board, name: title };
   database.insert(boards).values(serializeBoard(board)).run();
   for (const node of adapted.nodes) {
-    database.insert(nodes).values({ id: node.id, body: JSON.stringify(node) }).run();
+    database
+      .insert(nodes)
+      .values({ id: node.id, body: JSON.stringify(node) })
+      .run();
   }
   for (const asset of source.assets) {
     database.insert(assets).values(asset).run();

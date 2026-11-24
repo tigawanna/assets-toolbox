@@ -55,6 +55,11 @@ export default defineConfig({
         files: ["packages/screenshot-studio/src/canvas/**"],
         rules: { "shadcn/no-inline-styles": "off" },
       },
+      {
+        // svg-compose uses hand-written CSS rather than Tailwind utilities.
+        files: ["packages/svg-compose/**"],
+        rules: { "shadcn/no-unknown-classes": "off" },
+      },
     ],
   },
 });

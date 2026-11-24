@@ -42,7 +42,8 @@ const TOOLS = [
   },
   {
     name: "get_board",
-    description: "Read one board: scene strips, layers, and the latest event sequence. Omits image bytes. If projectId is omitted, uses the board currently open in the UI.",
+    description:
+      "Read one board: scene strips, layers, and the latest event sequence. Omits image bytes. If projectId is omitted, uses the board currently open in the UI.",
     inputSchema: {
       type: "object",
       properties: { projectId: { type: "string" } },
@@ -98,7 +99,8 @@ const TOOLS = [
   },
   {
     name: "add_device",
-    description: "Place a device on a slice. Android models: phone-punch, phone-flat, tablet, foldable-open, foldable-cover.",
+    description:
+      "Place a device on a slice. Android models: phone-punch, phone-flat, tablet, foldable-open, foldable-cover.",
     inputSchema: {
       type: "object",
       properties: {
@@ -138,7 +140,8 @@ const TOOLS = [
   },
   {
     name: "update_board",
-    description: "Rename the board or a scene strip, set slice count, store, or a solid background.",
+    description:
+      "Rename the board or a scene strip, set slice count, store, or a solid background.",
     inputSchema: {
       type: "object",
       properties: {

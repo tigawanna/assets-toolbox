@@ -62,7 +62,9 @@ export function BoardCloneMenu({
             onClick={() => run(onDuplicate)}
           >
             Duplicate
-            <span className="text-xs text-muted-foreground">Same size, stacked under this strip</span>
+            <span className="text-xs text-muted-foreground">
+              Same size, stacked under this strip
+            </span>
           </button>
           <button
             type="button"
@@ -84,7 +86,9 @@ export function BoardCloneMenu({
             onClick={() => run(() => onCloneStore("play"))}
           >
             Clone for Android
-            <span className="text-xs text-muted-foreground">Play listing size and Android frames</span>
+            <span className="text-xs text-muted-foreground">
+              Play listing size and Android frames
+            </span>
           </button>
         </div>
       ) : null}
