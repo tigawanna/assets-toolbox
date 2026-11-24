@@ -59,15 +59,17 @@
     "format:fix": "vp fmt --fix",
     "fmt": "vp fmt",
     "fmt:check": "vp fmt --check",
-    "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
-    "prepublishOnly": "pnpm run build && pnpm run check-exports",
-    "release": "bumpp"
+    "check-exports": "attw --pack . --profile node16 --ignore-rules cjs-resolves-to-esm",
+    "postbuild": "npm run check-exports",
+    "prepublishOnly": "pnpm run build",
+    "release": "changeset publish:expo-assets"
   },
   "dependencies": {
     "sharp": "0.35.5"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "catalog:",
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
     "@types/node": "^25.9.9",
     "bumpp": "^12.3.0",
     "typescript": "catalog:"

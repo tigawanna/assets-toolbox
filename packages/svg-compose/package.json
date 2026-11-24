@@ -20,7 +20,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "vp lint",
     "format": "vp fmt",
-    "fmt:check": "vp fmt --check"
+    "fmt:check": "vp fmt --check",
+    "prepublishOnly": "pnpm run build",
+    "check-exports": "attw --pack . --profile node16 --ignore-rules cjs-resolves-to-esm",
+    "postbuild": "npm run check-exports",
+    "release": "changeset publish:svg-compose"
   },
   "dependencies": {
     "dompurify": "3.5.0",
@@ -29,10 +33,12 @@
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "5.2.0",
-    "jsdom": "29.1.1",
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "jsdom": "31.0.1",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
