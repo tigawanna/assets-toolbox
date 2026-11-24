@@ -1,7 +1,6 @@
 {
   "name": "@tigawanna/svg-compose",
   "version": "0.1.0",
-  "private": true,
   "description": "Local SVG compositor: import, flatten, edit and export small SVG assets.",
   "license": "MIT",
   "author": "tigawanna <tigawanna@gmail.com>",
@@ -10,7 +9,15 @@
     "url": "git+https://github.com/tigawanna/assets-toolbox.git",
     "directory": "packages/svg-compose"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "dev": "vp dev --port 4330",
     "build": "vp build",
@@ -22,8 +29,6 @@
     "format": "vp fmt",
     "fmt:check": "vp fmt --check",
     "prepublishOnly": "pnpm run build",
-    "check-exports": "attw --pack . --profile node16 --ignore-rules cjs-resolves-to-esm",
-    "postbuild": "npm run check-exports",
     "release": "changeset publish:svg-compose"
   },
   "dependencies": {

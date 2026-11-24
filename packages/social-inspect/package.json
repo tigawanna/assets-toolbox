@@ -26,6 +26,7 @@
   },
   "files": [
     "dist",
+    "src",
     "app",
     "docs",
     "LICENSE",
@@ -75,7 +76,7 @@
     "open": "11.0.4",
     "react": "19.2.5",
     "react-dom": "19.2.5",
-    "vite": "catalog:"
+    "vite": "8.3.8"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
