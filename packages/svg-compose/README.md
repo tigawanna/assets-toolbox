@@ -13,6 +13,7 @@ pnpm --filter @tigawanna/svg-compose dev
 ## Architecture
 
 - `src/canvas/stage.ts` — imperative `Stage` that owns a real `<svg>`; pointer math goes through `getScreenCTM().inverse()`. React never renders document nodes.
+- `server/storage.mjs` — Node-side SQLite draft under `.svg-compose/workspace.sqlite` (same `node:sqlite` pattern as Screenshot Studio).
 - `src/doc/` — import (DOMPurify sanitize, id assignment, normalization), export (serialize + recompute `viewBox`), id and transform helpers.
 - `src/history/stack.ts` — snapshot command stack over `docGroup.innerHTML`; undo is lossless.
 - `src/components/` — React chrome only: tool rail, layers tree, inspector, HUD, keyboard-shortcuts dialog.
@@ -36,6 +37,7 @@ pnpm --filter @tigawanna/svg-compose dev
 - **Shaping tools:** the **Morph corners** tool (`K`) shows one draggable handle that rounds **all** corners uniformly — it works on rectangles and on 4-node paths made with Object to Path. **Node / morph** (`N`) is the general editor: it reveals every anchor and bezier handle so you can reshape one node at a time, toggle smooth/corner per node, or delete nodes. The **Rotate** tool (`O`) shows a handle above the object's centre for drag rotation. Rotation is baked into the element's `transform` around its own centre, so the object stays in place.
 - **Text:** press `T` (or use the rail) then click the canvas to place text; edit it in the inspector.
 - **Help:** press `Shift+?` (or click `?`) for a YouTube-style keyboard shortcuts dialog; `Escape` closes it.
+- **Persistence:** document edits and viewport are autosaved to a Node-side SQLite draft, restored on reload, and mirrored to localStorage as a fallback. The inspector header shows Loading / Saving / Saved locally / Browser backup.
 
 ## Shortcuts, keys and combos
 
@@ -98,6 +100,30 @@ Press `Shift+?` in the app for the same reference in a YouTube-style dialog. All
 | Copy while arranging                | `Ctrl+drag` the object instead of duplicating first                  |
 | Frame your work                     | `Ctrl+0` fits the zoom, then `C` centres it without changing zoom    |
 | Undo a whole drag                   | `Ctrl+Z` — each drag/transform is one snapshot                       |
+
+## Persistence and Node storage
+
+The editor autosaves the document body (not overlays) plus the current pan/zoom after a 900 ms debounce. Reloading restores both, and each edit/transform is still an in-memory undo step until reload.
+
+- **Storage file:** `.svg-compose/workspace.sqlite` in the package/working directory.
+- **Override:** set `SVG_COMPOSE_DATA=/absolute/path` before starting the server.
+- **Fallback:** the same draft is mirrored to `localStorage`; if the Node API is unavailable the inspector shows **Browser backup**.
+- **Unload safety:** pending edits are written to localStorage and beaconed to Node on tab hide/unload.
+
+### API
+
+| Route            | Method         | Purpose                                          |
+| ---------------- | -------------- | ------------------------------------------------ |
+| `/api/workspace` | `GET`          | Load `{ document }` (or `null`)                  |
+| `/api/workspace` | `PUT` / `POST` | Save `{ name, svg, viewport: { zoom, tx, ty } }` |
+
+The API middleware is mounted by both `vp dev` and `vp preview`. For a built app:
+
+```bash
+pnpm --filter @tigawanna/svg-compose build
+pnpm --filter @tigawanna/svg-compose start
+# http://127.0.0.1:4330
+```
 
 ## Acceptance test
 

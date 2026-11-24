@@ -122,6 +122,24 @@ describe("Stage", () => {
     stage.destroy();
   });
 
+  it("snapshots and restores the document plus viewport", () => {
+    const { stage } = makeStage();
+    stage.importSvg(BOX_PLUS_CIRCLE, "saved");
+    const snapshot = stage.snapshot();
+    expect(snapshot.svg).toContain("<rect");
+    expect(snapshot.svg).toContain("<circle");
+    expect(snapshot.viewport).toEqual({ zoom: 1, tx: 0, ty: 0 });
+
+    stage.undo();
+    expect(stage.exportSvg()).not.toContain("<rect");
+    stage.loadSnapshot(snapshot);
+    expect(stage.exportSvg()).toContain("<circle");
+    expect(stage.selectedIds).toEqual([]);
+    expect(stage.canUndo).toBe(false);
+    expect(stage.getViewport()).toEqual(snapshot.viewport);
+    stage.destroy();
+  });
+
   it("tracks zoom through subscribe", () => {
     const { stage } = makeStage();
     const seen: number[] = [];

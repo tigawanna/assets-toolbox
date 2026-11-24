@@ -1,12 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Stage, type LayerNode, type SelectionStyle } from "./canvas/stage";
+import {
+  Stage,
+  type LayerNode,
+  type SelectionStyle,
+  type StageSnapshot,
+  type StageViewport,
+} from "./canvas/stage";
 import { ActionButton } from "./components/action-button";
 import { Inspector } from "./components/inspector";
 import { Layers } from "./components/layers";
 import { ShortcutsDialog, isShortcutHelp } from "./components/shortcuts";
 import { StatusHud, type DragStatus, type Notice } from "./components/status-hud";
 import { ToolRail } from "./components/tool-rail";
+import {
+  documentKey,
+  loadWorkspaceFromLocal,
+  loadWorkspaceFromServer,
+  newestWorkspace,
+  saveWorkspaceToLocal,
+  saveWorkspaceToServer,
+} from "./lib/persistence";
 import {
   AlignBottomIcon,
   AlignCenterIcon,
@@ -29,11 +43,28 @@ import {
 } from "./components/icons";
 import { toolById } from "./tools/shapes";
 
+type SaveState = "loading" | "saving" | "saved" | "error" | "empty";
+
+const SAVE_LABELS: Record<SaveState, string> = {
+  loading: "Loading…",
+  saving: "Saving…",
+  saved: "Saved locally",
+  error: "Browser backup",
+  empty: "Autosave ready",
+};
+
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Stage | null>(null);
   const noticeId = useRef(0);
   const noticeTimer = useRef<number | null>(null);
+  const hydratedRef = useRef(false);
+  const lastDocumentKeyRef = useRef("");
+  const pendingSaveRef = useRef<{ name: string; svg: string; viewport: StageViewport } | null>(
+    null,
+  );
+  const saveTimerRef = useRef<number | null>(null);
+  const saveRevisionRef = useRef(0);
 
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -48,6 +79,8 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toolId, setToolId] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("loading");
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [railExpanded, setRailExpanded] = useState(true);
   const [rightExpanded, setRightExpanded] = useState(true);
   const [style, setStyle] = useState<SelectionStyle | null>(null);
@@ -59,9 +92,44 @@ export default function App() {
     noticeTimer.current = window.setTimeout(() => setNotice(null), 1900);
   }, []);
 
+  const persistNow = useCallback(async () => {
+    const pending = pendingSaveRef.current;
+    if (!pending) return;
+    const revision = saveRevisionRef.current;
+    setSaveState("saving");
+    try {
+      const saved = await saveWorkspaceToServer(pending);
+      saveWorkspaceToLocal(pending);
+      if (revision === saveRevisionRef.current) {
+        pendingSaveRef.current = null;
+        setLastSavedAt(saved.updatedAt);
+        setSaveState("saved");
+      }
+    } catch {
+      saveWorkspaceToLocal(pending);
+      if (revision === saveRevisionRef.current) setSaveState("error");
+    }
+  }, []);
+
+  const queueSave = useCallback(
+    (snapshot: StageSnapshot) => {
+      saveRevisionRef.current += 1;
+      pendingSaveRef.current = {
+        name: "Untitled",
+        svg: snapshot.svg,
+        viewport: snapshot.viewport,
+      };
+      setSaveState("saving");
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = window.setTimeout(() => void persistNow(), 900);
+    },
+    [persistNow],
+  );
+
   useEffect(
     () => () => {
       if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     },
     [],
   );
@@ -80,15 +148,68 @@ export default function App() {
       setTree(stage.getTree());
       setSelectedIds(stage.selectedIds);
       setEnteredGroupId(stage.enteredGroupId);
+      if (!hydratedRef.current) return;
+      const snapshot = stage.snapshot();
+      const key = documentKey(snapshot);
+      if (key !== lastDocumentKeyRef.current) {
+        lastDocumentKeyRef.current = key;
+        queueSave(snapshot);
+      }
     };
     const unsubscribe = stage.subscribe(sync);
     sync();
+
+    let cancelled = false;
+    const restore = async () => {
+      setSaveState("loading");
+      const [server, local] = await Promise.all([
+        loadWorkspaceFromServer().catch(() => null),
+        Promise.resolve(loadWorkspaceFromLocal()),
+      ]);
+      if (cancelled) return;
+      const saved = newestWorkspace(server, local);
+      if (saved) {
+        stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
+        saveWorkspaceToLocal(saved);
+        setLastSavedAt(saved.updatedAt);
+        notify("Restored saved work");
+      }
+      lastDocumentKeyRef.current = documentKey(stage.snapshot());
+      hydratedRef.current = true;
+      pendingSaveRef.current = null;
+      if (!saved) setSaveState("empty");
+      else setSaveState(server ? "saved" : "error");
+    };
+    void restore();
+
+    const flush = () => {
+      const pending = pendingSaveRef.current;
+      if (!pending) return;
+      saveWorkspaceToLocal(pending);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          "/api/workspace",
+          new Blob([JSON.stringify(pending)], { type: "application/json" }),
+        );
+      }
+    };
+    const onVisibility = () => {
+      if (document.hidden) flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
+      cancelled = true;
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       unsubscribe();
       stage.destroy();
       stageRef.current = null;
+      hydratedRef.current = false;
     };
-  }, []);
+  }, [notify, queueSave]);
 
   useEffect(() => {
     stageRef.current?.setTool(toolById(toolId));
@@ -349,7 +470,20 @@ export default function App() {
         {rightExpanded ? (
           <aside className="panel side">
             <div className="panel-head">
-              <h2>Inspector</h2>
+              <div className="panel-title">
+                <h2>Inspector</h2>
+                <span
+                  className={`save-state ${saveState}`}
+                  title={
+                    lastSavedAt
+                      ? `Last saved ${new Date(lastSavedAt).toLocaleTimeString()}`
+                      : "Autosave is enabled"
+                  }
+                >
+                  <span className="save-dot" />
+                  {SAVE_LABELS[saveState]}
+                </span>
+              </div>
               <button
                 aria-label="Collapse inspector"
                 className="panel-toggle"

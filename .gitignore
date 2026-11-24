@@ -10,6 +10,7 @@ dist
 .vite
 .vitest
 *.sqlite
+.svg-compose/
 routeTree.gen.ts
 store/
 references

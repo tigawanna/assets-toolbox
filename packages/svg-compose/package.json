@@ -1,6 +1,6 @@
 {
   "name": "@tigawanna/svg-compose",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local SVG compositor: import, flatten, edit and export small SVG assets.",
   "license": "MIT",
   "author": "tigawanna <tigawanna@gmail.com>",
@@ -11,6 +11,7 @@
   },
   "files": [
     "dist",
+    "server",
     "README.md"
   ],
   "type": "module",
@@ -22,6 +23,7 @@
     "dev": "vp dev --port 4330",
     "build": "vp build",
     "preview": "vp preview",
+    "start": "node server/index.mjs",
     "test": "vp test run",
     "test:watch": "vp test",
     "typecheck": "tsc --noEmit",
@@ -40,6 +42,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/cli": "^3.0.3",
+    "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.3.0",

@@ -32,6 +32,8 @@ const DOC_GROUP_ID = "doc";
 const OVERLAY_ID = "overlay";
 
 export type StagePoint = { x: number; y: number };
+export type StageViewport = { zoom: number; tx: number; ty: number };
+export type StageSnapshot = { svg: string; viewport: StageViewport };
 
 export type LayerNode = {
   id: string;
@@ -190,6 +192,39 @@ export class Stage {
 
   get zoomLevel() {
     return this.zoom;
+  }
+
+  getViewport(): StageViewport {
+    return { zoom: this.zoom, tx: this.tx, ty: this.ty };
+  }
+
+  /** Lossless document body + viewport, suitable for local persistence. */
+  snapshot(): StageSnapshot {
+    return { svg: this.docGroup.innerHTML, viewport: this.getViewport() };
+  }
+
+  /** Restore a saved draft and reset the in-memory undo stack. */
+  loadSnapshot(snapshot: { svg: string; viewport?: Partial<StageViewport> }): void {
+    if (typeof snapshot.svg !== "string") throw new Error("Invalid document snapshot");
+    this.tool?.onDeactivate?.();
+    this.tool = null;
+    this.docGroup.innerHTML = snapshot.svg;
+    this.selection.clear();
+    this.activeGroup = null;
+    const viewport = snapshot.viewport;
+    if (viewport) {
+      const zoom = Number(viewport.zoom);
+      const tx = Number(viewport.tx);
+      const ty = Number(viewport.ty);
+      if (Number.isFinite(zoom)) this.zoom = Math.min(64, Math.max(0.05, zoom));
+      if (Number.isFinite(tx)) this.tx = tx;
+      if (Number.isFinite(ty)) this.ty = ty;
+    }
+    this.svg.style.cursor = "";
+    this.toolOverlay.replaceChildren();
+    this.history.clear();
+    this.applyViewBox();
+    this.emit();
   }
 
   setTool(tool: Tool | null) {

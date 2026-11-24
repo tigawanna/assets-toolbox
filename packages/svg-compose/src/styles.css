@@ -1030,8 +1030,43 @@ button {
   z-index: 5;
 }
 
+.panel-title {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .panel-head h2 {
   margin: 0;
+}
+
+.save-state {
+  align-items: center;
+  color: #8f98ad;
+  display: inline-flex;
+  font-size: 10px;
+  gap: 5px;
+  letter-spacing: 0.02em;
+}
+
+.save-dot {
+  background: #6b7280;
+  border-radius: 50%;
+  height: 6px;
+  width: 6px;
+}
+
+.save-state.saving .save-dot {
+  background: #f59e0b;
+}
+
+.save-state.saved .save-dot {
+  background: #34d399;
+}
+
+.save-state.error .save-dot {
+  background: #f87171;
 }
 
 .panel-toggle {
