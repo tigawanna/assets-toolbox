@@ -14,3 +14,9 @@ dist
 routeTree.gen.ts
 store/
 references
+
+# Wails output and copied frontend bundles
+desktop/bin/
+desktop/build/
+desktop/frontend/svg-compose/*
+!desktop/frontend/svg-compose/.gitkeep

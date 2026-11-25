@@ -13,6 +13,7 @@ import { Layers } from "./components/layers";
 import { ShortcutsDialog, isShortcutHelp } from "./components/shortcuts";
 import { StatusHud, type DragStatus, type Notice } from "./components/status-hud";
 import { ToolRail } from "./components/tool-rail";
+import { completeDesktopFlush, onDesktopFlush } from "./lib/desktop";
 import {
   documentKey,
   loadWorkspaceFromLocal,
@@ -110,6 +111,15 @@ export default function App() {
       if (revision === saveRevisionRef.current) setSaveState("error");
     }
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onDesktopFlush(() => {
+      // The shell waits for this acknowledgement before allowing the window to
+      // close. persistNow() always settles and keeps localStorage as fallback.
+      void persistNow().finally(completeDesktopFlush);
+    });
+    return unsubscribe;
+  }, [persistNow]);
 
   const queueSave = useCallback(
     (snapshot: StageSnapshot) => {

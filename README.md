@@ -6,13 +6,16 @@
 
 Tools for most of a product’s asset needs: React on the web, React Native, React on the server, then Google Play and App Store listing screenshots.
 
-| Package                                                                                                                                     | What it does                                                                                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`@tigawanna/brand-assets`](./packages/brand-assets)                                                                                        | Favicon set plus an OG image from one SVG icon. Optional custom React OG component.                                                                                                                                |
-| [`@tigawanna/social-inspect`](./packages/social-inspect)                                                                                    | Local inspector for any URL: OG tags, favicons, social cards, scored issues, copyable fixes.                                                                                                                       |
-| [`@tigawanna/expo-assets`](./packages/expo-assets)                                                                                          | Expo app icon, Android adaptive/monochrome icons, splash, web favicon, notification icon, and an `app.json` fragment from one logo.                                                                                |
-| <img src="./packages/screenshot-studio/assets/icon.svg" alt="" width="20" /> [`@tigawanna/screenshot-studio`](./packages/screenshot-studio) | **MCP (experimental).** Local canvas for Google Play and App Store listing screenshots. Boards are SQLite files; clone scene strips per store and export PNGs. Needs **Node.js with `node:sqlite`** (Node 22.12+). |
-| [`@tigawanna/svg-compose`](./packages/svg-compose)                                                                                          | Local SVG compositor. Import SVG files, flatten them into individually editable shapes, group/ungroup, draw basic shapes, then export SVG or PNG.                                                                  |
+| Package                                                                                                                                     | What it does                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`@tigawanna/brand-assets`](./packages/brand-assets)                                                                                        | Favicon set plus an OG image from one SVG icon. Optional custom React OG component.                                                                                                                                      |
+| [`@tigawanna/social-inspect`](./packages/social-inspect)                                                                                    | Local inspector for any URL: OG tags, favicons, social cards, scored issues, copyable fixes.                                                                                                                             |
+| [`@tigawanna/expo-assets`](./packages/expo-assets)                                                                                          | Expo app icon, Android adaptive/monochrome icons, splash, web favicon, notification icon, and an `app.json` fragment from one logo.                                                                                      |
+| <img src="./packages/screenshot-studio/assets/icon.svg" alt="" width="20" /> [`@tigawanna/screenshot-studio`](./packages/screenshot-studio) | **MCP (experimental).** Local canvas for Google Play and App Store listing screenshots. Boards are SQLite files; clone scene strips per store and export PNGs. Needs **Node.js with `node:sqlite`** (Node 22.12+).       |
+| [`@tigawanna/svg-compose`](./packages/svg-compose)                                                                                          | Local SVG compositor. Import SVG files, flatten them into individually editable shapes, group/ungroup, draw basic shapes, then export SVG or PNG.                                                                        |
+| [`@tigawanna/cabra-sound`](./packages/cabra-sound)                                                                                          | Web Audio sound engine: 182 procedurally generated UI sounds, persistent volume/mute, offline waveforms and WAV export. Includes a self-contained demo sound board, launchable with `npx @tigawanna/cabra-sound studio`. |
+
+> `@tigawanna/cabra-sound` sound designs are based on [Bencho](https://github.com/cabralorenzo/bencho/tree/main/sounds) by cabralorenzo.
 
 > [!WARNING]
 > **The MCP endpoint in `screenshot-studio` is experimental and not production ready.** Tool names and schemas may change, there is no authentication, and CORS is open. Keep it bound to `127.0.0.1` and treat boards as disposable. See the [MCP guide](./packages/screenshot-studio/docs/mcp.md).
@@ -37,6 +40,18 @@ pnpm --filter @tigawanna/expo-assets build
 pnpm --filter @tigawanna/screenshot-studio dev
 pnpm --filter @tigawanna/svg-compose dev
 ```
+
+## Desktop pilot
+
+`svg-compose` also runs in a Wails desktop window with a Go/SQLite backend. The UI keeps the same HTTP API as the local Node app.
+
+```bash
+cd desktop
+./scripts/wails.sh build -trimpath -ldflags "-s -w"
+./build/bin/assets-toolbox
+```
+
+See [`DESKTOP_PLAN.md`](./DESKTOP_PLAN.md) for prerequisites, architecture, validation results, and the remaining roadmap.
 
 ## Quick use
 
@@ -72,7 +87,7 @@ Release notes live in each package's `CHANGELOG.md`.
 
 ## Publishing
 
-`@tigawanna/brand-assets`, `@tigawanna/expo-assets`, `@tigawanna/social-inspect`, and `@tigawanna/screenshot-studio` are public scoped packages (`publishConfig.access: "public"`). Their tarballs include the built `dist`/`.output`, `docs/`, `LICENSE`, and `CHANGELOG.md`. `svg-compose` is `private: true` and remains a local-only app.
+`@tigawanna/brand-assets`, `@tigawanna/cabra-sound`, `@tigawanna/expo-assets`, `@tigawanna/social-inspect`, and `@tigawanna/screenshot-studio` are public scoped packages (`publishConfig.access: "public"`). Their tarballs include the built `dist`/`.output`, `docs/`, `LICENSE`, and `CHANGELOG.md`. `svg-compose` is `private: true` and remains a local-only app.
 
 From a clean checkout:
 

@@ -1,0 +1,68 @@
+{
+  "name": "@tigawanna/cabra-sound",
+  "version": "0.1.0",
+  "description": "Tiny Web Audio sound engine: 182 procedurally synthesized UI sounds, offline waveform analysis and WAV export.",
+  "keywords": [
+    "audio",
+    "sound",
+    "synthesis",
+    "ui-sounds",
+    "wav",
+    "web-audio"
+  ],
+  "homepage": "https://github.com/tigawanna/assets-toolbox/tree/main/packages/cabra-sound#readme",
+  "bugs": {
+    "url": "https://github.com/tigawanna/assets-toolbox/issues"
+  },
+  "license": "MIT",
+  "author": "tigawanna <tigawanna@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigawanna/assets-toolbox.git",
+    "directory": "packages/cabra-sound"
+  },
+  "bin": {
+    "cabra-sound": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "demo",
+    "README.md"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "build:demo": "node scripts/embed-demo.mjs",
+    "dev": "vp pack --watch",
+    "studio": "node dist/cli.mjs studio",
+    "test": "vp test run",
+    "test:watch": "vp test",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
+    "format:fix": "vp fmt --fix",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.9",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

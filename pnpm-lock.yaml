@@ -76,6 +76,15 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
+  packages/cabra-sound:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.9
+        version: 25.9.9
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
   packages/expo-assets:
     dependencies:
       sharp:
