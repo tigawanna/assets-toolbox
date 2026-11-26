@@ -1,0 +1,55 @@
+{
+  "name": "@assets-toolbox/desktop-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "vite dev --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vp test run",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@tanstack/db": "1.0.0-rc.1.5",
+    "@tanstack/react-db": "1.0.0-rc.1.5",
+    "@tanstack/react-hotkeys": "^0.27.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dompurify": "3.5.0",
+    "konva": "9.3.22",
+    "lucide-react": "^0.554.0",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "react-konva": "19.2.0",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.4.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.2",
+    "@tailwindcss/vite": "^4.1.17",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^31.0.1",
+    "phosphor-svelte": "^3.1.1",
+    "svelte": "^5.59.2",
+    "svelte-check": "^4.7.8",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^6.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.17.0"
+  }
+}

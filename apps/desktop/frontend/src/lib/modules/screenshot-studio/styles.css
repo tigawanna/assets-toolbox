@@ -1,0 +1,138 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --studio-background: var(--canvas);
+  --studio-foreground: var(--text);
+  --studio-primary: var(--accent);
+  --studio-primary-foreground: var(--surface);
+  --studio-secondary: var(--surface-muted);
+  --studio-secondary-foreground: var(--text);
+  --studio-muted: var(--surface-muted);
+  --studio-muted-foreground: var(--text-muted);
+  --studio-accent: var(--surface-hover);
+  --studio-accent-foreground: var(--text);
+  --studio-destructive: var(--accent);
+  --studio-border: var(--line);
+  --studio-input: var(--line);
+  --studio-ring: var(--accent);
+  --studio-popover: var(--surface);
+  --studio-popover-foreground: var(--text);
+  --studio-sidebar: var(--sidebar);
+  --studio-sidebar-foreground: var(--text);
+  --studio-sidebar-primary: var(--accent);
+  --studio-sidebar-primary-foreground: var(--surface);
+  --studio-sidebar-accent: var(--sidebar-active);
+  --studio-sidebar-accent-foreground: var(--text);
+  --studio-sidebar-border: var(--line);
+  --studio-sidebar-ring: var(--accent);
+  --studio-canvas-bg: var(--canvas);
+  --studio-canvas-dot: var(--line-strong);
+  --studio-scrollbar-thumb: var(--line-strong);
+  --studio-scrollbar-thumb-hover: var(--text-subtle);
+  --studio-radius: 8px;
+}
+
+@theme inline {
+  --color-background: var(--studio-background);
+  --color-foreground: var(--studio-foreground);
+  --color-primary: var(--studio-primary);
+  --color-primary-foreground: var(--studio-primary-foreground);
+  --color-secondary: var(--studio-secondary);
+  --color-secondary-foreground: var(--studio-secondary-foreground);
+  --color-muted: var(--studio-muted);
+  --color-muted-foreground: var(--studio-muted-foreground);
+  --color-accent: var(--studio-accent);
+  --color-accent-foreground: var(--studio-accent-foreground);
+  --color-destructive: var(--studio-destructive);
+  --color-border: var(--studio-border);
+  --color-input: var(--studio-input);
+  --color-ring: var(--studio-ring);
+  --color-popover: var(--studio-popover);
+  --color-popover-foreground: var(--studio-popover-foreground);
+  --color-sidebar: var(--studio-sidebar);
+  --color-sidebar-foreground: var(--studio-sidebar-foreground);
+  --color-sidebar-primary: var(--studio-sidebar-primary);
+  --color-sidebar-primary-foreground: var(--studio-sidebar-primary-foreground);
+  --color-sidebar-accent: var(--studio-sidebar-accent);
+  --color-sidebar-accent-foreground: var(--studio-sidebar-accent-foreground);
+  --color-sidebar-border: var(--studio-sidebar-border);
+  --color-sidebar-ring: var(--studio-sidebar-ring);
+  --radius-sm: calc(var(--studio-radius) - 2px);
+  --radius-md: calc(var(--studio-radius) - 1px);
+  --radius-lg: var(--studio-radius);
+}
+
+.screenshot-studio-root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--studio-background);
+  color: var(--studio-foreground);
+  font-family: var(--font-sans);
+}
+
+.screenshot-studio-root *,
+.screenshot-studio-root *::before,
+.screenshot-studio-root *::after {
+  box-sizing: border-box;
+}
+
+.screenshot-studio-root :where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure) {
+  margin: 0;
+}
+
+.screenshot-studio-root :where(button, input, select, textarea) {
+  font: inherit;
+}
+
+.screenshot-studio-root :where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screenshot-studio-root :where(img, svg) {
+  display: block;
+  vertical-align: middle;
+}
+
+.screenshot-studio-root .canvas-grid {
+  background-color: var(--studio-canvas-bg);
+  background-image: radial-gradient(var(--studio-canvas-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.screenshot-studio-root .no-scrollbar {
+  scrollbar-width: none;
+}
+
+.screenshot-studio-root .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.screenshot-studio-root * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--studio-scrollbar-thumb) transparent;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: var(--studio-scrollbar-thumb);
+  background-clip: content-box;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-thumb:hover {
+  background: var(--studio-scrollbar-thumb-hover);
+  background-clip: content-box;
+}

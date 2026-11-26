@@ -64,11 +64,12 @@ export function loadWorkspaceFromLocal(): WorkspaceDocument | null {
 
 export function saveWorkspaceToLocal(
   document: Omit<WorkspaceDocument, "id" | "updatedAt">,
+  updatedAt?: string,
 ): WorkspaceDocument {
   const saved: WorkspaceDocument = {
     ...document,
     id: "local",
-    updatedAt: new Date().toISOString(),
+    updatedAt: updatedAt ?? new Date().toISOString(),
   };
   try {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(saved));

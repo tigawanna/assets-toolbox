@@ -1,0 +1,16 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "assets-toolbox",
+  "outputfilename": "assets-toolbox",
+  "frontend:dir": "frontend",
+  "frontend:install": "pnpm install --frozen-lockfile",
+  "frontend:build": "pnpm run build",
+  "frontend:dev:watcher": "pnpm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "wailsjsdir": "./frontend/src/lib",
+  "build:tags": "webkit2_41",
+  "author": {
+    "name": "tigawanna",
+    "email": "denniskinuthiaw@gmail.com"
+  }
+}

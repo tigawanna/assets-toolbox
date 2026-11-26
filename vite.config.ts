@@ -7,13 +7,13 @@ import { defineConfig } from "vite-plus";
  */
 export default defineConfig({
   fmt: {
-    ignorePatterns: ["**/dist/**", "references/**"],
+    ignorePatterns: ["**/dist/**", "references/**", "apps/desktop/frontend/src/lib/wailsjs/**"],
   },
   staged: {
     "*": "vp check --fix",
   },
   lint: {
-    ignorePatterns: ["**/dist/**", "references/**"],
+    ignorePatterns: ["**/dist/**", "references/**", "apps/desktop/frontend/src/lib/wailsjs/**"],
     options: { typeAware: true, typeCheck: true },
     jsPlugins: ["@shadcn/lint"],
     categories: { correctness: "error" },
@@ -59,6 +59,24 @@ export default defineConfig({
         // svg-compose uses hand-written CSS rather than Tailwind utilities.
         files: ["packages/svg-compose/**"],
         rules: { "shadcn/no-unknown-classes": "off" },
+      },
+      {
+        // The desktop SVG port keeps the editor's runtime SVG styles.
+        files: ["apps/desktop/frontend/src/lib/modules/svg-compose/**"],
+        rules: {
+          "shadcn/no-unknown-classes": "off",
+          "shadcn/no-inline-styles": "off",
+          "shadcn/no-arbitrary-values": "off",
+        },
+      },
+      {
+        // Screenshot Studio uses its own Tailwind/shadcn component layer.
+        files: ["apps/desktop/frontend/src/lib/modules/screenshot-studio/**"],
+        rules: {
+          "shadcn/no-unknown-classes": "off",
+          "shadcn/no-inline-styles": "off",
+          "shadcn/no-arbitrary-values": "off",
+        },
       },
     ],
   },

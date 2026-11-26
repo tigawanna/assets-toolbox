@@ -1,6 +1,17 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "futureFlags": {
+    "experimentalGoWorkspaces": true,
+    "experimentalTaskCommand": true
+  },
+  "globalEnv": ["PKG_CONFIG_PATH", "LD_LIBRARY_PATH"],
+  "globalPassThroughEnv": [
+    "DISPLAY",
+    "WAYLAND_DISPLAY",
+    "XDG_RUNTIME_DIR",
+    "DBUS_SESSION_BUS_ADDRESS"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

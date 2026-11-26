@@ -66,6 +66,7 @@ export default function App() {
   );
   const saveTimerRef = useRef<number | null>(null);
   const saveRevisionRef = useRef(0);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -93,23 +94,33 @@ export default function App() {
     noticeTimer.current = window.setTimeout(() => setNotice(null), 1900);
   }, []);
 
-  const persistNow = useCallback(async () => {
+  const persistNow = useCallback((): Promise<void> => {
     const pending = pendingSaveRef.current;
-    if (!pending) return;
+    if (!pending) return Promise.resolve();
     const revision = saveRevisionRef.current;
+    saveWorkspaceToLocal(pending);
     setSaveState("saving");
-    try {
-      const saved = await saveWorkspaceToServer(pending);
-      saveWorkspaceToLocal(pending);
-      if (revision === saveRevisionRef.current) {
-        pendingSaveRef.current = null;
-        setLastSavedAt(saved.updatedAt);
-        setSaveState("saved");
+
+    const run = async (): Promise<void> => {
+      try {
+        const saved = await saveWorkspaceToServer(pending);
+        if (revision === saveRevisionRef.current) {
+          saveWorkspaceToLocal(saved, saved.updatedAt);
+          pendingSaveRef.current = null;
+          setLastSavedAt(saved.updatedAt);
+          setSaveState("saved");
+        }
+      } catch {
+        if (revision === saveRevisionRef.current) setSaveState("error");
       }
-    } catch {
-      saveWorkspaceToLocal(pending);
-      if (revision === saveRevisionRef.current) setSaveState("error");
-    }
+    };
+
+    const result = saveQueueRef.current.catch(() => {}).then(run);
+    saveQueueRef.current = result;
+    void result.finally(() => {
+      if (saveQueueRef.current === result) saveQueueRef.current = Promise.resolve();
+    });
+    return result;
   }, []);
 
   useEffect(() => {
@@ -178,9 +189,13 @@ export default function App() {
       ]);
       if (cancelled) return;
       const saved = newestWorkspace(server, local);
+      const localWon =
+        saved !== null &&
+        saved === local &&
+        (server === null || Date.parse(local.updatedAt) > Date.parse(server.updatedAt));
       if (saved) {
         stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
-        saveWorkspaceToLocal(saved);
+        saveWorkspaceToLocal(saved, saved.updatedAt);
         setLastSavedAt(saved.updatedAt);
         notify("Restored saved work");
       }
@@ -188,7 +203,15 @@ export default function App() {
       hydratedRef.current = true;
       pendingSaveRef.current = null;
       if (!saved) setSaveState("empty");
-      else setSaveState(server ? "saved" : "error");
+      else if (localWon) {
+        pendingSaveRef.current = {
+          name: saved.name,
+          svg: saved.svg,
+          viewport: saved.viewport,
+        };
+        setSaveState("saving");
+        void persistNow();
+      } else setSaveState(server ? "saved" : "error");
     };
     void restore();
 

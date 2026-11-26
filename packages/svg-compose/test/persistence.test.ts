@@ -26,6 +26,13 @@ describe("workspace persistence", () => {
     expect(loadWorkspaceFromLocal()).toEqual(saved);
   });
 
+  it("preserves a server timestamp when mirroring a saved document", () => {
+    const updatedAt = "2026-11-24T10:00:00.000Z";
+    const saved = saveWorkspaceToLocal(sample, updatedAt);
+    expect(saved.updatedAt).toBe(updatedAt);
+    expect(loadWorkspaceFromLocal()).toEqual(saved);
+  });
+
   it("chooses the newer of the server and browser copies", () => {
     const server = { ...sample, id: "draft", updatedAt: "2026-11-24T10:00:00.000Z" };
     const local = { ...sample, id: "local", updatedAt: "2026-11-24T11:00:00.000Z" };

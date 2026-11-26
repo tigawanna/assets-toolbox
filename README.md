@@ -41,17 +41,32 @@ pnpm --filter @tigawanna/screenshot-studio dev
 pnpm --filter @tigawanna/svg-compose dev
 ```
 
-## Desktop pilot
+## Desktop app
 
-`svg-compose` also runs in a Wails desktop window with a Go/SQLite backend. The UI keeps the same HTTP API as the local Node app.
+`apps/desktop` is a Wails + Go application with a SvelteKit frontend. SVG Compose,
+Cabra Sound, and Screenshot Studio are working desktop routes; the other packages
+have reserved module routes and mounting plans. The shell includes search,
+light/dark themes, and a native Go status bridge.
 
 ```bash
-cd desktop
-./scripts/wails.sh build -trimpath -ldflags "-s -w"
-./build/bin/assets-toolbox
+pnpm run desktop:dev
+pnpm run desktop:build
 ```
 
-See [`DESKTOP_PLAN.md`](./DESKTOP_PLAN.md) for prerequisites, architecture, validation results, and the remaining roadmap.
+The executable is written to `apps/desktop/build/bin/assets-toolbox`. The generic
+`pnpm build`, `pnpm dev`, and `pnpm test` scripts exclude the native desktop target
+so web-only environments do not need Go, GTK, or WebKitGTK. Turborepo discovers the
+Go module through `go.work`; the explicit desktop commands build the frontend and
+native binary in one task graph:
+
+```bash
+pnpm exec turbo run build --filter=desktop
+pnpm exec turbo run test --filter=desktop
+pnpm exec turbo run lint --filter=desktop
+```
+
+See [`apps/desktop/README.md`](./apps/desktop/README.md) for prerequisites,
+architecture, and the package mounting workflow.
 
 ## Quick use
 

@@ -6,29 +6,137 @@ import { Layer, Stage } from "react-konva";
 import { BoardContent } from "@/canvas/board-content";
 import { boardCollections, collectionAsBoard, nodesInCollection } from "@/lib/scenes";
 import { fileSlug } from "@/lib/store-rules";
-import { boardSize, type StudioSnapshot } from "@/lib/studio";
+import { assetUrl, boardFillFor, boardSize, type StudioSnapshot } from "@/lib/studio";
 import { dataUrlToBytes, downloadBlob, zipStore } from "@/lib/zip";
 
-function waitForPaint(stage: Konva.Stage): Promise<void> {
-  return new Promise((resolve) => {
-    let frames = 0;
-    const tick = () => {
-      frames += 1;
-      const pending = stage.find("Image").some((node) => {
-        const image = (node as Konva.Image).image();
-        return image instanceof HTMLImageElement && !image.complete;
-      });
-      if (!pending && frames >= 2) {
-        resolve();
-        return;
-      }
-      if (frames > 90) {
-        resolve();
-        return;
-      }
-      requestAnimationFrame(tick);
+const IMAGE_LOAD_TIMEOUT_MS = 10_000;
+
+interface SnapshotImage {
+  url: string;
+  label: string;
+}
+
+function snapshotImages(snapshot: StudioSnapshot): SnapshotImage[] {
+  const images: SnapshotImage[] = [];
+  const add = (id: string | undefined, label: string) => {
+    const url = assetUrl(snapshot.assets, id);
+    if (url !== "") images.push({ url, label });
+  };
+
+  const fill = boardFillFor(snapshot.board);
+  add(fill.imageId, "board background");
+  for (const band of fill.bands) add(band.imageId, `background band ${band.id}`);
+  for (const node of snapshot.nodes) {
+    if (node.hidden) continue;
+    if (node.type === "device") add(node.screenAssetId, `${node.name} screen`);
+    if (node.type === "shape") add(node.imageId, `${node.name} image`);
+  }
+  return images;
+}
+
+function preloadImage({ url, label }: SnapshotImage): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    let settled = false;
+    const finish = (cause?: unknown) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      image.onload = null;
+      image.onerror = null;
+      if (cause === undefined) resolve();
+      else reject(cause);
     };
-    requestAnimationFrame(tick);
+    const timeout = window.setTimeout(
+      () => finish(new Error(`Timed out loading image for ${label}`)),
+      IMAGE_LOAD_TIMEOUT_MS,
+    );
+    const decode = () => {
+      if (image.naturalWidth < 1 || image.naturalHeight < 1) {
+        finish(new Error(`Image for ${label} has no readable dimensions`));
+        return;
+      }
+      try {
+        const decoded = image.decode();
+        void decoded.then(
+          () => finish(),
+          () => finish(new Error(`Could not decode image for ${label}`)),
+        );
+      } catch {
+        finish(new Error(`Could not decode image for ${label}`));
+      }
+    };
+    image.onload = decode;
+    image.onerror = () => finish(new Error(`Could not load image for ${label}`));
+    image.decoding = "async";
+    image.src = url;
+    if (image.complete) decode();
+  });
+}
+
+async function preloadSnapshotImages(images: SnapshotImage[]): Promise<void> {
+  const unique = new Map<string, SnapshotImage>();
+  for (const image of images) {
+    if (!unique.has(image.url)) unique.set(image.url, image);
+  }
+  await Promise.all(Array.from(unique.values(), preloadImage));
+}
+
+function waitForPaint(stage: Konva.Stage, expectedImageCount: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let frames = 0;
+    let settled = false;
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+    };
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve();
+    };
+    const fail = (cause: unknown) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(cause);
+    };
+    const timeout = window.setTimeout(
+      () =>
+        fail(
+          new Error(
+            expectedImageCount === 0
+              ? "Timed out waiting for the export canvas to paint"
+              : `Timed out waiting for ${expectedImageCount} snapshot images to mount`,
+          ),
+        ),
+      IMAGE_LOAD_TIMEOUT_MS,
+    );
+    const tick = () => {
+      if (settled) return;
+      frames += 1;
+      const images = stage.find("Image").map((node) => (node as Konva.Image).image());
+      const mounted =
+        images.length === expectedImageCount &&
+        images.every(
+          (image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0,
+        );
+      if (mounted && frames >= 2) {
+        void (async () => {
+          try {
+            for (const image of images) {
+              if (image instanceof HTMLImageElement) await image.decode();
+            }
+            done();
+          } catch {
+            fail(new Error("Could not decode a mounted snapshot image"));
+          }
+        })();
+        return;
+      }
+      window.requestAnimationFrame(tick);
+    };
+    window.requestAnimationFrame(tick);
   });
 }
 
@@ -47,10 +155,12 @@ function collectionSnapshots(snapshot: StudioSnapshot): StudioSnapshot[] {
 
 function ExportStage({
   snapshot,
+  expectedImageCount,
   onDone,
   onError,
 }: {
   snapshot: StudioSnapshot;
+  expectedImageCount: number;
   onDone: (files: { name: string; dataUrl: string }[]) => void;
   onError: (cause: unknown) => void;
 }) {
@@ -65,7 +175,7 @@ function ExportStage({
       try {
         const stage = stageRef.current;
         if (stage === null) throw new Error("Export canvas failed to mount");
-        await waitForPaint(stage);
+        await waitForPaint(stage, expectedImageCount);
         if (cancelled) return;
         const slug = fileSlug(snapshot.board.name);
         const files: { name: string; dataUrl: string }[] = [];
@@ -87,13 +197,21 @@ function ExportStage({
         }
         onDone(files);
       } catch (cause: unknown) {
-        onError(cause);
+        if (!cancelled) onError(cause);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [onDone, onError, preset.height, preset.sliceCount, preset.width, snapshot]);
+  }, [
+    expectedImageCount,
+    onDone,
+    onError,
+    preset.height,
+    preset.sliceCount,
+    preset.width,
+    snapshot,
+  ]);
 
   return (
     <Stage ref={stageRef} width={preset.width} height={preset.height} listening={false}>
@@ -111,30 +229,43 @@ function ExportStage({
   );
 }
 
-function exportOneStrip(snapshot: StudioSnapshot): Promise<{ name: string; dataUrl: string }[]> {
+async function exportOneStrip(
+  snapshot: StudioSnapshot,
+): Promise<{ name: string; dataUrl: string }[]> {
+  const images = snapshotImages(snapshot);
+  await preloadSnapshotImages(images);
   return new Promise((resolve, reject) => {
     const host = document.createElement("div");
     host.setAttribute("aria-hidden", "true");
     host.style.cssText = "position:fixed;left:-12000px;top:0;pointer-events:none;";
     document.body.appendChild(host);
     const root = createRoot(host);
+    let finished = false;
     const finish = () => {
+      if (finished) return;
+      finished = true;
       root.unmount();
       host.remove();
     };
-    root.render(
-      <ExportStage
-        snapshot={snapshot}
-        onDone={(files) => {
-          finish();
-          resolve(files);
-        }}
-        onError={(cause) => {
-          finish();
-          reject(cause);
-        }}
-      />,
-    );
+    try {
+      root.render(
+        <ExportStage
+          snapshot={snapshot}
+          expectedImageCount={images.length}
+          onDone={(files) => {
+            finish();
+            resolve(files);
+          }}
+          onError={(cause) => {
+            finish();
+            reject(cause);
+          }}
+        />,
+      );
+    } catch (cause: unknown) {
+      finish();
+      reject(cause);
+    }
   });
 }
 

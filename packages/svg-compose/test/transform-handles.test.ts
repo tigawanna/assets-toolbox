@@ -80,6 +80,30 @@ describe("selection handles", () => {
     ]);
   });
 
+  it("keeps gentle multi-step corner drags proportional and undoable", () => {
+    const { stage, wrapper } = makeStage();
+    const handle = stage.overlay.querySelector(".overlay-handle[data-direction='se']")!;
+    pointer(handle, "pointerdown", 100, 100);
+    pointer(stage.svg, "pointermove", 120, 120);
+    pointer(stage.svg, "pointermove", 150, 150);
+    pointer(stage.svg, "pointerup", 150, 150);
+    expect(parseTransform(wrapper.getAttribute("transform"))).toEqual([3.6, 0, 0, 3.6, 60, 60]);
+    stage.undo();
+    expect(parseTransform(stage.docGroup.firstElementChild?.getAttribute("transform"))).toEqual([
+      2.4, 0, 0, 2.4, 40, 40,
+    ]);
+  });
+
+  it("does not add duplicate undo steps for unchanged checkpoints", () => {
+    const { stage } = makeStage();
+    stage.undo();
+    expect(stage.canUndo).toBe(false);
+    stage.checkpoint();
+    stage.checkpoint();
+    stage.undo();
+    expect(stage.canUndo).toBe(false);
+  });
+
   it("dragging the top handle rotates the object", () => {
     const { stage } = makeStage();
     const handle = stage.overlay.querySelector(".overlay-rotate")!;

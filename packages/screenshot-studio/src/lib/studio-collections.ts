@@ -37,20 +37,31 @@ export const assetsCollection = createCollection(
   }),
 );
 
-async function clear(
-  collection:
-    | typeof boardCollection
-    | typeof nodesCollection
-    | typeof eventsCollection
-    | typeof assetsCollection,
-): Promise<void> {
+type StudioCollection =
+  | typeof boardCollection
+  | typeof nodesCollection
+  | typeof eventsCollection
+  | typeof assetsCollection;
+
+async function clear(collection: StudioCollection): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: collection }).select(({ row }) => ({ id: row.id })),
   );
   for (const row of current) await collection.delete(row.id).when("settled");
 }
 
-export async function clearStudio(): Promise<void> {
+let collectionQueue: Promise<void> = Promise.resolve();
+
+function enqueue<T>(work: () => Promise<T>): Promise<T> {
+  const run = collectionQueue.then(work);
+  collectionQueue = run.then(
+    () => {},
+    () => {},
+  );
+  return run;
+}
+
+async function clearAll(): Promise<void> {
   await Promise.all([
     clear(boardCollection),
     clear(nodesCollection),
@@ -59,16 +70,16 @@ export async function clearStudio(): Promise<void> {
   ]);
 }
 
-export async function mergeSnapshot(snapshot: StudioSnapshot): Promise<void> {
-  await replaceBoard(snapshot.board ?? defaultBoard());
-  await appendEvents(snapshot.events);
-  await Promise.all(snapshot.assets.map((asset) => replaceAsset(asset)));
-  await pruneNodes(new Set(snapshot.nodes.map((node) => node.id)));
-  await Promise.all(snapshot.nodes.map((node) => replaceNode(node)));
+async function merge(snapshot: StudioSnapshot): Promise<void> {
+  await replaceBoardRow(snapshot.board ?? defaultBoard());
+  await appendEventRows(snapshot.events);
+  await Promise.all(snapshot.assets.map((asset) => replaceAssetRow(asset)));
+  await pruneNodeRows(new Set(snapshot.nodes.map((node) => node.id)));
+  await Promise.all(snapshot.nodes.map((node) => replaceNodeRow(node)));
 }
 
-export async function applySnapshot(snapshot: StudioSnapshot): Promise<void> {
-  await clearStudio();
+async function apply(snapshot: StudioSnapshot): Promise<void> {
+  await clearAll();
   await boardCollection.insert(snapshot.board ?? defaultBoard()).when("settled");
   await Promise.all([
     ...snapshot.nodes.map((node) => nodesCollection.insert(node).when("settled")),
@@ -77,7 +88,19 @@ export async function applySnapshot(snapshot: StudioSnapshot): Promise<void> {
   ]);
 }
 
-export async function replaceAsset(asset: AssetRow): Promise<void> {
+export function clearStudio(): Promise<void> {
+  return enqueue(clearAll);
+}
+
+export function mergeSnapshot(snapshot: StudioSnapshot): Promise<void> {
+  return enqueue(() => merge(snapshot));
+}
+
+export function applySnapshot(snapshot: StudioSnapshot): Promise<void> {
+  return enqueue(() => apply(snapshot));
+}
+
+async function replaceAssetRow(asset: AssetRow): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: assetsCollection }).select(({ row }) => ({ id: row.id })),
   );
@@ -85,7 +108,7 @@ export async function replaceAsset(asset: AssetRow): Promise<void> {
   await assetsCollection.insert(asset).when("settled");
 }
 
-export async function replaceNode(node: StudioNode): Promise<void> {
+async function replaceNodeRow(node: StudioNode): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: nodesCollection }).select(({ row }) => ({ id: row.id })),
   );
@@ -100,11 +123,7 @@ export async function replaceNode(node: StudioNode): Promise<void> {
   }
 }
 
-export async function dropNode(id: string): Promise<void> {
-  await nodesCollection.delete(id).when("settled");
-}
-
-export async function pruneNodes(keep: Set<string>): Promise<void> {
+async function pruneNodeRows(keep: Set<string>): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: nodesCollection }).select(({ row }) => ({ id: row.id })),
   );
@@ -113,22 +132,23 @@ export async function pruneNodes(keep: Set<string>): Promise<void> {
   }
 }
 
-export async function replaceBoard(board: BoardRow): Promise<void> {
+async function replaceBoardRow(board: BoardRow): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: boardCollection }).select(({ row }) => ({ id: row.id })),
   );
-  if (current.length === 0) {
-    await boardCollection.insert(board).when("settled");
+  if (current.length === 1 && current[0]?.id === board.id) {
+    await boardCollection
+      .update(board.id, (draft) => {
+        Object.assign(draft, board);
+      })
+      .when("settled");
     return;
   }
-  await boardCollection
-    .update(board.id, (draft) => {
-      Object.assign(draft, board);
-    })
-    .when("settled");
+  for (const row of current) await boardCollection.delete(row.id).when("settled");
+  await boardCollection.insert(board).when("settled");
 }
 
-export async function appendEvents(all: EventRow[]): Promise<void> {
+async function appendEventRows(all: EventRow[]): Promise<void> {
   const current = await queryOnce((q) =>
     q.from({ row: eventsCollection }).select(({ row }) => ({ id: row.id })),
   );
@@ -136,5 +156,32 @@ export async function appendEvents(all: EventRow[]): Promise<void> {
   for (const event of all) {
     if (seen.has(event.id)) continue;
     await eventsCollection.insert(event).when("settled");
+    seen.add(event.id);
   }
+}
+
+export function replaceAsset(asset: AssetRow): Promise<void> {
+  return enqueue(() => replaceAssetRow(asset));
+}
+
+export function replaceNode(node: StudioNode): Promise<void> {
+  return enqueue(() => replaceNodeRow(node));
+}
+
+export function dropNode(id: string): Promise<void> {
+  return enqueue(async () => {
+    await nodesCollection.delete(id).when("settled");
+  });
+}
+
+export function pruneNodes(keep: Set<string>): Promise<void> {
+  return enqueue(() => pruneNodeRows(keep));
+}
+
+export function replaceBoard(board: BoardRow): Promise<void> {
+  return enqueue(() => replaceBoardRow(board));
+}
+
+export function appendEvents(all: EventRow[]): Promise<void> {
+  return enqueue(() => appendEventRows(all));
 }

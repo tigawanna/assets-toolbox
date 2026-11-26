@@ -1,3 +1,5 @@
+Dear agnet,Ignore this for now
+
 # Desktop shell pilot: Wails + Go for svg-compose
 
 **Status (2026-11-25):** the pilot builds, runs, saves through Go, survives close/reopen, and passes a shared Node/Go HTTP contract suite. Phase 2 (embeddable component), native dialogs, and the launcher are still open.

@@ -11,7 +11,7 @@
 import { toHexColor } from "../doc/color";
 import { downloadText, safeBBox, serializeDocument } from "../doc/export";
 import { importIntoDocument, parseSvg, type ImportBox } from "../doc/import";
-import { nextId, regenerateIds } from "../doc/ids";
+import { assignIds, nextId, regenerateIds } from "../doc/ids";
 import { makeCorner, makeSmooth, modelToPath, pathToModel, shapeToPathData } from "../doc/path";
 import {
   bakeInto,
@@ -209,6 +209,7 @@ export class Stage {
     this.tool?.onDeactivate?.();
     this.tool = null;
     this.docGroup.innerHTML = snapshot.svg;
+    assignIds(this.docGroup);
     this.selection.clear();
     this.activeGroup = null;
     const viewport = snapshot.viewport;
@@ -684,19 +685,18 @@ export class Stage {
 
   /** Scale the transform handle's target around a fixed anchor point. */
   private applyScale(sx: number, sy: number, anchor: StagePoint): void {
-    const element = this.transform?.element;
-    if (!element) return;
-    const matrix = parseTransform(element.getAttribute("transform"));
+    const handle = this.transform;
+    if (!handle) return;
     const around = multiply(
       multiply(translate(anchor.x, anchor.y), scale(sx, sy)),
       translate(-anchor.x, -anchor.y),
     );
-    setTransform(element, multiply(around, matrix));
+    setTransform(handle.element, multiply(around, handle.baseMatrix));
     this.emit();
   }
 
   /** Rotate around each object's own centre, keeping it in place. */
-  applyRotation(degrees: number): void {
+  applyRotation(degrees: number, baseMatrix?: Matrix): void {
     for (const element of this.selectedElements()) {
       const box = this.bboxInSvgSpace(element);
       const local = (element as SVGGraphicsElement).getBBox?.();
@@ -708,7 +708,7 @@ export class Stage {
         local && Number.isFinite(local.y)
           ? local.y + local.height / 2
           : (box?.y ?? 0) + (box?.height ?? 0) / 2;
-      const matrix = parseTransform(element.getAttribute("transform"));
+      const matrix = baseMatrix ?? parseTransform(element.getAttribute("transform"));
       const current = (Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI;
       const delta = ((degrees - current + 540) % 360) - 180;
       const aroundCenter = multiply(
@@ -1064,7 +1064,7 @@ export class Stage {
       const angle = Math.atan2(point.y - centre.y, point.x - centre.x);
       const delta = (angle - handle.startAngle) * (180 / Math.PI);
       const current = (Math.atan2(handle.baseMatrix[1], handle.baseMatrix[0]) * 180) / Math.PI;
-      this.applyRotation(current + delta);
+      this.applyRotation(current + delta, handle.baseMatrix);
       return;
     }
 

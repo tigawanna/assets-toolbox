@@ -70,7 +70,6 @@ import {
   type StudioSnapshot,
 } from "@/lib/studio";
 import {
-  appendEvents,
   applySnapshot,
   assetsCollection,
   clearStudio,
@@ -80,7 +79,6 @@ import {
   eventsCollection,
   nodesCollection,
   pruneNodes,
-  replaceAsset,
   replaceBoard,
   replaceNode,
 } from "@/lib/studio-collections";
@@ -143,6 +141,12 @@ function StudioShell({ projectId }: { projectId: string }) {
   const [hydrated, setHydrated] = useState(false);
   const undoRef = useRef<() => void>(() => {});
   const undoing = useRef(false);
+  const projectIdRef = useRef(projectId);
+  const projectGenerationRef = useRef(0);
+  if (projectIdRef.current !== projectId) {
+    projectIdRef.current = projectId;
+    projectGenerationRef.current += 1;
+  }
   const nameTimer = useRef(0);
   const stripTimer = useRef(0);
   const formatHotkey = useFormatForDisplay();
@@ -152,6 +156,8 @@ function StudioShell({ projectId }: { projectId: string }) {
   const undoHint = formatHotkey("Mod+Z");
   const presets = listPresets();
   const pid = { projectId };
+  const isProjectCurrent = (generation: number) =>
+    generation === projectGenerationRef.current && projectIdRef.current === projectId;
   const board = boardQuery.data[0] ?? defaultBoard();
   const nodes = nodeQuery.data ?? [];
   const assets = assetQuery.data ?? [];
@@ -230,23 +236,27 @@ function StudioShell({ projectId }: { projectId: string }) {
   }, [projectId]);
 
   useEffect(() => {
+    const generation = ++projectGenerationRef.current;
     let cancelled = false;
     setError("");
     setHydrated(false);
     void (async () => {
-      await clearStudio();
-      if (cancelled) return;
       try {
+        await clearStudio();
+        if (cancelled || generation !== projectGenerationRef.current) return;
         const snapshot = await loadStudio({ data: { projectId } });
-        if (cancelled) return;
+        if (cancelled || generation !== projectGenerationRef.current) return;
         await applySnapshot(snapshot);
-        if (!cancelled) setHydrated(true);
+        if (!cancelled && generation === projectGenerationRef.current) setHydrated(true);
       } catch (cause: unknown) {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : "Could not load");
+        if (!cancelled && generation === projectGenerationRef.current) {
+          setError(cause instanceof Error ? cause.message : "Could not load");
+        }
       }
     })();
     return () => {
       cancelled = true;
+      if (projectGenerationRef.current === generation) projectGenerationRef.current += 1;
     };
   }, [projectId]);
 
@@ -255,6 +265,7 @@ function StudioShell({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     if (!hydrated) return;
+    const generation = projectGenerationRef.current;
     const source = new EventSource(`/api/live?projectId=${encodeURIComponent(projectId)}`);
     source.onmessage = (event) => {
       let payload: { type?: string; seq?: number } = {};
@@ -265,7 +276,9 @@ function StudioShell({ projectId }: { projectId: string }) {
       }
       if (payload.type !== "change") return;
       if (typeof payload.seq === "number" && payload.seq <= seqRef.current) return;
-      void loadStudio({ data: { projectId } }).then(mergeSnapshot);
+      void loadStudio({ data: { projectId } }).then((snapshot) => {
+        if (generation === projectGenerationRef.current) return mergeSnapshot(snapshot);
+      });
     };
     return () => source.close();
   }, [hydrated, projectId]);
@@ -326,32 +339,39 @@ function StudioShell({ projectId }: { projectId: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, span]);
 
-  async function persist(work: () => Promise<StudioSnapshot>): Promise<StudioSnapshot> {
+  async function persist<T extends StudioSnapshot>(work: () => Promise<T>): Promise<T | null> {
+    const generation = projectGenerationRef.current;
+    if (!isProjectCurrent(generation)) return null;
     setError("");
     try {
       const snapshot = await work();
-      await replaceBoard(snapshot.board);
-      await appendEvents(snapshot.events);
-      await Promise.all(snapshot.assets.map((asset) => replaceAsset(asset)));
-      await pruneNodes(new Set(snapshot.nodes.map((node) => node.id)));
-      await Promise.all(snapshot.nodes.map((node) => replaceNode(node)));
-      return snapshot;
+      if (!isProjectCurrent(generation)) return null;
+      await mergeSnapshot(snapshot);
+      return isProjectCurrent(generation) ? snapshot : null;
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not save");
+      if (isProjectCurrent(generation)) {
+        setError(cause instanceof Error ? cause.message : "Could not save");
+      }
       throw cause;
     }
   }
 
-  async function persistLive(work: () => Promise<StudioSnapshot>, live: () => Promise<void>) {
+  async function persistLive(
+    work: () => Promise<StudioSnapshot>,
+    live: (generation: number) => Promise<void>,
+  ) {
+    const generation = projectGenerationRef.current;
     setError("");
     try {
-      await live();
+      if (!isProjectCurrent(generation)) return;
+      await live(generation);
+      if (!isProjectCurrent(generation)) return;
       const snapshot = await work();
-      await replaceBoard(snapshot.board);
-      await appendEvents(snapshot.events);
-      await Promise.all(snapshot.assets.map((asset) => replaceAsset(asset)));
+      if (isProjectCurrent(generation)) await mergeSnapshot(snapshot);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not save");
+      if (isProjectCurrent(generation)) {
+        setError(cause instanceof Error ? cause.message : "Could not save");
+      }
     }
   }
 
@@ -461,6 +481,7 @@ function StudioShell({ projectId }: { projectId: string }) {
           },
         }),
       );
+      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
       const addedId = snapshot.events.at(-1)?.nodeId;
       if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
     } catch (cause: unknown) {
@@ -481,6 +502,7 @@ function StudioShell({ projectId }: { projectId: string }) {
           },
         }),
       );
+      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
       const addedId = snapshot.events.at(-1)?.nodeId;
       if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
     } catch (cause: unknown) {
@@ -621,11 +643,10 @@ function StudioShell({ projectId }: { projectId: string }) {
 
   async function duplicateSelectedNode(id: string) {
     try {
-      const snapshot = (await persist(() =>
-        cloneSelectedNode({ data: { ...pid, id } }),
-      )) as StudioSnapshot & {
-        nodeId: string;
-      };
+      const snapshot = (await persist(() => cloneSelectedNode({ data: { ...pid, id } }))) as
+        | (StudioSnapshot & { nodeId: string })
+        | null;
+      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
       if (snapshot.nodeId !== undefined) setSelectedId(snapshot.nodeId);
     } catch (cause: unknown) {
       setError(cause instanceof Error ? cause.message : "Could not duplicate");
@@ -641,8 +662,9 @@ function StudioShell({ projectId }: { projectId: string }) {
     const count = ids.length;
     await persistLive(
       () => reorderStack({ data: { ...pid, ids } }),
-      async () => {
+      async (generation) => {
         for (const node of nodes) {
+          if (!isProjectCurrent(generation)) return;
           const index = ids.indexOf(node.id);
           if (index < 0) continue;
           await replaceNode({ ...node, z: count - 1 - index });
@@ -652,16 +674,20 @@ function StudioShell({ projectId }: { projectId: string }) {
   }
 
   async function undoLast() {
-    if (total < 1 || undoing.current) return;
+    const generation = projectGenerationRef.current;
+    if (total < 1 || undoing.current || !isProjectCurrent(generation)) return;
     undoing.current = true;
     setError("");
     try {
-      await applySnapshot(await undoEvent({ data: pid }));
-      setSelectedId(null);
+      const snapshot = await undoEvent({ data: pid });
+      if (!isProjectCurrent(generation)) return;
+      await applySnapshot(snapshot);
+      if (isProjectCurrent(generation)) setSelectedId(null);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not undo");
+      if (isProjectCurrent(generation))
+        setError(cause instanceof Error ? cause.message : "Could not undo");
     } finally {
-      undoing.current = false;
+      if (isProjectCurrent(generation)) undoing.current = false;
     }
   }
   undoRef.current = () => {
@@ -669,24 +695,36 @@ function StudioShell({ projectId }: { projectId: string }) {
   };
 
   async function restoreToEvent(seq: number) {
+    const generation = projectGenerationRef.current;
+    if (!isProjectCurrent(generation)) return;
     setError("");
     try {
-      await applySnapshot(await restoreHistory({ data: { ...pid, seq } }));
-      setSelectedId(null);
+      const snapshot = await restoreHistory({ data: { ...pid, seq } });
+      if (!isProjectCurrent(generation)) return;
+      await applySnapshot(snapshot);
+      if (isProjectCurrent(generation)) setSelectedId(null);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not restore");
+      if (isProjectCurrent(generation)) {
+        setError(cause instanceof Error ? cause.message : "Could not restore");
+      }
     }
   }
 
   async function reloadLatest() {
+    const generation = projectGenerationRef.current;
+    if (!isProjectCurrent(generation)) return;
     setReloading(true);
     setError("");
     try {
-      await applySnapshot(await loadStudio({ data: pid }));
+      const snapshot = await loadStudio({ data: pid });
+      if (!isProjectCurrent(generation)) return;
+      await applySnapshot(snapshot);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not reload");
+      if (isProjectCurrent(generation)) {
+        setError(cause instanceof Error ? cause.message : "Could not reload");
+      }
     } finally {
-      setReloading(false);
+      if (isProjectCurrent(generation)) setReloading(false);
     }
   }
 
@@ -699,6 +737,7 @@ function StudioShell({ projectId }: { projectId: string }) {
           data: { ...pid, collectionId, store },
         }),
       );
+      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
       const added = boardCollections(snapshot.board).at(-1);
       if (added !== undefined) setSelectedId(collectionSelectionId(added.id));
     } catch (cause: unknown) {
@@ -717,8 +756,9 @@ function StudioShell({ projectId }: { projectId: string }) {
     try {
       await persistLive(
         () => removeCollection({ data: { ...pid, collectionId } }),
-        async () => {
+        async (generation) => {
           await replaceBoard(next.board);
+          if (!isProjectCurrent(generation)) return;
           await pruneNodes(new Set(next.nodes.map((node) => node.id)));
         },
       );
@@ -773,12 +813,16 @@ function StudioShell({ projectId }: { projectId: string }) {
     apply?: "board" | "device" | "band" | "overlay",
     shape?: ShapeKind,
   ) {
+    const generation = projectGenerationRef.current;
     try {
       const data = await readImageFile(file);
+      if (generation !== projectGenerationRef.current) return;
       const snapshot = (await addAsset({
         data: { ...pid, name: file.name, mime: file.type || "image/png", data },
       })) as StudioSnapshot & { assetId: string };
+      if (generation !== projectGenerationRef.current) return;
       await persist(async () => snapshot);
+      if (generation !== projectGenerationRef.current) return;
       const assetId = snapshot.assetId;
       if (assetId === undefined) return;
       if (apply === "board") {
@@ -802,7 +846,9 @@ function StudioShell({ projectId }: { projectId: string }) {
         }
       }
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not import");
+      if (generation === projectGenerationRef.current) {
+        setError(cause instanceof Error ? cause.message : "Could not import");
+      }
     }
   }
 

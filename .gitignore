@@ -20,3 +20,10 @@ desktop/bin/
 desktop/build/
 desktop/frontend/svg-compose/*
 !desktop/frontend/svg-compose/.gitkeep
+apps/desktop/build/
+apps/desktop/frontend/build/*
+!apps/desktop/frontend/build/.gitkeep
+apps/desktop/frontend/node_modules/
+apps/desktop/frontend/package.json.md5
+apps/desktop/frontend/.svelte-kit/
+apps/desktop/frontend/src/lib/wailsjs/wailsjs/

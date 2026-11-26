@@ -17,7 +17,9 @@ export class HistoryStack {
 
   /** Call *before* mutating the document. */
   checkpoint(): void {
-    this.past.push(this.read());
+    const snapshot = this.read();
+    if (this.past[this.past.length - 1] === snapshot) return;
+    this.past.push(snapshot);
     if (this.past.length > this.limit) this.past.shift();
     this.future = [];
   }

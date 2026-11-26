@@ -49,7 +49,7 @@ describe("sound catalog", () => {
 describe("play", () => {
   it("records named plays on the tape hook", () => {
     const events = tape();
-    play("click");
+    expect(play("click")).toBe(true);
     expect(events).toHaveLength(1);
     expect(events[0]?.name).toBe("click");
     expect(events[0]?.notes).toHaveLength(1);
@@ -58,16 +58,16 @@ describe("play", () => {
 
   it("throttles repeated plays within the gap window", () => {
     const events = tape();
-    play("click", { gap: 60_000 });
-    play("click", { gap: 60_000 });
+    expect(play("click", { gap: 60_000 })).toBe(true);
+    expect(play("click", { gap: 60_000 })).toBe(false);
     expect(events).toHaveLength(1);
   });
 
   it("respects a preview override unless asIs is set", () => {
     const events = tape();
     setPreview("paid", ["paid", "click"]);
-    play("click");
-    play("click", { asIs: true });
+    expect(play("click")).toBe(true);
+    expect(play("click", { asIs: true })).toBe(true);
     expect(events.map((event) => event.name)).toEqual(["paid", "click"]);
     expect(events[0]?.gain).toBe(3);
   });
@@ -75,7 +75,7 @@ describe("play", () => {
   it("ignores names excluded by the preview filter", () => {
     const events = tape();
     setPreview("paid", ["paid"]);
-    play("click");
+    expect(play("click")).toBe(false);
     expect(events).toHaveLength(0);
   });
 });
@@ -95,6 +95,13 @@ describe("controls", () => {
       controls.setVolume(original);
       unsubscribe();
     }
+  });
+
+  it("ignores non-finite volume changes", () => {
+    const original = controls.volume();
+    controls.setVolume(Number.NaN);
+    controls.setVolume(Number.POSITIVE_INFINITY);
+    expect(controls.volume()).toBe(original);
   });
 
   it("toggles the enabled state", () => {

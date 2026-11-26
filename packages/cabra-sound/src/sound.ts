@@ -956,6 +956,7 @@ const VOLUME_KEY = "cabra-volume";
 let audioContext: AudioContext | null = null;
 let unlocked = false;
 let silentBufferPlayed = false;
+const activeSources = new Set<AudioScheduledSourceNode>();
 
 /** Create the context on first use and play a one-sample buffer to warm it up. */
 function ensureAudio(): void {
@@ -965,7 +966,7 @@ function ensureAudio(): void {
     return;
   }
   const ctx = audioContext;
-  if (ctx.state !== "running") void ctx.resume();
+  if (ctx.state !== "running") void ctx.resume().catch(() => {});
   if (!silentBufferPlayed) {
     silentBufferPlayed = true;
     try {
@@ -979,18 +980,68 @@ function ensureAudio(): void {
   }
 }
 
-if (typeof window !== "undefined") {
-  const gestures = ["pointerdown", "keydown", "touchend", "click"];
+const gestures = ["pointerdown", "keydown", "touchend", "click"] as const;
+let gestureListenersInstalled = false;
+
+function installGestureListeners(): void {
+  if (gestureListenersInstalled || typeof window === "undefined") return;
+  gestureListenersInstalled = true;
   const onGesture = (event: Event): void => {
     if (
       (event as PointerEvent).isTrusted &&
       ((unlocked = true), ensureAudio(), audioContext?.state === "running")
     ) {
-      for (const gesture of gestures) window.removeEventListener(gesture, onGesture, true);
+      removeGestureListeners();
     }
   };
+  gestureHandler = onGesture;
   for (const gesture of gestures) window.addEventListener(gesture, onGesture, true);
 }
+
+let gestureHandler: ((event: Event) => void) | null = null;
+
+function removeGestureListeners(): void {
+  if (!gestureListenersInstalled || typeof window === "undefined") return;
+  if (gestureHandler) {
+    for (const gesture of gestures) window.removeEventListener(gesture, gestureHandler, true);
+  }
+  gestureHandler = null;
+  gestureListenersInstalled = false;
+}
+
+export function initializeAudio(): void {
+  installGestureListeners();
+}
+
+function stopActiveSources(): void {
+  for (const source of activeSources) {
+    try {
+      source.stop();
+    } catch {
+      // A source that already ended needs no further cleanup.
+    }
+  }
+  activeSources.clear();
+}
+
+export function disposeAudio(): void {
+  removeGestureListeners();
+  stopActiveSources();
+  const context = audioContext;
+  audioContext = null;
+  masterGain = null;
+  unlocked = false;
+  silentBufferPlayed = false;
+  if (context && context.state !== "closed") {
+    try {
+      void context.close().catch(() => {});
+    } catch {
+      // The context may already be closing.
+    }
+  }
+}
+
+installGestureListeners();
 
 function readEnabled(): boolean {
   try {
@@ -1014,12 +1065,22 @@ let volume = ((): number => {
 
 let masterGain: GainNode | null = null;
 
+/** Keep live output in sync with both the mute switch and the saved volume. */
+function syncMasterGain(immediate = false): void {
+  if (masterGain === null || audioContext === null) return;
+  const now = audioContext.currentTime;
+  const value = enabled ? volume : 0;
+  masterGain.gain.cancelScheduledValues(now);
+  if (immediate) masterGain.gain.setValueAtTime(value, now);
+  else masterGain.gain.setTargetAtTime(value, now, 0.02);
+}
+
 /** Route through the master gain when using the live context. */
 function outputFor(ctx: BaseAudioContext): AudioNode {
   if (ctx === audioContext) {
     masterGain ??= (() => {
       const gain = ctx.createGain();
-      gain.gain.value = volume;
+      gain.gain.value = enabled ? volume : 0;
       gain.connect(ctx.destination);
       return gain;
     })();
@@ -1033,10 +1094,9 @@ const subscribers = new Set<() => void>();
 export const controls: SoundControls = {
   volume: () => volume,
   setVolume(value) {
+    if (!Number.isFinite(value)) return;
     volume = Math.min(1, Math.max(0, value));
-    if (masterGain && audioContext) {
-      masterGain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.02);
-    }
+    syncMasterGain();
     try {
       localStorage.setItem(VOLUME_KEY, String(volume));
     } catch {
@@ -1051,6 +1111,7 @@ export const controls: SoundControls = {
   enabled: () => enabled,
   forceOn() {
     enabled = true;
+    syncMasterGain(true);
     subscribers.forEach((listener) => listener());
   },
   toggle() {
@@ -1060,6 +1121,8 @@ export const controls: SoundControls = {
     } catch {
       /* noop */
     }
+    if (!enabled) stopActiveSources();
+    syncMasterGain(true);
     if (enabled) play("click");
     subscribers.forEach((listener) => listener());
   },
@@ -1134,10 +1197,10 @@ function getTape(): TapeEvent[] | undefined {
   return (globalThis as { __tape?: TapeEvent[] }).__tape;
 }
 
-/** Play a named sound. */
-export function play(name: SoundName, options?: PlayOptions): void {
+/** Play a named sound, returning true only when it was scheduled or recorded. */
+export function play(name: SoundName, options?: PlayOptions): boolean {
   if (previewName && !options?.asIs) {
-    if (previewOnly && !previewOnly.includes(name)) return;
+    if (previewOnly && !previewOnly.includes(name)) return false;
     name = previewName;
     options = { ...options, force: true, gain: 3 };
   }
@@ -1146,7 +1209,7 @@ export function play(name: SoundName, options?: PlayOptions): void {
   if (tape) {
     if (options?.gap) {
       const now = performance.now();
-      if (now - (lastPlayed[name] ?? -Infinity) < options.gap) return;
+      if (now - (lastPlayed[name] ?? -Infinity) < options.gap) return false;
       lastPlayed[name] = now;
     }
     const bend = options?.at === undefined ? 1 : 0.75 + Math.min(1, Math.max(0, options.at)) * 0.75;
@@ -1157,39 +1220,51 @@ export function play(name: SoundName, options?: PlayOptions): void {
       t: performance.now(),
       gain: options?.gain ?? 1,
     });
-    return;
+    return true;
   }
 
-  if ((!enabled && !options?.force) || activeCount) return;
+  if ((!enabled && !options?.force) || activeCount) return false;
   if (options?.gap) {
     const now = performance.now();
-    if (now - (lastPlayed[name] ?? -Infinity) < options.gap) return;
+    if (now - (lastPlayed[name] ?? -Infinity) < options.gap) return false;
     lastPlayed[name] = now;
   }
-  if (!unlocked || (configureAudioSession(), ensureAudio(), !audioContext)) return;
+  if (!unlocked || (configureAudioSession(), ensureAudio(), !audioContext)) return false;
   const ctx = audioContext;
-  if (ctx.state !== "running") return;
+  if (ctx.state !== "running") return false;
   const bend = options?.at === undefined ? 1 : 0.75 + Math.min(1, Math.max(0, options.at)) * 0.75;
-  renderNotes(ctx, SOUNDS[name], bend, ctx.currentTime, options?.gain ?? 1);
+  const bypassMute = options?.force === true && !enabled;
+  const gain = (options?.gain ?? 1) * (bypassMute ? volume : 1);
+  renderNotes(
+    ctx,
+    SOUNDS[name],
+    bend,
+    ctx.currentTime,
+    gain,
+    bypassMute ? ctx.destination : undefined,
+  );
+  return true;
 }
 
 /** Play a raw note array (bypasses named-sound lookup). */
-function playNotes(notes: Note[], gain = 1): void {
+function playNotes(notes: Note[], gain = 1): boolean {
   const tape = getTape();
   if (tape) {
     tape.push({ notes, bend: 1, t: performance.now(), gain });
-    return;
+    return true;
   }
-  if (!enabled || activeCount || !unlocked) return;
+  if (!enabled || activeCount || !unlocked) return false;
   configureAudioSession();
   ensureAudio();
   if (audioContext && audioContext.state === "running") {
     renderNotes(audioContext, notes, 1, audioContext.currentTime, gain);
+    return true;
   }
+  return false;
 }
 
 /** A short rising/falling sweep made of many tiny voices. */
-export function sweep(duration: number, ascending: boolean): void {
+export function sweep(duration: number, ascending: boolean): boolean {
   const steps = Math.max(6, Math.round(duration / 360));
   const notes: Note[] = [];
   for (let i = 0; i < steps; i++) {
@@ -1208,12 +1283,12 @@ export function sweep(duration: number, ascending: boolean): void {
       at: eased * (duration - 60),
     });
   }
-  playNotes(notes);
+  return playNotes(notes);
 }
 
 /** A very quiet click used as a UI tick. */
-export function subtleTick(): void {
-  playNotes([
+export function subtleTick(): boolean {
+  return playNotes([
     { hz: 2600, ms: 16, gain: 0.006, q: 3, noise: "bandpass", atk: 1 },
     { hz: 880, to: 760, ms: 28, gain: 0.006, wave: "sine", atk: 2 },
   ]);
@@ -1226,6 +1301,7 @@ function renderNotes(
   bend: number,
   startTime: number,
   gain = 1,
+  outputTarget?: AudioNode,
 ): void {
   for (const note of notes) {
     const noteStart = startTime + (note.at ?? 0) / 1e3;
@@ -1273,8 +1349,12 @@ function renderNotes(
       node.connect(lowpass);
       output = lowpass;
     }
-    output.connect(envelope).connect(outputFor(ctx));
+    output.connect(envelope).connect(outputTarget ?? outputFor(ctx));
 
+    if (ctx === audioContext) {
+      activeSources.add(source);
+      source.onended = () => activeSources.delete(source);
+    }
     if (note.noise) (source as AudioBufferSourceNode).start(noteStart, Math.random() * 1.5);
     else (source as OscillatorNode).start(noteStart);
     source.stop(noteEnd + 0.02);
@@ -1358,9 +1438,15 @@ export async function getWaveform(names: SoundName[], buckets = 40): Promise<Wav
   const key = `${[...names].sort().join("+")}:${buckets}`;
   const cached = waveformCache.get(key);
   if (cached !== undefined) return cached;
+  let reference: number;
   try {
-    const reference = await (maxAmplitudeCache ??= computeMaxAmplitude());
-    if (!(reference > 0)) return null;
+    reference = await (maxAmplitudeCache ??= computeMaxAmplitude());
+  } catch {
+    maxAmplitudeCache = null;
+    return null;
+  }
+  if (!(reference > 0)) return null;
+  try {
     const notes = names.flatMap((name) => SOUNDS[name]);
     const ms = durationMs(notes);
     const ctx = new OfflineCtx(1, Math.ceil((ms / 1e3 + 0.02) * PEAK_RATE), PEAK_RATE);
@@ -1382,7 +1468,7 @@ export async function getWaveform(names: SoundName[], buckets = 40): Promise<Wav
     waveformCache.set(key, result);
     return result;
   } catch {
-    waveformCache.set(key, null);
+    waveformCache.delete(key);
     return null;
   }
 }
@@ -1391,7 +1477,7 @@ const WAV_RATE = 44100;
 const WAV_TAIL = 0.05;
 
 /** Render a set of sounds to a 16-bit PCM WAV blob. */
-export async function renderWav(names: SoundName[]): Promise<Blob | null> {
+export async function renderWav(names: readonly SoundName[]): Promise<Blob | null> {
   const OfflineCtx = getOfflineContext();
   if (!OfflineCtx || names.length === 0) return null;
   try {
@@ -1408,7 +1494,7 @@ export async function renderWav(names: SoundName[]): Promise<Blob | null> {
   }
 }
 
-export const wavFilename = (names: SoundName[]): string => `bencho-${names.join("-")}.wav`;
+export const wavFilename = (names: readonly SoundName[]): string => `bencho-${names.join("-")}.wav`;
 
 function encodeWav(samples: Float32Array, sampleRate: number): Blob {
   const dataLength = samples.length * 2;
