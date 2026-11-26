@@ -905,8 +905,8 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                   aria-label={`${layer.name} layer`}
                   aria-pressed={selectedId === layer.id}
                   className={`og-editor-layer og-editor-layer--${layer.kind}${
-                    selectedId === layer.id ? " selected" : ""
-                  }`}
+                    layer.name === "Background" ? " og-editor-layer--background" : ""
+                  }${selectedId === layer.id ? " selected" : ""}`}
                   onPointerDown={(event) => handleLayerPointerDown(event, layer)}
                   onPointerMove={handleLayerPointerMove}
                   onPointerUp={handleLayerPointerUp}

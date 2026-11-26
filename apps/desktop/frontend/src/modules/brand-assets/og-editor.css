@@ -194,6 +194,10 @@
   border-radius: 50%;
 }
 
+.og-editor-layer--background {
+  pointer-events: none;
+}
+
 .og-editor-layer--image {
   overflow: hidden;
 }
