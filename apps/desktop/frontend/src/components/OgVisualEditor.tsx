@@ -67,6 +67,7 @@ interface TextLayer extends LayerBase {
 interface ShapeLayer extends LayerBase {
   kind: "rect" | "ellipse";
   fill: string;
+  fillImage?: string;
   radius: number;
 }
 
@@ -90,6 +91,7 @@ interface LayerPatch {
   color?: string;
   align?: TextAlign;
   fill?: string;
+  fillImage?: string;
   radius?: number;
   src?: string;
 }
@@ -356,16 +358,23 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
   if (width === 0 || height === 0) return;
 
   const image = layer.kind === "image" ? await loadImage(layer.src) : null;
+  const shapeImage =
+    (layer.kind === "rect" || layer.kind === "ellipse") && layer.fillImage
+      ? await loadImage(layer.fillImage).catch(() => null)
+      : null;
   context.save();
   try {
     if (layer.kind === "rect") {
-      context.fillStyle = "#000000";
-      context.fillStyle = layer.fill;
       traceRoundRect(context, layer.x, layer.y, width, height, layer.radius);
-      context.fill();
+      if (shapeImage) {
+        context.clip();
+        drawCover(context, shapeImage, layer.x, layer.y, width, height);
+      } else {
+        context.fillStyle = "#000000";
+        context.fillStyle = layer.fill;
+        context.fill();
+      }
     } else if (layer.kind === "ellipse") {
-      context.fillStyle = "#000000";
-      context.fillStyle = layer.fill;
       context.beginPath();
       context.ellipse(
         layer.x + width / 2,
@@ -376,7 +385,14 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
         0,
         Math.PI * 2,
       );
-      context.fill();
+      if (shapeImage) {
+        context.clip();
+        drawCover(context, shapeImage, layer.x, layer.y, width, height);
+      } else {
+        context.fillStyle = "#000000";
+        context.fillStyle = layer.fill;
+        context.fill();
+      }
     } else if (layer.kind === "image" && image) {
       drawCover(context, image, layer.x, layer.y, width, height);
     } else if (layer.kind === "text") {
@@ -420,6 +436,7 @@ function layerVars(layer: Layer, scale: number): StyleVars {
   return {
     ...base,
     "--og-fill": layer.fill,
+    "--og-fill-image": layer.fillImage ? `url("${layer.fillImage}")` : "none",
     "--og-radius": `${layer.radius * scale}px`,
   };
 }
@@ -511,6 +528,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const dragRef = useRef<DragState | null>(null);
 
   const selectedLayer = layers.find((layer) => layer.id === selectedId) ?? null;
+  const backgroundLayerId = layers.find((layer) => layer.name === "Background")?.id ?? null;
   const previewVars: StyleVars = { "--og-aspect": `${designWidth} / ${designHeight}` };
 
   useEffect(() => {
@@ -624,7 +642,12 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
         const targetId = fileTargetRef.current;
         fileTargetRef.current = null;
         if (targetId) {
-          updateLayer(targetId, { src });
+          const target = layers.find((layer) => layer.id === targetId);
+          if (target?.kind === "rect" || target?.kind === "ellipse") {
+            updateLayer(targetId, { fillImage: src });
+          } else {
+            updateLayer(targetId, { src });
+          }
           return;
         }
         let width = Math.round(designWidth * 0.3);
@@ -652,7 +675,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
         setError(cause instanceof Error ? cause.message : "The image could not be added.");
       }
     },
-    [addLayer, designHeight, designWidth, updateLayer],
+    [addLayer, designHeight, designWidth, layers, updateLayer],
   );
 
   const handleLayerPointerDown = useCallback(
@@ -840,6 +863,15 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             >
               <ImagePlus size={13} aria-hidden="true" /> Image
             </button>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={() => backgroundLayerId && openFilePicker(backgroundLayerId)}
+              disabled={!backgroundLayerId}
+              aria-label="Set background image"
+            >
+              <ImagePlus size={13} aria-hidden="true" /> BG image
+            </button>
             <span className="og-editor-toolbar-hint">Drag layers to move them</span>
           </div>
 
@@ -979,6 +1011,25 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                       value={selectedLayer.fill}
                       onChange={(fill) => updateLayer(selectedLayer.id, { fill })}
                     />
+                    <div className="og-editor-actions">
+                      <button
+                        type="button"
+                        className="og-editor-button"
+                        onClick={() => openFilePicker(selectedLayer.id)}
+                      >
+                        <ImagePlus size={13} aria-hidden="true" />
+                        {selectedLayer.fillImage ? "Replace image" : "Set image"}
+                      </button>
+                      {selectedLayer.fillImage ? (
+                        <button
+                          type="button"
+                          className="og-editor-button"
+                          onClick={() => updateLayer(selectedLayer.id, { fillImage: "" })}
+                        >
+                          Remove image
+                        </button>
+                      ) : null}
+                    </div>
                     {selectedLayer.kind === "rect" ? (
                       <NumberField
                         label="Radius"

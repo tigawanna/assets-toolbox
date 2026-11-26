@@ -180,7 +180,10 @@
 
 .og-editor-layer--rect,
 .og-editor-layer--ellipse {
-  background: var(--og-fill, transparent);
+  background-color: var(--og-fill, transparent);
+  background-image: var(--og-fill-image, none);
+  background-position: center;
+  background-size: cover;
 }
 
 .og-editor-layer--rect {
