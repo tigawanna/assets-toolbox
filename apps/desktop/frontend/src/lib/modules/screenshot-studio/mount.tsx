@@ -11,7 +11,7 @@ export function mountScreenshotStudio(host: HTMLElement): () => void {
 
   const onReady = (next: DesktopFlush | null) => {
     flush = next;
-    if (next) setDesktopModuleActive("studio", true);
+    setDesktopModuleActive("studio", next !== null);
   };
 
   root.render(createElement(StrictMode, null, createElement(ScreenshotStudioApp, { onReady })));

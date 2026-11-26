@@ -7,7 +7,7 @@ import { BoardContent } from "@/canvas/board-content";
 import { boardCollections, collectionAsBoard, nodesInCollection } from "@/lib/scenes";
 import { fileSlug } from "@/lib/store-rules";
 import { assetUrl, boardFillFor, boardSize, type StudioSnapshot } from "@/lib/studio";
-import { dataUrlToBytes, downloadBlob, zipStore } from "@/lib/zip";
+import { dataUrlToBytes, downloadBlob, uniqueZipNames, zipStore } from "@/lib/zip";
 
 const IMAGE_LOAD_TIMEOUT_MS = 10_000;
 
@@ -286,7 +286,7 @@ export async function exportSnapshotSlices(
       });
     }
   }
-  return files;
+  return uniqueZipNames(files);
 }
 
 export async function downloadSnapshotsZip(
@@ -306,5 +306,8 @@ export async function downloadSnapshotsZip(
       });
     }
   }
-  downloadBlob(new Blob([zipStore(entries) as BlobPart], { type: "application/zip" }), filename);
+  downloadBlob(
+    new Blob([zipStore(uniqueZipNames(entries)) as BlobPart], { type: "application/zip" }),
+    filename,
+  );
 }

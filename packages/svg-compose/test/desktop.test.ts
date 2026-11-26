@@ -26,8 +26,10 @@ describe("desktop flush bridge", () => {
 
     expect(onDesktopFlush(callback)).toBe(unsubscribe);
     expect(eventsOn).toHaveBeenCalledWith("workspace:flush", callback);
+    callback(9);
+    expect(callback).toHaveBeenCalledWith(9);
 
-    completeDesktopFlush();
-    expect(eventsEmit).toHaveBeenCalledWith("workspace:flushed");
+    completeDesktopFlush(false, 9);
+    expect(eventsEmit).toHaveBeenCalledWith("workspace:flushed", false, 9);
   });
 });

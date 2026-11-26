@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { zipStore } from "./zip";
+import { uniqueZipNames, zipStore } from "./zip";
 
 describe("zipStore", () => {
   it("writes a valid store-only archive", () => {
@@ -16,5 +16,24 @@ describe("zipStore", () => {
     expect(archive.at(-21)).toBe(0x4b);
     expect(archive.at(-20)).toBe(0x05);
     expect(archive.at(-19)).toBe(0x06);
+  });
+
+  it("keeps archive paths unique when names collide", () => {
+    const files = uniqueZipNames([
+      { name: "Untitled/01.png", data: "a" },
+      { name: "Untitled/01.png", data: "b" },
+      { name: "A B/01.png", data: "c" },
+      { name: "A B/01.png", data: "d" },
+      { name: "A B/01.png", data: "e" },
+    ]);
+
+    expect(files.map((file) => file.name)).toEqual([
+      "Untitled/01.png",
+      "Untitled/01-2.png",
+      "A B/01.png",
+      "A B/01-2.png",
+      "A B/01-3.png",
+    ]);
+    expect(files.map((file) => file.data)).toEqual(["a", "b", "c", "d", "e"]);
   });
 });

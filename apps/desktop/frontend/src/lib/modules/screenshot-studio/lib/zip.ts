@@ -1,1 +1,7 @@
-export { dataUrlToBytes, downloadBlob, zipStore, type ZipEntry } from "../../../zip";
+export {
+  dataUrlToBytes,
+  downloadBlob,
+  uniqueZipNames,
+  zipStore,
+  type ZipEntry,
+} from "../../../zip";

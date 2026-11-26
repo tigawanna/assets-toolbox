@@ -60,13 +60,15 @@ export default function App() {
   const noticeId = useRef(0);
   const noticeTimer = useRef<number | null>(null);
   const hydratedRef = useRef(false);
+  const hydrationBaselineRef = useRef("");
+  const editedDuringHydrationRef = useRef(false);
   const lastDocumentKeyRef = useRef("");
   const pendingSaveRef = useRef<{ name: string; svg: string; viewport: StageViewport } | null>(
     null,
   );
   const saveTimerRef = useRef<number | null>(null);
   const saveRevisionRef = useRef(0);
-  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
 
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -94,14 +96,14 @@ export default function App() {
     noticeTimer.current = window.setTimeout(() => setNotice(null), 1900);
   }, []);
 
-  const persistNow = useCallback((): Promise<void> => {
+  const persistNow = useCallback((): Promise<boolean> => {
     const pending = pendingSaveRef.current;
-    if (!pending) return Promise.resolve();
+    if (!pending) return Promise.resolve(true);
     const revision = saveRevisionRef.current;
     saveWorkspaceToLocal(pending);
     setSaveState("saving");
 
-    const run = async (): Promise<void> => {
+    const run = async (): Promise<boolean> => {
       try {
         const saved = await saveWorkspaceToServer(pending);
         if (revision === saveRevisionRef.current) {
@@ -110,24 +112,24 @@ export default function App() {
           setLastSavedAt(saved.updatedAt);
           setSaveState("saved");
         }
+        return true;
       } catch {
         if (revision === saveRevisionRef.current) setSaveState("error");
+        return false;
       }
     };
 
     const result = saveQueueRef.current.catch(() => {}).then(run);
     saveQueueRef.current = result;
     void result.finally(() => {
-      if (saveQueueRef.current === result) saveQueueRef.current = Promise.resolve();
+      if (saveQueueRef.current === result) saveQueueRef.current = Promise.resolve(true);
     });
     return result;
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onDesktopFlush(() => {
-      // The shell waits for this acknowledgement before allowing the window to
-      // close. persistNow() always settles and keeps localStorage as fallback.
-      void persistNow().finally(completeDesktopFlush);
+    const unsubscribe = onDesktopFlush((requestId) => {
+      void persistNow().then((succeeded) => completeDesktopFlush(succeeded, requestId));
     });
     return unsubscribe;
   }, [persistNow]);
@@ -160,6 +162,9 @@ export default function App() {
     if (!container) return;
     const stage = new Stage(container);
     stageRef.current = stage;
+    hydrationBaselineRef.current = documentKey(stage.snapshot());
+    editedDuringHydrationRef.current = false;
+    let restoring = false;
     const sync = () => {
       setZoom(stage.zoomLevel);
       setCanUndo(stage.canUndo);
@@ -169,7 +174,12 @@ export default function App() {
       setTree(stage.getTree());
       setSelectedIds(stage.selectedIds);
       setEnteredGroupId(stage.enteredGroupId);
-      if (!hydratedRef.current) return;
+      if (!hydratedRef.current) {
+        if (!restoring && documentKey(stage.snapshot()) !== hydrationBaselineRef.current) {
+          editedDuringHydrationRef.current = true;
+        }
+        return;
+      }
       const snapshot = stage.snapshot();
       const key = documentKey(snapshot);
       if (key !== lastDocumentKeyRef.current) {
@@ -193,8 +203,14 @@ export default function App() {
         saved !== null &&
         saved === local &&
         (server === null || Date.parse(local.updatedAt) > Date.parse(server.updatedAt));
-      if (saved) {
-        stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
+      const editedDuringHydration = editedDuringHydrationRef.current;
+      if (saved && !editedDuringHydration) {
+        restoring = true;
+        try {
+          stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
+        } finally {
+          restoring = false;
+        }
         saveWorkspaceToLocal(saved, saved.updatedAt);
         setLastSavedAt(saved.updatedAt);
         notify("Restored saved work");
@@ -202,7 +218,16 @@ export default function App() {
       lastDocumentKeyRef.current = documentKey(stage.snapshot());
       hydratedRef.current = true;
       pendingSaveRef.current = null;
-      if (!saved) setSaveState("empty");
+      if (editedDuringHydration) {
+        const snapshot = stage.snapshot();
+        pendingSaveRef.current = {
+          name: "Untitled",
+          svg: snapshot.svg,
+          viewport: snapshot.viewport,
+        };
+        setSaveState("saving");
+        void persistNow();
+      } else if (!saved) setSaveState("empty");
       else if (localWon) {
         pendingSaveRef.current = {
           name: saved.name,
@@ -241,6 +266,8 @@ export default function App() {
       stage.destroy();
       stageRef.current = null;
       hydratedRef.current = false;
+      hydrationBaselineRef.current = "";
+      editedDuringHydrationRef.current = false;
     };
   }, [notify, queueSave]);
 

@@ -159,6 +159,8 @@ function StudioShell({
   const projectIdRef = useRef(projectId);
   const projectGeneration = useRef(0);
   const mutationQueue = useRef<Promise<void>>(Promise.resolve());
+  const pendingOperations = useRef(0);
+  const idleWaiters = useRef<Array<() => void>>([]);
   const mutationFailed = useRef(false);
   const nameRevision = useRef(0);
   const stripRevision = useRef(0);
@@ -251,7 +253,29 @@ function StudioShell({
     return run;
   }
 
+  function beginOperation(): () => void {
+    pendingOperations.current += 1;
+    let ended = false;
+    return () => {
+      if (ended) return;
+      ended = true;
+      pendingOperations.current -= 1;
+      if (pendingOperations.current === 0) {
+        const waiters = idleWaiters.current;
+        idleWaiters.current = [];
+        for (const resolve of waiters) resolve();
+      }
+    };
+  }
+
+  async function waitForOperations(): Promise<void> {
+    while (pendingOperations.current > 0) {
+      await new Promise<void>((resolve) => idleWaiters.current.push(resolve));
+    }
+  }
+
   const flush = useCallback<DesktopFlush>(async () => {
+    await waitForOperations();
     await mutationQueue.current;
     return !mutationFailed.current;
   }, []);
@@ -392,20 +416,28 @@ function StudioShell({
   }, [selected, span]);
 
   async function persist<T extends StudioSnapshot>(work: () => Promise<T>): Promise<T | null> {
+    const endOperation = beginOperation();
     const generation = projectGeneration.current;
-    if (!isProjectCurrent(generation)) return null;
+    if (!isProjectCurrent(generation)) {
+      endOperation();
+      return null;
+    }
     setError("");
     try {
-      return await serializeMutation(generation, async () => {
-        const snapshot = await work();
+      const snapshot = await serializeMutation(generation, async () => {
+        const result = await work();
         if (!isProjectCurrent(generation)) return null;
-        await mergeSnapshot(snapshot);
-        return isProjectCurrent(generation) ? snapshot : null;
+        await mergeSnapshot(result);
+        if (isProjectCurrent(generation)) mutationFailed.current = false;
+        return isProjectCurrent(generation) ? result : null;
       });
+      return snapshot;
     } catch (cause: unknown) {
       if (isProjectCurrent(generation)) mutationFailed.current = true;
       reportError(cause, "Could not save", generation);
       throw cause;
+    } finally {
+      endOperation();
     }
   }
 
@@ -419,8 +451,12 @@ function StudioShell({
     work: () => Promise<StudioSnapshot>,
     live: (generation: number) => Promise<void>,
   ): Promise<StudioSnapshot | null> {
+    const endOperation = beginOperation();
     const generation = projectGeneration.current;
-    if (!isProjectCurrent(generation)) return null;
+    if (!isProjectCurrent(generation)) {
+      endOperation();
+      return null;
+    }
     setError("");
     try {
       await live(generation);
@@ -429,12 +465,15 @@ function StudioShell({
         const snapshot = await work();
         if (!isProjectCurrent(generation)) return null;
         await mergeSnapshot(snapshot);
+        if (isProjectCurrent(generation)) mutationFailed.current = false;
         return isProjectCurrent(generation) ? snapshot : null;
       });
     } catch (cause: unknown) {
       if (isProjectCurrent(generation)) mutationFailed.current = true;
       reportError(cause, "Could not save", generation);
       return null;
+    } finally {
+      endOperation();
     }
   }
 
@@ -924,6 +963,7 @@ function StudioShell({
   ) {
     const generation = projectGeneration.current;
     if (!isProjectCurrent(generation)) return;
+    const endOperation = beginOperation();
     try {
       const data = await readImageFile(file);
       if (!isProjectCurrent(generation)) return;
@@ -960,6 +1000,8 @@ function StudioShell({
       }
     } catch (cause: unknown) {
       reportError(cause, "Could not import", generation);
+    } finally {
+      endOperation();
     }
   }
 

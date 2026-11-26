@@ -171,6 +171,39 @@ func TestBeforeCloseWaitsForEveryActiveModule(t *testing.T) {
 	}
 }
 
+func TestModuleActivatedDuringCloseRestartsFlush(t *testing.T) {
+	app, quitCalled := activeCloseApp(t)
+	if !app.beforeClose(context.Background()) {
+		t.Fatal("first close should request the workspace flush")
+	}
+	firstID := flushRequestID(app, "workspace")
+
+	app.closeMu.Lock()
+	app.activeModules["studio"] = true
+	app.closeMu.Unlock()
+	app.startCloseCycle(context.Background())
+
+	secondID := flushRequestID(app, "workspace")
+	if secondID == firstID {
+		t.Fatal("restarted close should issue a new request ID")
+	}
+	if app.acknowledgeFlush("workspace", true, float64(firstID)) {
+		t.Fatal("stale acknowledgement must not finish the restarted close")
+	}
+	app.acknowledgeFlush("workspace", true, float64(secondID))
+	select {
+	case <-quitCalled:
+		t.Fatal("app quit before the newly active studio flushed")
+	default:
+	}
+	app.acknowledgeFlush("studio", true, float64(flushRequestID(app, "studio")))
+	select {
+	case <-quitCalled:
+	case <-time.After(time.Second):
+		t.Fatal("app did not quit after the restarted close completed")
+	}
+}
+
 func TestWorkspaceIdentityIsStableAndDirectorySpecific(t *testing.T) {
 	firstPath := filepath.Join(t.TempDir(), "workspace.json")
 	secondPath := filepath.Join(t.TempDir(), "workspace.json")

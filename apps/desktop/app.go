@@ -77,7 +77,11 @@ func (a *App) startup(ctx context.Context) {
 			wailsruntime.EventsOn(ctx, module+":active", func(...interface{}) {
 				a.closeMu.Lock()
 				a.activeModules[module] = true
+				restartClose := a.closing
 				a.closeMu.Unlock()
+				if restartClose {
+					a.startCloseCycle(ctx)
+				}
 			}),
 			wailsruntime.EventsOn(ctx, module+":inactive", func(...interface{}) {
 				a.closeMu.Lock()
@@ -160,6 +164,18 @@ func (a *App) beforeClose(ctx context.Context) bool {
 		return true
 	}
 	a.closing = true
+	a.closeMu.Unlock()
+
+	a.startCloseCycle(ctx)
+	return true
+}
+
+// startCloseCycle flushes every module active at the time of the close. If a
+// module becomes active mid-close, the cycle restarts so its unsaved work is
+// included before the app exits.
+func (a *App) startCloseCycle(ctx context.Context) {
+	a.closeMu.Lock()
+	a.closing = true
 	a.closeSequence++
 	closeSequence := a.closeSequence
 	requests := make(map[string]flushRequest, len(a.activeModules))
@@ -167,6 +183,7 @@ func (a *App) beforeClose(ctx context.Context) bool {
 		a.flushSequence++
 		requests[module] = flushRequest{id: a.flushSequence, ack: make(chan bool, 1)}
 	}
+	a.cancelFlushRequestsLocked()
 	a.flushRequests = make(map[string]flushRequest, len(requests))
 	for module, request := range requests {
 		a.flushRequests[module] = request
@@ -177,7 +194,6 @@ func (a *App) beforeClose(ctx context.Context) bool {
 		a.emit(ctx, module+":flush", request.id)
 	}
 	go a.finishClose(ctx, closeSequence, requests)
-	return true
 }
 
 func (a *App) finishClose(ctx context.Context, closeSequence uint64, requests map[string]flushRequest) {

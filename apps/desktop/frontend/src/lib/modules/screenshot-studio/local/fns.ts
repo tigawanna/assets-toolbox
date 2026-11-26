@@ -107,42 +107,44 @@ function migrateLegacyProjects(): Promise<void> {
     } catch {
       return;
     }
+    let failed = false;
+    let ids: string[] = [];
     try {
-      let ids: string[] = [];
-      try {
-        const parsed: unknown = JSON.parse(legacy.getItem(LEGACY_INDEX_KEY) ?? "[]");
-        if (Array.isArray(parsed)) {
-          ids = parsed.filter((id): id is string => typeof id === "string");
-        }
-      } catch {
-        ids = [];
+      const parsed: unknown = JSON.parse(legacy.getItem(LEGACY_INDEX_KEY) ?? "[]");
+      if (Array.isArray(parsed)) {
+        ids = parsed.filter((id): id is string => typeof id === "string");
       }
+    } catch {
+      ids = [];
+    }
 
-      for (const id of new Set(ids)) {
-        const key = `${LEGACY_PROJECT_PREFIX}${id}`;
-        const raw = legacy.getItem(key);
-        if (raw === null) continue;
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(raw);
-        } catch {
-          continue;
-        }
-        if (!isLegacyProject(parsed)) continue;
+    for (const id of new Set(ids)) {
+      const key = `${LEGACY_PROJECT_PREFIX}${id}`;
+      const raw = legacy.getItem(key);
+      if (raw === null) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      if (!isLegacyProject(parsed)) continue;
+      try {
         await withProjectLock(id, async () => {
           if ((await readProject(id)) === null) {
             await writeStoredProject(id, clone(parsed.snapshot), parsed.updatedAt);
           }
         });
         legacy.removeItem(key);
+      } catch {
+        failed = true;
       }
-      legacy.removeItem(LEGACY_INDEX_KEY);
-    } catch {
-      // Legacy localStorage is an optional migration source; IndexedDB remains usable.
     }
-  })().catch((cause: unknown) => {
+    if (!failed) legacy.removeItem(LEGACY_INDEX_KEY);
+    if (failed) throw new Error("Some legacy boards could not be migrated");
+  })().catch(() => {
+    // Keep the legacy records so a later operation can retry the failed projects.
     legacyMigration = null;
-    throw cause;
   });
   return legacyMigration;
 }

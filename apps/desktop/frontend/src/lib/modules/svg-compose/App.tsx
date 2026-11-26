@@ -68,6 +68,8 @@ export default function App({ onReady }: AppProps) {
   const noticeId = useRef(0);
   const noticeTimer = useRef<number | null>(null);
   const hydratedRef = useRef(false);
+  const hydrationBaselineRef = useRef("");
+  const editedDuringHydrationRef = useRef(false);
   const lastDocumentKeyRef = useRef("");
   const pendingSaveRef = useRef<{ name: string; svg: string; viewport: StageViewport } | null>(
     null,
@@ -172,6 +174,9 @@ export default function App({ onReady }: AppProps) {
     if (!container) return;
     const stage = new Stage(container);
     stageRef.current = stage;
+    hydrationBaselineRef.current = documentKey(stage.snapshot());
+    editedDuringHydrationRef.current = false;
+    let restoring = false;
     const sync = () => {
       setZoom(stage.zoomLevel);
       setCanUndo(stage.canUndo);
@@ -181,7 +186,12 @@ export default function App({ onReady }: AppProps) {
       setTree(stage.getTree());
       setSelectedIds(stage.selectedIds);
       setEnteredGroupId(stage.enteredGroupId);
-      if (!hydratedRef.current) return;
+      if (!hydratedRef.current) {
+        if (!restoring && documentKey(stage.snapshot()) !== hydrationBaselineRef.current) {
+          editedDuringHydrationRef.current = true;
+        }
+        return;
+      }
       const snapshot = stage.snapshot();
       const key = documentKey(snapshot);
       if (key !== lastDocumentKeyRef.current) {
@@ -208,8 +218,14 @@ export default function App({ onReady }: AppProps) {
         saved !== null &&
         saved === local &&
         (server === null || Date.parse(local.updatedAt) > Date.parse(server.updatedAt));
-      if (saved) {
-        stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
+      const editedDuringHydration = editedDuringHydrationRef.current;
+      if (saved && !editedDuringHydration) {
+        restoring = true;
+        try {
+          stage.loadSnapshot({ svg: saved.svg, viewport: saved.viewport });
+        } finally {
+          restoring = false;
+        }
         saveWorkspaceToLocal(saved, { workspaceId, updatedAt: saved.updatedAt });
         setLastSavedAt(saved.updatedAt);
         notify("Restored saved work");
@@ -217,7 +233,16 @@ export default function App({ onReady }: AppProps) {
       lastDocumentKeyRef.current = documentKey(stage.snapshot());
       hydratedRef.current = true;
       pendingSaveRef.current = null;
-      if (!saved) setSaveState("empty");
+      if (editedDuringHydration) {
+        const snapshot = stage.snapshot();
+        pendingSaveRef.current = {
+          name: "Untitled",
+          svg: snapshot.svg,
+          viewport: snapshot.viewport,
+        };
+        setSaveState("saving");
+        void persistNow();
+      } else if (!saved) setSaveState("empty");
       else if (localWon) {
         pendingSaveRef.current = {
           name: saved.name,
@@ -256,6 +281,8 @@ export default function App({ onReady }: AppProps) {
       stage.destroy();
       stageRef.current = null;
       hydratedRef.current = false;
+      hydrationBaselineRef.current = "";
+      editedDuringHydrationRef.current = false;
     };
   }, [notify, queueSave]);
 

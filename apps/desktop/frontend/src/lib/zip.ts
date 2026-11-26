@@ -103,6 +103,25 @@ export function zipStore(entries: ZipEntry[]): Uint8Array {
   return concat([...locals, central, end]);
 }
 
+export function uniqueZipNames<T extends { name: string }>(entries: T[]): T[] {
+  const used = new Set<string>();
+  return entries.map((entry) => {
+    const slash = entry.name.lastIndexOf("/");
+    const dot = entry.name.lastIndexOf(".");
+    const hasExtension = dot > slash;
+    const base = hasExtension ? entry.name.slice(0, dot) : entry.name;
+    const extension = hasExtension ? entry.name.slice(dot) : "";
+    let name = entry.name;
+    let suffix = 2;
+    while (used.has(name.toLowerCase())) {
+      name = `${base}-${suffix}${extension}`;
+      suffix += 1;
+    }
+    used.add(name.toLowerCase());
+    return { ...entry, name };
+  });
+}
+
 export function dataUrlToBytes(dataUrl: string): Uint8Array {
   const comma = dataUrl.indexOf(",");
   const encoded = comma === -1 ? dataUrl : dataUrl.slice(comma + 1);

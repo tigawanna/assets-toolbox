@@ -15,7 +15,7 @@ const desktopRuntime = (): WailsRuntime | undefined =>
 export const onDesktopFlush = (callback: WailsEventCallback): (() => void) | undefined =>
   desktopRuntime()?.EventsOn(FLUSH_REQUEST, callback);
 
-/** Acknowledge a desktop flush after the pending save has settled. */
-export const completeDesktopFlush = (): void => {
-  desktopRuntime()?.EventsEmit(FLUSH_COMPLETE);
+/** Acknowledge a close-time flush after the durable write, echoing its request ID. */
+export const completeDesktopFlush = (succeeded = true, requestId?: unknown): void => {
+  desktopRuntime()?.EventsEmit(FLUSH_COMPLETE, succeeded, requestId);
 };
