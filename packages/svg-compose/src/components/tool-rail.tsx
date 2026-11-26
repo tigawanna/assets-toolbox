@@ -13,7 +13,6 @@ import {
   ImageIcon,
   ImportIcon,
   LineIcon,
-  LogoIcon,
   NodeIcon,
   PenIcon,
   RectIcon,
@@ -43,6 +42,7 @@ type ToolRailProps = {
   focusMode: boolean;
   onToggleFocus: () => void;
   onScaleHint: () => void;
+  showActions?: boolean;
 };
 
 type ToolEntry = { id: string | null; label: string; key: string; icon: ReactNode };
@@ -113,6 +113,7 @@ export function ToolRail({
   focusMode,
   onToggleFocus,
   onScaleHint,
+  showActions = true,
 }: ToolRailProps) {
   const pickFiles = (event: ChangeEvent<HTMLInputElement>) => {
     onImportFiles(Array.from(event.target.files ?? []));
@@ -121,13 +122,6 @@ export function ToolRail({
 
   return (
     <aside aria-label="Tools" className={`rail${expanded ? " expanded" : " collapsed"}`}>
-      <div className="rail-brand">
-        <span className="rail-brand-mark">
-          <LogoIcon />
-        </span>
-        {expanded && <span className="rail-brand-name">SVG Compose</span>}
-      </div>
-
       <div className="rail-body">
         <div className="rail-group">
           {expanded && <span className="rail-section-label">Create</span>}
@@ -167,85 +161,91 @@ export function ToolRail({
           />
         </div>
 
-        <div className="rail-group">
-          <RailButton
-            label="Undo"
-            icon={<UndoIcon />}
-            shortcut="⌘Z"
-            disabled={!canUndo}
-            expanded={expanded}
-            onClick={onUndo}
-          />
-          <RailButton
-            label="Redo"
-            icon={<RedoIcon />}
-            shortcut="⌘⇧Z"
-            disabled={!canRedo}
-            expanded={expanded}
-            onClick={onRedo}
-          />
-          <RailButton
-            label="Fit view"
-            icon={<FitIcon />}
-            shortcut="⌘0"
-            expanded={expanded}
-            onClick={onFit}
-          />
-          <RailButton
-            label="Recenter"
-            icon={<RecenterIcon />}
-            shortcut="C"
-            expanded={expanded}
-            onClick={onRecenter}
-          />
-        </div>
+        {showActions ? (
+          <>
+            <div className="rail-group">
+              <RailButton
+                label="Undo"
+                icon={<UndoIcon />}
+                shortcut="⌘Z"
+                disabled={!canUndo}
+                expanded={expanded}
+                onClick={onUndo}
+              />
+              <RailButton
+                label="Redo"
+                icon={<RedoIcon />}
+                shortcut="⌘⇧Z"
+                disabled={!canRedo}
+                expanded={expanded}
+                onClick={onRedo}
+              />
+              <RailButton
+                label="Fit view"
+                icon={<FitIcon />}
+                shortcut="⌘0"
+                expanded={expanded}
+                onClick={onFit}
+              />
+              <RailButton
+                label="Recenter"
+                icon={<RecenterIcon />}
+                shortcut="C"
+                expanded={expanded}
+                onClick={onRecenter}
+              />
+            </div>
 
-        <div className="rail-group">
-          <label
-            aria-label="Import SVG"
-            className="rail-button file-button"
-            data-tip={expanded ? undefined : "Import SVG"}
-            title={expanded ? undefined : "Import SVG"}
-          >
-            <span className="rail-icon">
-              <ImportIcon />
-            </span>
-            {expanded && <span className="rail-label">Import SVG</span>}
-            <input type="file" accept=".svg,image/svg+xml" multiple onChange={pickFiles} />
-          </label>
-          <RailButton
-            label="Export SVG"
-            icon={<ExportIcon />}
-            expanded={expanded}
-            onClick={onExportSvg}
-          />
-          <RailButton
-            label="Export PNG"
-            icon={<ImageIcon />}
-            expanded={expanded}
-            onClick={onExportPng}
-          />
-        </div>
+            <div className="rail-group">
+              <label
+                aria-label="Import SVG"
+                className="rail-button file-button"
+                data-tip={expanded ? undefined : "Import SVG"}
+                title={expanded ? undefined : "Import SVG"}
+              >
+                <span className="rail-icon">
+                  <ImportIcon />
+                </span>
+                {expanded && <span className="rail-label">Import SVG</span>}
+                <input type="file" accept=".svg,image/svg+xml" multiple onChange={pickFiles} />
+              </label>
+              <RailButton
+                label="Export SVG"
+                icon={<ExportIcon />}
+                expanded={expanded}
+                onClick={onExportSvg}
+              />
+              <RailButton
+                label="Export PNG"
+                icon={<ImageIcon />}
+                expanded={expanded}
+                onClick={onExportPng}
+              />
+            </div>
+          </>
+        ) : null}
 
         <div className="rail-spacer" />
 
-        <div className="rail-group">
-          <RailButton
-            label="Focus mode"
-            icon={<FocusIcon />}
-            shortcut="\\"
-            active={focusMode}
-            expanded={expanded}
-            onClick={onToggleFocus}
-          />
-          <RailButton
-            label="Shortcuts"
-            icon={<HelpIcon />}
-            shortcut="⇧?"
-            expanded={expanded}
-            onClick={onShortcuts}
-          />
-        </div>
+        {showActions ? (
+          <div className="rail-group">
+            <RailButton
+              label="Focus mode"
+              icon={<FocusIcon />}
+              shortcut="\\"
+              active={focusMode}
+              expanded={expanded}
+              onClick={onToggleFocus}
+            />
+            <RailButton
+              label="Shortcuts"
+              icon={<HelpIcon />}
+              shortcut="⇧?"
+              expanded={expanded}
+              onClick={onShortcuts}
+            />
+          </div>
+        ) : null}
       </div>
 
       <button

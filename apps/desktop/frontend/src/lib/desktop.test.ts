@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { completeDesktopFlush, onDesktopFlush, setDesktopModuleActive } from "./desktop";
@@ -9,7 +7,7 @@ afterEach(() => {
 });
 
 describe("desktop flush events", () => {
-  it("echoes the request ID and reports the durable write result", () => {
+  it("echoes request IDs and reports durable write results", () => {
     const EventsOn = vi.fn(() => () => {});
     const EventsEmit = vi.fn();
     vi.stubGlobal("runtime", { EventsOn, EventsEmit });

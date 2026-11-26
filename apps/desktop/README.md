@@ -1,8 +1,8 @@
-# Assets Toolbox desktop shell
+# Assets Toolbox desktop app
 
-A Wails + Go desktop application with a SvelteKit frontend. SVG Compose, Cabra
-Sound, and Screenshot Studio are mounted as working tools. The remaining packages
-in `packages/` have stable route placeholders, ready for their real UIs.
+A Wails + Go desktop application with a React 19 and TanStack Router frontend.
+The previous SvelteKit implementation is archived at `apps/desktop-svelte`; it is
+not part of the pnpm workspace and is not used by the active desktop build.
 
 ## Requirements
 
@@ -21,62 +21,53 @@ vp install
 pnpm run desktop:dev
 ```
 
-The command starts Vite, generates Wails bindings, and opens the native window.
-SVG Compose uses the bound Go workspace methods in both development and packaged
-builds; browser previews retain the HTTP/local-storage fallback.
-Use `Ctrl+B` (`Cmd+B` on macOS) to collapse or expand the root workspace
-sidebar. Inside SVG Compose, `[` toggles the tool rail, `]` toggles the
-inspector, and `Shift+?` opens the keyboard shortcut dialog. The root
-`pnpm run desktop:dev` and `pnpm run desktop:build` scripts use
-`scripts/desktop.mjs` to run Wails from the Go module directory on every platform.
-You can also run the frontend by itself for browser-based UI work:
+For browser-only UI work:
 
 ```bash
-pnpm --filter @assets-toolbox/desktop-ui dev
+pnpm --filter @assets-toolbox/desktop dev
 ```
 
-## Build
+The frontend uses one React root and one TanStack Router instance. Browser history
+is used for shell and Screenshot Studio board routes; the Go asset server returns
+`index.html` for client-side routes while missing assets still return 404.
+
+## Build and test
 
 ```bash
 pnpm run desktop:build
+pnpm --filter @assets-toolbox/desktop test
+pnpm --filter @assets-toolbox/desktop typecheck
+(cd apps/desktop && go test ./...)
 ```
 
 The executable is written to `apps/desktop/build/bin/assets-toolbox`.
-Turborepo also understands the Go module. These commands exercise the same tasks
-used by the repository-wide build:
 
-```bash
-pnpm exec turbo run build --filter=desktop
-pnpm exec turbo run test --filter=desktop
-pnpm exec turbo run lint --filter=desktop
-```
+## Package integration
 
-`go.work` enables Turborepo's experimental Go workspace discovery. The desktop
-build depends on `@assets-toolbox/desktop-ui#build`, so the SvelteKit bundle is
-embedded before Wails compiles the binary.
+The desktop does not copy package applications or translate them into another
+framework. Vite aliases import the canonical React sources directly:
 
-## Data storage
+- `@assets/svg-compose/*` → `packages/svg-compose/src/*`
+- `@assets/screenshot-studio/*` → `packages/screenshot-studio/src/*`
+- `@/server/fns` → Screenshot Studio's IndexedDB-backed browser adapter
 
-SVG Compose stores its native draft in `workspace.json` under the desktop config
-directory. `SVG_COMPOSE_DATA` can override the directory. This file is separate
-from the Node package's `.svg-compose/workspace.sqlite`; there is no automatic
-SQLite migration, so use a new directory when evaluating the desktop app.
-Browser backups are namespaced by the native workspace path. Screenshot Studio
-boards use browser IndexedDB storage.
+SVG Compose keeps its native Go workspace bridge and HTTP/browser fallback.
+Screenshot Studio uses IndexedDB in the desktop and real TanStack routes for
+board navigation. Cabra Sound uses the canonical Web Audio engine with a native
+React interface.
 
-## Mounting a package
+## Routes
 
-1. Copy the package UI into this frontend for the first pass.
-2. Add its component under `src/lib/modules/<package>/`.
-3. Add a static route at `src/routes/packages/<package>/` so it takes precedence
-   over the generic `[slug]` placeholder.
-4. Keep `src/lib/catalog.ts` as the source of truth for shell metadata and mark the
-   package as `mounted`.
+- `/` — package library
+- `/packages/:slug` — package details or integration placeholder
+- `/packages/svg-compose` — SVG editor
+- `/packages/screenshot-studio` — Studio board list
+- `/packages/screenshot-studio/board/:projectId` — Studio editor
+- `/packages/cabra-sound` — sound browser and exporter
 
-The shell intentionally does not import the remaining package applications yet.
-This keeps their Vite, React, and server dependencies isolated until each mount
-is designed. SVG Compose is mounted as a scoped React island; Cabra Sound reuses
-the lifted Web Audio engine through a native Svelte interface. Screenshot Studio
-uses a browser-local snapshot adapter, so its editor, history, and export work
-without a Node sidecar. Its MCP and SSE server endpoints are not available in
-this embedded mode.
+## Persistence
+
+SVG Compose stores its native draft under the desktop config directory and mirrors
+it to workspace-namespaced local storage. Screenshot Studio boards use IndexedDB.
+The Go close-time flush handshake waits for active editors to acknowledge durable
+writes before quitting.

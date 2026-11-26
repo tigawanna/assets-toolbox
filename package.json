@@ -4,19 +4,18 @@
   "description": "CLI and local-app tools for brand, social-preview, Expo, and store-listing assets.",
   "type": "module",
   "scripts": {
-    "build": "turbo run build --filter=!desktop --filter=!go-workspace",
-    "dev": "turbo run dev --filter=!desktop --filter=!go-workspace",
-    "test": "turbo run test --filter=!desktop --filter=!go-workspace",
+    "build": "turbo run build --filter=!desktop --filter=!@assets-toolbox/desktop --filter=!go-workspace",
+    "dev": "turbo run dev --filter=!desktop --filter=!@assets-toolbox/desktop --filter=!go-workspace",
+    "test": "turbo run test --filter=!desktop --filter=!@assets-toolbox/desktop --filter=!go-workspace",
     "desktop:dev": "node scripts/desktop.mjs dev",
     "desktop:build": "node scripts/desktop.mjs build -trimpath -ldflags \"-s -w\"",
-    "postinstall": "pnpm --filter @assets-toolbox/desktop-ui exec svelte-kit sync",
     "lint": "vp lint --deny-warnings .",
     "lint:fix": "vp lint --fix .",
     "format": "vp fmt .",
     "format:fix": "vp fmt .",
     "check-types": "turbo run typecheck",
     "check-exports": "turbo run check-exports",
-    "quality": "turbo run //#lint //#format check-types test --filter=!desktop --filter=!go-workspace"
+    "quality": "turbo run //#lint //#format check-types test --filter=!desktop --filter=!@assets-toolbox/desktop --filter=!go-workspace"
   },
   "devDependencies": {
     "@shadcn/lint": "catalog:",

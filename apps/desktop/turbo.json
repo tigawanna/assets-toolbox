@@ -2,9 +2,9 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "dependsOn": ["@assets-toolbox/desktop-ui#build"],
+      "dependsOn": ["@assets-toolbox/desktop#build"],
       "command": ["wails", "build", "-s", "-trimpath", "-ldflags", "-s -w"],
-      "outputs": ["build/bin/**"]
+      "outputs": ["build/bin/**", "frontend/build/**"]
     },
     "dev": {
       "cache": false,
@@ -13,14 +13,14 @@
     },
     "test": {
       "dependsOn": [
-        "@assets-toolbox/desktop-ui#build",
-        "@assets-toolbox/desktop-ui#test",
-        "@assets-toolbox/desktop-ui#typecheck"
+        "@assets-toolbox/desktop#build",
+        "@assets-toolbox/desktop#test",
+        "@assets-toolbox/desktop#typecheck"
       ],
       "command": ["go", "test", "-tags=webkit2_41", "./..."]
     },
     "lint": {
-      "dependsOn": ["@assets-toolbox/desktop-ui#build", "@assets-toolbox/desktop-ui#typecheck"],
+      "dependsOn": ["@assets-toolbox/desktop#build", "@assets-toolbox/desktop#typecheck"],
       "command": ["go", "vet", "-tags=webkit2_41", "./..."]
     }
   }

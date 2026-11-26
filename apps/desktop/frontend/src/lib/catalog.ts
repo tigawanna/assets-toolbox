@@ -1,9 +1,16 @@
 export type PackageCategory = "Create" | "Inspect" | "Prepare" | "Audio";
-
 export type PackageIconName = "shapes" | "scan" | "swatchbook" | "device" | "frame" | "waveform";
+export type ToolId =
+  | "svg-compose"
+  | "social-inspect"
+  | "brand-assets"
+  | "expo-assets"
+  | "screenshot-studio"
+  | "cabra-sound";
+export type ToolRoute = `/packages/${ToolId}`;
 
 export interface ToolPackage {
-  id: string;
+  id: ToolId;
   name: string;
   shortName: string;
   description: string;
@@ -13,7 +20,7 @@ export interface ToolPackage {
   source: string;
   stack: string;
   mount: string;
-  route: string;
+  route: ToolRoute;
   featured?: boolean;
   mounted?: boolean;
 }
@@ -29,7 +36,7 @@ const packageSeed = [
     tags: ["Vector", "Editor", "Export"],
     source: "packages/svg-compose",
     stack: "React + Vite",
-    mount: "Mounted with the original React UI and a Go workspace API",
+    mount: "Original React UI with native Go workspace persistence",
     featured: true,
     mounted: true,
   },
@@ -79,8 +86,8 @@ const packageSeed = [
     icon: "frame",
     tags: ["Canvas", "App Store", "Export"],
     source: "packages/screenshot-studio",
-    stack: "TanStack Start + Konva",
-    mount: "Mounted with the React canvas and local board storage",
+    stack: "TanStack Router + Konva",
+    mount: "Original React canvas with browser-local board storage",
     mounted: true,
   },
   {
@@ -93,7 +100,7 @@ const packageSeed = [
     tags: ["Sound", "Web Audio", "WAV"],
     source: "packages/cabra-sound",
     stack: "Web Audio",
-    mount: "Mounted with the procedural Web Audio engine",
+    mount: "React interface using the procedural Web Audio engine",
     mounted: true,
   },
 ] satisfies readonly Omit<ToolPackage, "route">[];

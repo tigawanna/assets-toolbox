@@ -41,7 +41,6 @@ export interface ZipEntry {
   data: Uint8Array;
 }
 
-/** Store-only zip so generated files can download as one archive. */
 export function zipStore(entries: ZipEntry[]): Uint8Array {
   const locals: Uint8Array[] = [];
   const centrals: Uint8Array[] = [];

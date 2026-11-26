@@ -9,10 +9,9 @@ export interface NativeSystemInfo {
 
 interface WailsWindow extends Window {
   go?: {
-    main: {
-      App: {
-        GetSystemInfo(): Promise<NativeSystemInfo>;
-        WorkspaceID(): Promise<string>;
+    main?: {
+      App?: {
+        GetSystemInfo?: () => Promise<NativeSystemInfo>;
       };
     };
   };
@@ -28,30 +27,11 @@ const browserPreview: NativeSystemInfo = {
 };
 
 export async function getSystemInfo(): Promise<NativeSystemInfo> {
-  if (typeof window === "undefined") {
-    return browserPreview;
-  }
-
-  const bridge = (window as WailsWindow).go;
-  if (!bridge) {
-    return browserPreview;
-  }
-
-  return bridge.main.App.GetSystemInfo();
-}
-
-export async function getWorkspaceId(): Promise<string> {
-  if (typeof window === "undefined") return "";
-  const bridge = (window as WailsWindow).go;
-  if (!bridge?.main.App.WorkspaceID) return "";
-  try {
-    return await bridge.main.App.WorkspaceID();
-  } catch {
-    return "";
-  }
+  if (typeof window === "undefined") return browserPreview;
+  const app = (window as WailsWindow).go?.main?.App;
+  return app?.GetSystemInfo ? app.GetSystemInfo() : browserPreview;
 }
 
 export function formatPlatform(info: NativeSystemInfo): string {
-  if (!info.desktop) return "Browser preview";
-  return `${info.os}/${info.arch}`;
+  return info.desktop ? `${info.os}/${info.arch}` : "Browser preview";
 }

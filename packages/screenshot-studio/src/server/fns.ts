@@ -36,6 +36,9 @@ import {
 import { writeOpenBoard } from "./open-board";
 import { studioSettings } from "./settings";
 
+export type { ProjectSummary } from "./projects";
+export type { StudioSettings } from "./settings";
+
 function isStore(value: unknown): value is StoreName {
   return value === "play" || value === "app-store";
 }

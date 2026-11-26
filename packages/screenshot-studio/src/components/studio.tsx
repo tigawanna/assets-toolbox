@@ -14,11 +14,12 @@ import {
   SlidersHorizontal,
   Undo2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { downloadSnapshotsZip } from "@/canvas/export-slices";
 import { CanvasHost } from "@/canvas/canvas-host";
+import { completeDesktopFlush, onDesktopFlush, type DesktopFlush } from "@/desktop/runtime";
 import { ScreenshotStudioIcon } from "@/components/brand-icon";
 import { BoardCloneMenu } from "@/components/board-clone-menu";
 import { SettingsDrawer } from "@/components/settings-drawer";
@@ -100,6 +101,7 @@ import {
   patchNode,
   removeCollection,
   removeNode,
+  renameBoard,
   reorderStack,
   restoreHistory,
   undoEvent,
@@ -112,15 +114,32 @@ function busyLabel(busy: string): string {
   return "Working…";
 }
 
-export function Studio({ projectId }: { projectId: string }) {
+export type StudioProps = {
+  projectId: string;
+  onReady?: (flush: DesktopFlush | null) => void;
+  onHome?: () => void;
+  embedded?: boolean;
+};
+
+export function Studio({ projectId, onReady, onHome, embedded = false }: StudioProps) {
   return (
     <HotkeysProvider>
-      <StudioShell key={projectId} projectId={projectId} />
+      <StudioShell projectId={projectId} onReady={onReady} onHome={onHome} embedded={embedded} />
     </HotkeysProvider>
   );
 }
 
-function StudioShell({ projectId }: { projectId: string }) {
+function StudioShell({
+  projectId,
+  onReady,
+  onHome,
+  embedded,
+}: {
+  projectId: string;
+  onReady?: (flush: DesktopFlush | null) => void;
+  onHome?: () => void;
+  embedded: boolean;
+}) {
   const boardQuery = useLiveQuery((q) => q.from({ board: boardCollection }));
   const nodeQuery = useLiveQuery((q) => q.from({ node: nodesCollection }));
   const assetQuery = useLiveQuery((q) => q.from({ asset: assetsCollection }));
@@ -138,30 +157,42 @@ function StudioShell({ projectId }: { projectId: string }) {
   const [nameDraft, setNameDraft] = useState("Untitled");
   const [stripDraft, setStripDraft] = useState("Scenes");
   const [busy, setBusy] = useState("");
-  const [hydrated, setHydrated] = useState(false);
+  const [hydratedProjectId, setHydratedProjectId] = useState<string | null>(null);
+  const hydrated = hydratedProjectId === projectId;
   const undoRef = useRef<() => void>(() => {});
   const undoing = useRef(false);
   const projectIdRef = useRef(projectId);
-  const projectGenerationRef = useRef(0);
+  const projectGeneration = useRef(0);
   if (projectIdRef.current !== projectId) {
     projectIdRef.current = projectId;
-    projectGenerationRef.current += 1;
+    projectGeneration.current += 1;
   }
-  const nameTimer = useRef(0);
-  const stripTimer = useRef(0);
+  const mutationQueue = useRef<Promise<void>>(Promise.resolve());
+  const pendingOperations = useRef(0);
+  const idleWaiters = useRef<Array<() => void>>([]);
+  const mutationFailed = useRef(false);
+  const nameRevision = useRef(0);
+  const stripRevision = useRef(0);
+  const nameEditing = useRef(false);
+  const stripEditing = useRef(false);
+  const nameBaseline = useRef("");
+  const stripBaseline = useRef("");
+  const skipNameBlur = useRef(false);
+  const skipStripBlur = useRef(false);
   const formatHotkey = useFormatForDisplay();
-  const leftHint = formatHotkey("Mod+B");
-  const rightHint = formatHotkey("Mod+L");
+  const leftHint = formatHotkey(embedded ? "[" : "Mod+B");
+  const rightHint = formatHotkey(embedded ? "]" : "Mod+L");
   const duplicateHint = formatHotkey("Mod+D");
   const undoHint = formatHotkey("Mod+Z");
   const presets = listPresets();
   const pid = { projectId };
-  const isProjectCurrent = (generation: number) =>
-    generation === projectGenerationRef.current && projectIdRef.current === projectId;
   const board = boardQuery.data[0] ?? defaultBoard();
   const nodes = nodeQuery.data ?? [];
   const assets = assetQuery.data ?? [];
   const activeCollection = selectionCollection(board, nodes, selectedId);
+  const activeCollectionIdRef = useRef(activeCollection.id);
+  const stripDraftCollectionIdRef = useRef(activeCollection.id);
+  activeCollectionIdRef.current = activeCollection.id;
   const fill = collectionFill(activeCollection);
   const selectedBandId = parseBandSelection(selectedId);
   const selectedBand =
@@ -206,13 +237,73 @@ function StudioShell({ projectId }: { projectId: string }) {
   const playPresets = presets.filter((preset) => preset.store === "play");
   const appPresets = presets.filter((preset) => preset.store === "app-store");
 
+  function isProjectCurrent(generation: number): boolean {
+    return projectGeneration.current === generation && projectIdRef.current === projectId;
+  }
+
+  function reportError(cause: unknown, fallback: string, generation: number) {
+    if (!isProjectCurrent(generation)) return;
+    setError(cause instanceof Error ? cause.message : fallback);
+  }
+
+  function serializeMutation<T>(generation: number, work: () => Promise<T>): Promise<T | null> {
+    const run = mutationQueue.current.then(async () => {
+      if (!isProjectCurrent(generation)) return null;
+      return await work();
+    });
+    mutationQueue.current = run.then(
+      () => {},
+      () => {},
+    );
+    return run;
+  }
+
+  function beginOperation(): () => void {
+    pendingOperations.current += 1;
+    let ended = false;
+    return () => {
+      if (ended) return;
+      ended = true;
+      pendingOperations.current -= 1;
+      if (pendingOperations.current === 0) {
+        const waiters = idleWaiters.current;
+        idleWaiters.current = [];
+        for (const resolve of waiters) resolve();
+      }
+    };
+  }
+
+  async function waitForOperations(): Promise<void> {
+    while (pendingOperations.current > 0) {
+      await new Promise<void>((resolve) => idleWaiters.current.push(resolve));
+    }
+  }
+
+  const flush = useCallback<DesktopFlush>(async () => {
+    await waitForOperations();
+    await mutationQueue.current;
+    return !mutationFailed.current;
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onDesktopFlush("studio", (requestId) => {
+      void flush().then((succeeded) => completeDesktopFlush("studio", succeeded, requestId));
+    });
+    onReady?.(flush);
+    return () => {
+      unsubscribe?.();
+      onReady?.(null);
+    };
+  }, [flush, onReady]);
+
   useHotkeys([
-    { hotkey: "Mod+B", callback: () => setLeftOpen((open) => !open) },
-    { hotkey: "Mod+L", callback: () => setRightOpen((open) => !open) },
+    { hotkey: embedded ? "[" : "Mod+B", callback: () => setLeftOpen((open) => !open) },
+    { hotkey: embedded ? "]" : "Mod+L", callback: () => setRightOpen((open) => !open) },
     {
       hotkey: "Mod+D",
       callback: (event) => {
         event.preventDefault();
+        if (!hydrated) return;
         if (selected !== null) void duplicateSelectedNode(selected.id);
         else if (span !== null) void duplicateSelectedSlice();
       },
@@ -236,27 +327,39 @@ function StudioShell({ projectId }: { projectId: string }) {
   }, [projectId]);
 
   useEffect(() => {
-    const generation = ++projectGenerationRef.current;
+    return () => {
+      projectGeneration.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
+    const generation = projectGeneration.current;
+    nameRevision.current = 0;
+    stripRevision.current = 0;
+    nameEditing.current = false;
+    stripEditing.current = false;
+    undoing.current = false;
+    mutationFailed.current = false;
     setError("");
-    setHydrated(false);
+    setSelectedId(null);
+    setBusy("");
+    setReloading(false);
+    setHydratedProjectId(null);
     void (async () => {
       try {
         await clearStudio();
-        if (cancelled || generation !== projectGenerationRef.current) return;
+        if (cancelled || !isProjectCurrent(generation)) return;
         const snapshot = await loadStudio({ data: { projectId } });
-        if (cancelled || generation !== projectGenerationRef.current) return;
+        if (cancelled || !isProjectCurrent(generation)) return;
         await applySnapshot(snapshot);
-        if (!cancelled && generation === projectGenerationRef.current) setHydrated(true);
+        if (!cancelled && isProjectCurrent(generation)) setHydratedProjectId(projectId);
       } catch (cause: unknown) {
-        if (!cancelled && generation === projectGenerationRef.current) {
-          setError(cause instanceof Error ? cause.message : "Could not load");
-        }
+        if (!cancelled) reportError(cause, "Could not load", generation);
       }
     })();
     return () => {
       cancelled = true;
-      if (projectGenerationRef.current === generation) projectGenerationRef.current += 1;
     };
   }, [projectId]);
 
@@ -264,8 +367,8 @@ function StudioShell({ projectId }: { projectId: string }) {
   seqRef.current = events[0]?.seq ?? total;
 
   useEffect(() => {
-    if (!hydrated) return;
-    const generation = projectGenerationRef.current;
+    if (embedded || !hydrated) return;
+    const generation = projectGeneration.current;
     const source = new EventSource(`/api/live?projectId=${encodeURIComponent(projectId)}`);
     source.onmessage = (event) => {
       let payload: { type?: string; seq?: number } = {};
@@ -277,18 +380,24 @@ function StudioShell({ projectId }: { projectId: string }) {
       if (payload.type !== "change") return;
       if (typeof payload.seq === "number" && payload.seq <= seqRef.current) return;
       void loadStudio({ data: { projectId } }).then((snapshot) => {
-        if (generation === projectGenerationRef.current) return mergeSnapshot(snapshot);
+        if (isProjectCurrent(generation)) return mergeSnapshot(snapshot);
       });
     };
     return () => source.close();
-  }, [hydrated, projectId]);
+  }, [embedded, hydrated, projectId]);
 
   useEffect(() => {
-    setNameDraft(board.name);
+    if (!nameEditing.current && nameRevision.current === 0) setNameDraft(board.name);
   }, [board.name]);
 
   useEffect(() => {
-    setStripDraft(activeCollection.name);
+    if (stripDraftCollectionIdRef.current !== activeCollection.id) {
+      stripDraftCollectionIdRef.current = activeCollection.id;
+      stripRevision.current = 0;
+      setStripDraft(activeCollection.name);
+      return;
+    }
+    if (!stripEditing.current && stripRevision.current === 0) setStripDraft(activeCollection.name);
   }, [activeCollection.id, activeCollection.name]);
 
   useEffect(() => {
@@ -298,16 +407,6 @@ function StudioShell({ projectId }: { projectId: string }) {
       }
       if (event.key === "Escape") {
         setSelectedId(null);
-        return;
-      }
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        !event.altKey &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === "z"
-      ) {
-        event.preventDefault();
-        undoRef.current();
         return;
       }
       if (event.key === "Delete" || event.key === "Backspace") {
@@ -340,38 +439,64 @@ function StudioShell({ projectId }: { projectId: string }) {
   }, [selected, span]);
 
   async function persist<T extends StudioSnapshot>(work: () => Promise<T>): Promise<T | null> {
-    const generation = projectGenerationRef.current;
-    if (!isProjectCurrent(generation)) return null;
+    const endOperation = beginOperation();
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) {
+      endOperation();
+      return null;
+    }
     setError("");
     try {
-      const snapshot = await work();
-      if (!isProjectCurrent(generation)) return null;
-      await mergeSnapshot(snapshot);
-      return isProjectCurrent(generation) ? snapshot : null;
+      const snapshot = await serializeMutation(generation, async () => {
+        const result = await work();
+        if (!isProjectCurrent(generation)) return null;
+        await mergeSnapshot(result);
+        if (isProjectCurrent(generation)) mutationFailed.current = false;
+        return isProjectCurrent(generation) ? result : null;
+      });
+      return snapshot;
     } catch (cause: unknown) {
-      if (isProjectCurrent(generation)) {
-        setError(cause instanceof Error ? cause.message : "Could not save");
-      }
+      if (isProjectCurrent(generation)) mutationFailed.current = true;
+      reportError(cause, "Could not save", generation);
       throw cause;
+    } finally {
+      endOperation();
     }
+  }
+
+  function save(work: () => Promise<StudioSnapshot>) {
+    void persist(work).catch(() => {
+      // persist has already reported the error for the active project.
+    });
   }
 
   async function persistLive(
     work: () => Promise<StudioSnapshot>,
     live: (generation: number) => Promise<void>,
-  ) {
-    const generation = projectGenerationRef.current;
+  ): Promise<StudioSnapshot | null> {
+    const endOperation = beginOperation();
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) {
+      endOperation();
+      return null;
+    }
     setError("");
     try {
-      if (!isProjectCurrent(generation)) return;
       await live(generation);
-      if (!isProjectCurrent(generation)) return;
-      const snapshot = await work();
-      if (isProjectCurrent(generation)) await mergeSnapshot(snapshot);
+      if (!isProjectCurrent(generation)) return null;
+      return await serializeMutation(generation, async () => {
+        const snapshot = await work();
+        if (!isProjectCurrent(generation)) return null;
+        await mergeSnapshot(snapshot);
+        if (isProjectCurrent(generation)) mutationFailed.current = false;
+        return isProjectCurrent(generation) ? snapshot : null;
+      });
     } catch (cause: unknown) {
-      if (isProjectCurrent(generation)) {
-        setError(cause instanceof Error ? cause.message : "Could not save");
-      }
+      if (isProjectCurrent(generation)) mutationFailed.current = true;
+      reportError(cause, "Could not save", generation);
+      return null;
+    } finally {
+      endOperation();
     }
   }
 
@@ -385,6 +510,7 @@ function StudioShell({ projectId }: { projectId: string }) {
     label: string,
     kind: "edit" | "move" | "transform" = "edit",
   ) {
+    if (!isProjectCurrent(projectGeneration.current)) return;
     const current = nodes.find((node) => node.id === id);
     if (current === undefined) return;
     const next = { ...current, ...patch, id: current.id, type: current.type } as StudioNode;
@@ -395,6 +521,7 @@ function StudioShell({ projectId }: { projectId: string }) {
   }
 
   async function removeSelected(id: string) {
+    if (!isProjectCurrent(projectGeneration.current)) return;
     setSelectedId(null);
     await persistLive(
       () => removeNode({ data: { ...pid, id } }),
@@ -402,55 +529,89 @@ function StudioShell({ projectId }: { projectId: string }) {
     );
   }
 
-  async function commitBoardName(raw: string) {
-    window.clearTimeout(nameTimer.current);
+  async function commitBoardName(raw: string, normalizeDraft = true) {
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
     const name = raw.trim() === "" ? "Untitled" : raw.trim();
-    setNameDraft(name);
-    if (name === board.name) return;
+    if (normalizeDraft) setNameDraft(name);
+    const revision = ++nameRevision.current;
     try {
-      await persistLive(
-        () => patchBoard({ data: { ...pid, name } }),
-        () => replaceBoard({ ...board, name }),
-      );
+      const snapshot = await persist(async () => {
+        const result: unknown = await renameBoard({ data: { ...pid, name } });
+        // The browser adapter returns a snapshot; the canonical server returns a summary.
+        if (result !== null && typeof result === "object" && "board" in result) {
+          return result as StudioSnapshot;
+        }
+        return loadStudio({ data: pid });
+      });
+      if (snapshot === null || !isProjectCurrent(generation) || revision !== nameRevision.current) {
+        return;
+      }
+      nameRevision.current = 0;
+      if (!nameEditing.current) setNameDraft(snapshot.board.name);
     } catch (cause: unknown) {
-      setNameDraft(board.name);
-      setError(cause instanceof Error ? cause.message : "Could not rename");
+      if (!isProjectCurrent(generation) || revision !== nameRevision.current) return;
+      nameRevision.current = 0;
+      if (!nameEditing.current) setNameDraft(board.name);
+      reportError(cause, "Could not rename", generation);
     }
   }
 
   function queueBoardName(raw: string) {
+    nameEditing.current = true;
     setNameDraft(raw);
-    window.clearTimeout(nameTimer.current);
-    nameTimer.current = window.setTimeout(() => {
-      void commitBoardName(raw);
-    }, 400);
+    void commitBoardName(raw, false);
   }
 
-  async function commitStripName(raw: string) {
-    window.clearTimeout(stripTimer.current);
+  async function commitStripName(raw: string, normalizeDraft = true) {
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
+    const collectionId = activeCollection.id;
     const name = raw.trim() === "" ? activeCollection.name : raw.trim();
-    setStripDraft(name);
-    if (name === activeCollection.name) return;
+    if (normalizeDraft) setStripDraft(name);
+    const revision = ++stripRevision.current;
     try {
-      await persistLive(
-        () =>
-          patchBoard({
-            data: { ...pid, collectionId: activeCollection.id, name },
-          }),
-        () => replaceBoard(patchCollection(board, activeCollection.id, { name })),
-      );
+      // The browser adapter supports history-preserving collection renames. The
+      // canonical server keeps its existing patchBoard API in standalone mode.
+      const renameCollection = renameBoard as unknown as (options: {
+        data: { projectId: string; name: string; collectionId: string };
+      }) => Promise<StudioSnapshot>;
+      const snapshot = embedded
+        ? await persist(() => renameCollection({ data: { ...pid, collectionId, name } }))
+        : await persist(() => patchBoard({ data: { ...pid, collectionId, name } }));
+      if (
+        snapshot === null ||
+        !isProjectCurrent(generation) ||
+        activeCollectionIdRef.current !== collectionId ||
+        revision !== stripRevision.current
+      ) {
+        return;
+      }
+      stripRevision.current = 0;
+      if (!stripEditing.current) {
+        setStripDraft(
+          snapshot.board.collections?.find((collection) => collection.id === collectionId)?.name ??
+            name,
+        );
+      }
     } catch (cause: unknown) {
-      setStripDraft(activeCollection.name);
-      setError(cause instanceof Error ? cause.message : "Could not rename strip");
+      if (
+        !isProjectCurrent(generation) ||
+        activeCollectionIdRef.current !== collectionId ||
+        revision !== stripRevision.current
+      ) {
+        return;
+      }
+      stripRevision.current = 0;
+      if (!stripEditing.current) setStripDraft(activeCollection.name);
+      reportError(cause, "Could not rename strip", generation);
     }
   }
 
   function queueStripName(raw: string) {
+    stripEditing.current = true;
     setStripDraft(raw);
-    window.clearTimeout(stripTimer.current);
-    stripTimer.current = window.setTimeout(() => {
-      void commitStripName(raw);
-    }, 400);
+    void commitStripName(raw, false);
   }
 
   async function moveCollection(id: string, x: number, y: number) {
@@ -466,6 +627,7 @@ function StudioShell({ projectId }: { projectId: string }) {
     assetName?: string,
     shape?: ShapeKind,
   ) {
+    const generation = projectGeneration.current;
     try {
       const snapshot = await persist(() =>
         addOverlay({
@@ -481,15 +643,16 @@ function StudioShell({ projectId }: { projectId: string }) {
           },
         }),
       );
-      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
+      if (snapshot === null || !isProjectCurrent(generation)) return;
       const addedId = snapshot.events.at(-1)?.nodeId;
       if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : `Could not add ${kind}`);
+      reportError(cause, `Could not add ${kind}`, generation);
     }
   }
 
   async function createLine(smooth: boolean) {
+    const generation = projectGeneration.current;
     try {
       const snapshot = await persist(() =>
         addLine({
@@ -502,11 +665,11 @@ function StudioShell({ projectId }: { projectId: string }) {
           },
         }),
       );
-      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
+      if (snapshot === null || !isProjectCurrent(generation)) return;
       const addedId = snapshot.events.at(-1)?.nodeId;
       if (addedId !== undefined && addedId !== "") setSelectedId(addedId);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not add line");
+      reportError(cause, "Could not add line", generation);
     }
   }
 
@@ -527,6 +690,7 @@ function StudioShell({ projectId }: { projectId: string }) {
   }
 
   async function commitFill(next = fill) {
+    const generation = projectGeneration.current;
     try {
       await persist(() =>
         patchBoard({
@@ -538,7 +702,7 @@ function StudioShell({ projectId }: { projectId: string }) {
         }),
       );
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not save");
+      reportError(cause, "Could not save", generation);
     }
   }
 
@@ -547,6 +711,7 @@ function StudioShell({ projectId }: { projectId: string }) {
   }
 
   async function commitSliceFill(color: string, imageId?: string) {
+    const generation = projectGeneration.current;
     if (selectedBand !== undefined) {
       await commitFill({
         ...fill,
@@ -560,10 +725,11 @@ function StudioShell({ projectId }: { projectId: string }) {
       ...fill,
       bands: setBandSpan(fill.bands, band, band.start, band.count, activeCollection.sliceCount),
     });
-    setSelectedId(bandSelectionId(band.id));
+    if (isProjectCurrent(generation)) setSelectedId(bandSelectionId(band.id));
   }
 
   async function commitSliceSpan(index: number) {
+    const generation = projectGeneration.current;
     if (selectedBand !== undefined) {
       const next = nextCoverage(
         selectedBand.start,
@@ -590,18 +756,20 @@ function StudioShell({ projectId }: { projectId: string }) {
       ...fill,
       bands: setBandSpan(fill.bands, band, band.start, band.count, activeCollection.sliceCount),
     });
-    setSelectedId(bandSelectionId(band.id));
+    if (isProjectCurrent(generation)) setSelectedId(bandSelectionId(band.id));
   }
 
   async function resetSlice() {
+    const generation = projectGeneration.current;
     if (selectedBand === undefined) return;
     const start = selectedBand.start;
     await commitFill({ ...fill, bands: removeBand(fill.bands, selectedBand.id) });
-    setSelectedId(sliceSelectionId(activeCollection.id, start));
+    if (isProjectCurrent(generation)) setSelectedId(sliceSelectionId(activeCollection.id, start));
   }
 
   async function deleteSelectedSlice() {
-    if (span === null) return;
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation) || span === null) return;
     if (activeCollection.sliceCount <= 1 || span.count >= activeCollection.sliceCount) return;
     setSelectedId(null);
     try {
@@ -616,12 +784,13 @@ function StudioShell({ projectId }: { projectId: string }) {
         }),
       );
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not delete slice");
+      reportError(cause, "Could not delete slice", generation);
     }
   }
 
   async function duplicateSelectedSlice() {
-    if (span === null) return;
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation) || span === null) return;
     if (activeCollection.sliceCount + span.count > MAX_SLICES) return;
     const copyStart = span.start + span.count;
     try {
@@ -635,21 +804,24 @@ function StudioShell({ projectId }: { projectId: string }) {
           },
         }),
       );
-      setSelectedId(sliceSelectionId(activeCollection.id, copyStart));
+      if (isProjectCurrent(generation)) {
+        setSelectedId(sliceSelectionId(activeCollection.id, copyStart));
+      }
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not duplicate slice");
+      reportError(cause, "Could not duplicate slice", generation);
     }
   }
 
   async function duplicateSelectedNode(id: string) {
+    const generation = projectGeneration.current;
     try {
-      const snapshot = (await persist(() => cloneSelectedNode({ data: { ...pid, id } }))) as
-        | (StudioSnapshot & { nodeId: string })
-        | null;
-      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
-      if (snapshot.nodeId !== undefined) setSelectedId(snapshot.nodeId);
+      const snapshot = await persist(() => cloneSelectedNode({ data: { ...pid, id } }));
+      if (snapshot === null || !isProjectCurrent(generation) || snapshot.nodeId === undefined) {
+        return;
+      }
+      setSelectedId(snapshot.nodeId);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not duplicate");
+      reportError(cause, "Could not duplicate", generation);
     }
   }
 
@@ -674,20 +846,23 @@ function StudioShell({ projectId }: { projectId: string }) {
   }
 
   async function undoLast() {
-    const generation = projectGenerationRef.current;
-    if (total < 1 || undoing.current || !isProjectCurrent(generation)) return;
+    const generation = projectGeneration.current;
+    if (!hydrated || !isProjectCurrent(generation) || total < 1 || undoing.current) return;
     undoing.current = true;
     setError("");
     try {
-      const snapshot = await undoEvent({ data: pid });
-      if (!isProjectCurrent(generation)) return;
-      await applySnapshot(snapshot);
-      if (isProjectCurrent(generation)) setSelectedId(null);
+      const snapshot = await serializeMutation(generation, async () => {
+        const next = await undoEvent({ data: pid });
+        if (!isProjectCurrent(generation)) return null;
+        await applySnapshot(next);
+        return next;
+      });
+      if (snapshot !== null && isProjectCurrent(generation)) setSelectedId(null);
     } catch (cause: unknown) {
-      if (isProjectCurrent(generation))
-        setError(cause instanceof Error ? cause.message : "Could not undo");
+      if (isProjectCurrent(generation)) mutationFailed.current = true;
+      reportError(cause, "Could not undo", generation);
     } finally {
-      if (isProjectCurrent(generation)) undoing.current = false;
+      undoing.current = false;
     }
   }
   undoRef.current = () => {
@@ -695,40 +870,45 @@ function StudioShell({ projectId }: { projectId: string }) {
   };
 
   async function restoreToEvent(seq: number) {
-    const generation = projectGenerationRef.current;
+    const generation = projectGeneration.current;
     if (!isProjectCurrent(generation)) return;
     setError("");
     try {
-      const snapshot = await restoreHistory({ data: { ...pid, seq } });
-      if (!isProjectCurrent(generation)) return;
-      await applySnapshot(snapshot);
-      if (isProjectCurrent(generation)) setSelectedId(null);
+      const snapshot = await serializeMutation(generation, async () => {
+        const next = await restoreHistory({ data: { ...pid, seq } });
+        if (!isProjectCurrent(generation)) return null;
+        await applySnapshot(next);
+        return next;
+      });
+      if (snapshot !== null && isProjectCurrent(generation)) setSelectedId(null);
     } catch (cause: unknown) {
-      if (isProjectCurrent(generation)) {
-        setError(cause instanceof Error ? cause.message : "Could not restore");
-      }
+      if (isProjectCurrent(generation)) mutationFailed.current = true;
+      reportError(cause, "Could not restore", generation);
     }
   }
 
   async function reloadLatest() {
-    const generation = projectGenerationRef.current;
+    const generation = projectGeneration.current;
     if (!isProjectCurrent(generation)) return;
     setReloading(true);
     setError("");
     try {
-      const snapshot = await loadStudio({ data: pid });
-      if (!isProjectCurrent(generation)) return;
-      await applySnapshot(snapshot);
+      await serializeMutation(generation, async () => {
+        const snapshot = await loadStudio({ data: pid });
+        if (!isProjectCurrent(generation)) return;
+        await applySnapshot(snapshot);
+      });
     } catch (cause: unknown) {
-      if (isProjectCurrent(generation)) {
-        setError(cause instanceof Error ? cause.message : "Could not reload");
-      }
+      if (isProjectCurrent(generation)) mutationFailed.current = true;
+      reportError(cause, "Could not reload", generation);
     } finally {
       if (isProjectCurrent(generation)) setReloading(false);
     }
   }
 
   async function cloneCurrent(store?: StoreName, collectionId = activeCollection.id) {
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
     markBusy("clone");
     setError("");
     try {
@@ -737,17 +917,19 @@ function StudioShell({ projectId }: { projectId: string }) {
           data: { ...pid, collectionId, store },
         }),
       );
-      if (snapshot === null || !isProjectCurrent(projectGenerationRef.current)) return;
+      if (snapshot === null || !isProjectCurrent(generation)) return;
       const added = boardCollections(snapshot.board).at(-1);
       if (added !== undefined) setSelectedId(collectionSelectionId(added.id));
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not clone");
+      reportError(cause, "Could not clone", generation);
     } finally {
-      setBusy("");
+      if (isProjectCurrent(generation)) setBusy("");
     }
   }
 
   async function deleteCurrentStrip(collectionId: string) {
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
     markBusy("delete-strip");
     setError("");
     const next = removeSceneCollection(board, nodes, collectionId);
@@ -756,38 +938,41 @@ function StudioShell({ projectId }: { projectId: string }) {
     try {
       await persistLive(
         () => removeCollection({ data: { ...pid, collectionId } }),
-        async (generation) => {
+        async (liveGeneration) => {
           await replaceBoard(next.board);
-          if (!isProjectCurrent(generation)) return;
+          if (!isProjectCurrent(liveGeneration)) return;
           await pruneNodes(new Set(next.nodes.map((node) => node.id)));
         },
       );
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not delete strip");
+      reportError(cause, "Could not delete strip", generation);
     } finally {
-      setBusy("");
+      if (isProjectCurrent(generation)) setBusy("");
     }
   }
 
   async function applyStoreRules(store: StoreName) {
+    const generation = projectGeneration.current;
     try {
       await persist(() =>
         applyStore({ data: { ...pid, store, collectionId: activeCollection.id } }),
       );
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not apply store rules");
+      reportError(cause, "Could not apply store rules", generation);
     }
   }
 
   async function exportCollection() {
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
     markBusy("export");
     setError("");
     try {
       await downloadSnapshotsZip([{ board, nodes, events, assets }], `${fileSlug(board.name)}.zip`);
     } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "Could not export");
+      reportError(cause, "Could not export", generation);
     } finally {
-      setBusy("");
+      if (isProjectCurrent(generation)) setBusy("");
     }
   }
 
@@ -813,26 +998,31 @@ function StudioShell({ projectId }: { projectId: string }) {
     apply?: "board" | "device" | "band" | "overlay",
     shape?: ShapeKind,
   ) {
-    const generation = projectGenerationRef.current;
+    const generation = projectGeneration.current;
+    if (!isProjectCurrent(generation)) return;
+    const endOperation = beginOperation();
     try {
       const data = await readImageFile(file);
-      if (generation !== projectGenerationRef.current) return;
-      const snapshot = (await addAsset({
-        data: { ...pid, name: file.name, mime: file.type || "image/png", data },
-      })) as StudioSnapshot & { assetId: string };
-      if (generation !== projectGenerationRef.current) return;
-      await persist(async () => snapshot);
-      if (generation !== projectGenerationRef.current) return;
+      if (!isProjectCurrent(generation)) return;
+      const snapshot = await persist(() =>
+        addAsset({
+          data: { ...pid, name: file.name, mime: file.type || "image/png", data },
+        }),
+      );
+      if (snapshot === null || !isProjectCurrent(generation)) return;
       const assetId = snapshot.assetId;
       if (assetId === undefined) return;
       if (apply === "board") {
         await commitBoardFill(fill.color, assetId);
+        if (!isProjectCurrent(generation)) return;
       }
       if (apply === "band") {
         await commitSliceFill(span?.color ?? fill.color, assetId);
+        if (!isProjectCurrent(generation)) return;
       }
       if (apply === "device" && selected !== null && selected.type === "device") {
         await commitNode(selected.id, { screenAssetId: assetId }, "Screen image");
+        if (!isProjectCurrent(generation)) return;
       }
       if (apply === "overlay") {
         if (selected !== null && selected.type === "shape") {
@@ -846,114 +1036,158 @@ function StudioShell({ projectId }: { projectId: string }) {
         }
       }
     } catch (cause: unknown) {
-      if (generation === projectGenerationRef.current) {
-        setError(cause instanceof Error ? cause.message : "Could not import");
-      }
+      reportError(cause, "Could not import", generation);
+    } finally {
+      endOperation();
     }
   }
 
+  const exportLabel = busy === "export" ? "Exporting" : "Export";
+  const reloadLabel = reloading ? "Reloading" : "Reload";
+
   if (!hydrated) {
     return (
-      <div className="grid h-screen place-items-center bg-background text-sm text-muted-foreground">
+      <div
+        className={`grid ${embedded ? "screenshot-studio-root h-full" : "h-screen"} place-items-center bg-background text-sm text-muted-foreground`}
+      >
         {error === "" ? "Opening board…" : error}
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-background text-foreground">
-      <header className="no-scrollbar flex h-12 shrink-0 items-center gap-3 overflow-x-auto border-b border-border px-3">
-        <Link to="/" title="Screenshot Studio boards" aria-label="Screenshot Studio boards">
-          <ScreenshotStudioIcon className="size-6" />
-        </Link>
-        <Link
-          to="/"
-          className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Boards
-        </Link>
-        <span className="text-muted-foreground">/</span>
+    <div
+      className={`flex ${embedded ? "h-full" : "h-screen"} min-h-0 flex-col overflow-hidden bg-background text-foreground${embedded ? " screenshot-studio-root" : ""}`}
+    >
+      <header className="no-scrollbar flex h-11 shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border px-2">
+        {onHome ? (
+          <button
+            type="button"
+            className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+            title="Screenshot Studio boards"
+            aria-label="Screenshot Studio boards"
+            onClick={onHome}
+          >
+            <ScreenshotStudioIcon className="size-5" />
+            <span>Boards</span>
+          </button>
+        ) : (
+          <Link
+            to="/"
+            className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+            title="Screenshot Studio boards"
+            aria-label="Screenshot Studio boards"
+          >
+            <ScreenshotStudioIcon className="size-5" />
+            <span>Boards</span>
+          </Link>
+        )}
         <Input
           aria-label="Board name"
           value={nameDraft}
           onChange={(event) => queueBoardName(event.target.value)}
-          onBlur={(event) => void commitBoardName(event.target.value)}
+          onFocus={() => {
+            nameEditing.current = true;
+            nameBaseline.current = board.name;
+          }}
+          onBlur={(event) => {
+            nameEditing.current = false;
+            if (skipNameBlur.current) {
+              skipNameBlur.current = false;
+              return;
+            }
+            void commitBoardName(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
+              nameEditing.current = false;
               void commitBoardName(event.currentTarget.value);
               event.currentTarget.blur();
             }
             if (event.key === "Escape") {
-              window.clearTimeout(nameTimer.current);
-              setNameDraft(board.name);
+              event.preventDefault();
+              nameEditing.current = false;
+              skipNameBlur.current = true;
               event.currentTarget.blur();
+              void commitBoardName(nameBaseline.current);
             }
           }}
-          className="h-8 max-w-48 min-w-24 border-transparent bg-transparent px-2 text-sm tracking-tight shadow-none hover:border-border focus-visible:border-ring"
+          className="h-7 w-28 min-w-0 border-transparent bg-transparent px-1.5 text-xs tracking-tight shadow-none hover:border-border focus-visible:border-ring"
         />
-        <span className="text-muted-foreground">/</span>
         <Input
           aria-label="Scene strip name"
           data-testid="header-strip-name"
           value={stripDraft}
           onChange={(event) => queueStripName(event.target.value)}
-          onBlur={(event) => void commitStripName(event.target.value)}
+          onFocus={() => {
+            stripEditing.current = true;
+            stripBaseline.current = activeCollection.name;
+          }}
+          onBlur={(event) => {
+            stripEditing.current = false;
+            if (skipStripBlur.current) {
+              skipStripBlur.current = false;
+              return;
+            }
+            void commitStripName(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
+              stripEditing.current = false;
               void commitStripName(event.currentTarget.value);
               event.currentTarget.blur();
             }
             if (event.key === "Escape") {
-              window.clearTimeout(stripTimer.current);
-              setStripDraft(activeCollection.name);
+              event.preventDefault();
+              stripEditing.current = false;
+              skipStripBlur.current = true;
               event.currentTarget.blur();
+              void commitStripName(stripBaseline.current);
             }
           }}
-          className="h-8 max-w-52 min-w-28 border-transparent bg-transparent px-2 text-sm tracking-tight shadow-none hover:border-border focus-visible:border-ring"
+          className="h-7 w-24 min-w-0 border-transparent bg-transparent px-1.5 text-xs tracking-tight shadow-none hover:border-border focus-visible:border-ring"
         />
         <select
           aria-label="Scene size"
-          className="h-8 min-w-0 rounded-md border border-border bg-popover px-2 text-sm"
+          className="h-7 w-32 min-w-0 rounded-md border border-border bg-popover px-1.5 text-xs"
           value={`${activeCollection.store}:${activeCollection.presetId}`}
           onChange={(event) => {
             const raw = event.target.value;
             const sep = raw.indexOf(":");
             const store = raw.slice(0, sep) as "play" | "app-store";
             const presetId = raw.slice(sep + 1);
-            void persist(() =>
+            save(() =>
               patchBoard({
                 data: { ...pid, collectionId: activeCollection.id, store, presetId },
               }),
-            ).catch((cause: unknown) =>
-              setError(cause instanceof Error ? cause.message : "Could not save"),
             );
           }}
         >
           <optgroup label="Google Play">
             {playPresets.map((preset) => (
               <option key={`play:${preset.id}`} value={`play:${preset.id}`}>
-                {preset.label} · {preset.width}×{preset.height}
+                {embedded ? preset.label : `${preset.label} · ${preset.width}×${preset.height}`}
               </option>
             ))}
           </optgroup>
           <optgroup label="App Store">
             {appPresets.map((preset) => (
               <option key={`app-store:${preset.id}`} value={`app-store:${preset.id}`}>
-                {preset.label} · {preset.width}×{preset.height}
+                {embedded ? preset.label : `${preset.label} · ${preset.width}×${preset.height}`}
               </option>
             ))}
           </optgroup>
         </select>
-        <div className="flex items-center gap-1 text-sm">
+        <div className="flex shrink-0 items-center gap-0.5 text-xs">
           <Button
             variant="outline"
             size="xs"
             title="Remove the last slice"
             disabled={activeCollection.sliceCount <= 1}
             onClick={() =>
-              void persist(() =>
+              save(() =>
                 deleteSlices({
                   data: {
                     ...pid,
@@ -967,14 +1201,14 @@ function StudioShell({ projectId }: { projectId: string }) {
           >
             −
           </Button>
-          <span className="min-w-16 text-center text-xs text-muted-foreground">
+          <span className="min-w-12 text-center text-xs text-muted-foreground">
             {activeCollection.sliceCount} slices
           </span>
           <Button
             variant="outline"
             size="xs"
             onClick={() =>
-              void persist(() =>
+              save(() =>
                 patchBoard({
                   data: {
                     ...pid,
@@ -995,48 +1229,52 @@ function StudioShell({ projectId }: { projectId: string }) {
         />
         <Button
           variant="ghost"
-          size="xs"
+          size={embedded ? "icon-xs" : "xs"}
           data-testid="export-board"
           disabled={busy !== ""}
           title="Download every scene strip on this board as PNGs"
+          aria-label="Export board"
           onClick={() => void exportCollection()}
         >
           <Download />
-          {busy === "export" ? "Exporting" : "Export"}
+          {embedded ? null : exportLabel}
         </Button>
         <Button
           variant="ghost"
-          size="xs"
+          size={embedded ? "icon-xs" : "xs"}
           className="ml-auto"
           data-testid="recenter-board"
           title="Fit every scene strip in the view (0)"
+          aria-label="Recenter board"
           onClick={() => window.dispatchEvent(new Event(FIT_CAMERA_EVENT))}
         >
           <LocateFixed />
-          Recenter
+          {embedded ? null : "Recenter"}
         </Button>
         <Button
           variant="ghost"
-          size="xs"
+          size={embedded ? "icon-xs" : "xs"}
           title={`Undo last change (${undoHint})`}
+          aria-label="Undo last change"
           disabled={total < 1}
           onClick={() => void undoLast()}
         >
           <Undo2 />
-          Undo
+          {embedded ? null : "Undo"}
         </Button>
         <Button
           variant="ghost"
-          size="xs"
+          size={embedded ? "icon-xs" : "xs"}
           title="Reload the saved board if the canvas looks stale"
+          aria-label="Reload saved board"
           disabled={reloading}
           onClick={() => void reloadLatest()}
         >
           <RotateCw className={reloading ? "animate-spin" : undefined} />
-          {reloading ? "Reloading" : "Reload"}
+          {embedded ? null : reloadLabel}
         </Button>
-        <ThemeToggle />
-        <SettingsDrawer projectId={projectId} align="header" />
+        {embedded ? null : <ThemeToggle />}
+        <SettingsDrawer projectId={projectId} align="header" embedded={embedded} />
       </header>
       {error === "" ? null : (
         <p className="border-b border-border px-3 py-2 text-sm text-destructive">{error}</p>
@@ -1053,7 +1291,9 @@ function StudioShell({ projectId }: { projectId: string }) {
           </div>
         )}
         {leftOpen ? (
-          <aside className="flex w-66 shrink-0 flex-col overflow-hidden border-r border-border bg-linear-to-b from-popover to-background/95">
+          <aside
+            className={`flex ${embedded ? "w-60" : "w-66"} shrink-0 flex-col overflow-hidden border-r border-border ${embedded ? "bg-popover" : "bg-linear-to-b from-popover to-background/95"}`}
+          >
             <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/70 bg-background/25 px-2.5">
               <span className="flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-foreground/90 uppercase">
                 <Library className="size-3.5 text-primary" aria-hidden />
@@ -1077,63 +1317,69 @@ function StudioShell({ projectId }: { projectId: string }) {
                 </Button>
               </div>
             </header>
-            <LayersPanel
-              board={board}
-              nodes={nodes}
-              selectedId={boardSelected || span !== null ? null : selectedId}
-              onSelect={setSelectedId}
-              onPatch={(id, patch, label) => void commitNode(id, patch, label)}
-              onRestack={(ids) => void restack(ids)}
-              duplicateHint={duplicateHint}
-              onDuplicateNode={(id) => void duplicateSelectedNode(id)}
-              onRemoveNode={(id) => void removeSelected(id)}
-              onDuplicateSlice={() => void duplicateSelectedSlice()}
-              onDeleteSlice={() => void deleteSelectedSlice()}
-              onDuplicateCollection={(id) => void cloneCurrent(undefined, id)}
-              onRemoveCollection={(id) => void deleteCurrentStrip(id)}
-            />
-            <DevicesPanel
-              onDevice={(model: DeviceModelId) =>
-                void persist(() =>
-                  addDevice({
-                    data: {
-                      ...pid,
-                      model,
-                      slice: span?.start ?? 0,
-                      collectionId: activeCollection.id,
-                    },
-                  }),
-                )
+            <div
+              className={
+                embedded ? "min-h-0 flex-1 overflow-y-auto overscroll-contain" : "contents"
               }
-              onPair={(android, apple) =>
-                void persist(() =>
-                  addDevicePair({
-                    data: {
-                      ...pid,
-                      android,
-                      apple,
-                      slice: span?.start ?? 0,
-                      collectionId: activeCollection.id,
-                    },
-                  }),
-                )
-              }
-              onText={(role) =>
-                void persist(() =>
-                  addText({
-                    data: {
-                      ...pid,
-                      role,
-                      slice: span?.start ?? 0,
-                      collectionId: activeCollection.id,
-                    },
-                  }),
-                )
-              }
-              onShape={(shape) => void createOverlay("shape", undefined, undefined, shape)}
-              onImage={(file, shape) => void importImage(file, "overlay", shape)}
-              onLine={(smooth) => void createLine(smooth)}
-            />
+            >
+              <LayersPanel
+                board={board}
+                nodes={nodes}
+                selectedId={boardSelected || span !== null ? null : selectedId}
+                onSelect={setSelectedId}
+                onPatch={(id, patch, label) => void commitNode(id, patch, label)}
+                onRestack={(ids) => void restack(ids)}
+                duplicateHint={duplicateHint}
+                onDuplicateNode={(id) => void duplicateSelectedNode(id)}
+                onRemoveNode={(id) => void removeSelected(id)}
+                onDuplicateSlice={() => void duplicateSelectedSlice()}
+                onDeleteSlice={() => void deleteSelectedSlice()}
+                onDuplicateCollection={(id) => void cloneCurrent(undefined, id)}
+                onRemoveCollection={(id) => void deleteCurrentStrip(id)}
+              />
+              <DevicesPanel
+                onDevice={(model: DeviceModelId) =>
+                  save(() =>
+                    addDevice({
+                      data: {
+                        ...pid,
+                        model,
+                        slice: span?.start ?? 0,
+                        collectionId: activeCollection.id,
+                      },
+                    }),
+                  )
+                }
+                onPair={(android, apple) =>
+                  save(() =>
+                    addDevicePair({
+                      data: {
+                        ...pid,
+                        android,
+                        apple,
+                        slice: span?.start ?? 0,
+                        collectionId: activeCollection.id,
+                      },
+                    }),
+                  )
+                }
+                onText={(role) =>
+                  save(() =>
+                    addText({
+                      data: {
+                        ...pid,
+                        role,
+                        slice: span?.start ?? 0,
+                        collectionId: activeCollection.id,
+                      },
+                    }),
+                  )
+                }
+                onShape={(shape) => void createOverlay("shape", undefined, undefined, shape)}
+                onImage={(file, shape) => void importImage(file, "overlay", shape)}
+                onLine={(smooth) => void createLine(smooth)}
+              />
+            </div>
           </aside>
         ) : (
           <button
@@ -1171,7 +1417,9 @@ function StudioShell({ projectId }: { projectId: string }) {
           />
         </main>
         {rightOpen ? (
-          <aside className="flex w-74 shrink-0 flex-col overflow-hidden border-l border-border bg-linear-to-b from-popover to-background/95">
+          <aside
+            className={`flex ${embedded ? "w-64" : "w-74"} shrink-0 flex-col overflow-hidden border-l border-border ${embedded ? "bg-popover" : "bg-linear-to-b from-popover to-background/95"}`}
+          >
             <header className="flex h-10 shrink-0 items-center justify-between gap-1 border-b border-border/70 bg-background/25 px-2.5">
               <span className="flex items-center gap-2 px-1 text-xs font-semibold tracking-widest text-foreground/90 uppercase">
                 <SlidersHorizontal className="size-3.5 text-primary" aria-hidden />

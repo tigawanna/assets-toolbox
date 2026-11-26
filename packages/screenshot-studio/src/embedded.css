@@ -2,9 +2,9 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
-.screenshot-studio-root {
+:root {
   --studio-background: oklch(0.985 0.006 145);
   --studio-foreground: oklch(0.21 0.02 145);
   --studio-primary: oklch(0.58 0.15 145);
@@ -36,8 +36,8 @@
   --studio-radius: 8px;
 }
 
-[data-theme="dark"] .screenshot-studio-root,
-.dark .screenshot-studio-root {
+[data-theme="dark"],
+.dark {
   --studio-background: oklch(0.16 0.012 145);
   --studio-foreground: oklch(0.93 0.01 140);
   --studio-primary: oklch(0.82 0.18 135);
@@ -66,6 +66,39 @@
   --studio-canvas-dot: oklch(0.32 0.012 145);
   --studio-scrollbar-thumb: oklch(0.36 0.012 145);
   --studio-scrollbar-thumb-hover: oklch(0.48 0.02 145);
+}
+
+/* Embedded Studio shares the desktop shell palette instead of its standalone green skin. */
+:root {
+  --studio-background: var(--canvas);
+  --studio-foreground: var(--text);
+  --studio-primary: var(--accent);
+  --studio-primary-foreground: var(--on-ink);
+  --studio-secondary: var(--surface-muted);
+  --studio-secondary-foreground: var(--text);
+  --studio-muted: var(--surface-muted);
+  --studio-muted-foreground: var(--text-muted);
+  --studio-accent: var(--surface-hover);
+  --studio-accent-foreground: var(--text);
+  --studio-destructive: #c45a45;
+  --studio-border: var(--line);
+  --studio-input: var(--line);
+  --studio-ring: var(--accent);
+  --studio-popover: var(--surface);
+  --studio-popover-foreground: var(--text);
+  --studio-sidebar: var(--sidebar);
+  --studio-sidebar-foreground: var(--text);
+  --studio-sidebar-primary: var(--accent);
+  --studio-sidebar-primary-foreground: var(--on-ink);
+  --studio-sidebar-accent: var(--sidebar-active);
+  --studio-sidebar-accent-foreground: var(--text);
+  --studio-sidebar-border: var(--line);
+  --studio-sidebar-ring: var(--accent);
+  --studio-canvas-bg: var(--surface-muted);
+  --studio-canvas-dot: var(--line-strong);
+  --studio-scrollbar-thumb: var(--line-strong);
+  --studio-scrollbar-thumb-hover: var(--text-subtle);
+  --studio-radius: var(--radius-md);
 }
 
 @theme inline {
@@ -99,16 +132,62 @@
 }
 
 .screenshot-studio-root {
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   width: 100%;
   height: 100%;
   min-height: 0;
   background: var(--studio-background);
   color: var(--studio-foreground);
   font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.screenshot-studio-root :where(.text-xs) {
+  font-size: 10px;
+}
+
+.screenshot-studio-root :where(.text-sm) {
+  font-size: 12px;
+}
+
+.screenshot-studio-root :where(.text-base) {
+  font-size: 13px;
+}
+
+.screenshot-studio-root :where(.text-lg) {
+  font-size: 14px;
+}
+
+.screenshot-studio-root :where(.text-xl) {
+  font-size: 16px;
+}
+
+.screenshot-studio-root :where(.text-2xl) {
+  font-size: 20px;
+}
+
+.screenshot-studio-root :where(.text-3xl) {
+  font-size: 28px;
+}
+
+.screenshot-studio-root :where(.text-4xl) {
+  font-size: 32px;
+}
+
+.screenshot-studio-root > header {
+  height: 44px;
+  gap: 6px;
+  padding: 0 8px;
+  background: var(--studio-popover);
+}
+
+.screenshot-studio-root > header > * {
+  flex-shrink: 0;
+}
+
+.screenshot-studio-root > header input,
+.screenshot-studio-root > header select {
+  font-size: 11px;
 }
 
 .screenshot-studio-root *,

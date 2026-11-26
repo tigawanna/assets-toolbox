@@ -1,20 +1,28 @@
 {
-  "extends": "$app/tsconfig",
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "skipLibCheck": true,
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "paths": {
-      "@/server/fns": ["./src/lib/modules/screenshot-studio/local/fns.ts"],
-      "@tanstack/react-router": ["./src/lib/modules/screenshot-studio/local/router-shim.tsx"],
-      "@/*": ["./src/lib/modules/screenshot-studio/*"]
-    },
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "allowJs": false,
-    "checkJs": false,
-    "noEmit": true
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@tigawanna/cabra-sound": ["../../../packages/cabra-sound/src/index.ts"],
+      "@/server/fns": ["../../../packages/screenshot-studio/src/desktop/browser-fns.ts"],
+      "@/*": ["../../../packages/screenshot-studio/src/*"],
+      "@assets/screenshot-studio/*": ["../../../packages/screenshot-studio/src/*"],
+      "@assets/svg-compose/*": ["../../../packages/svg-compose/src/*"]
+    }
   },
-  "include": ["src", "vite.config.ts"],
-  "exclude": ["src/lib/wailsjs/**/*.js"]
+  "include": ["src", "vite.config.ts"]
 }

@@ -64,9 +64,10 @@
 
 html,
 body,
-.sveltekit-body {
+#root {
   width: 100%;
   height: 100%;
+  line-height: normal;
 }
 
 body {
@@ -76,18 +77,18 @@ body {
   color: var(--text);
 }
 
-.sveltekit-body {
-  display: contents;
-}
-
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
 }
 
 button,
 a,
-input {
+input,
+textarea,
+select {
   -webkit-tap-highlight-color: transparent;
 }
 

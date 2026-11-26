@@ -1,41 +1,40 @@
-import adapter from "@sveltejs/adapter-static";
 import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
-import { sveltekit } from "@sveltejs/kit/vite";
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
+
+const studioSource = fileURLToPath(
+  new URL("../../../packages/screenshot-studio/src/", import.meta.url),
+);
+const studioBrowserApi = fileURLToPath(
+  new URL("../../../packages/screenshot-studio/src/desktop/browser-fns.ts", import.meta.url),
+);
 
 export default defineConfig({
-  plugins: [
-    sveltekit({
-      preprocess: vitePreprocess(),
-      adapter: adapter({
-        pages: "build",
-        assets: "build",
-        fallback: "index.html",
-        precompress: false,
-        strict: true,
-      }),
-    }),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
       {
-        find: "@tanstack/react-router",
+        find: "@tigawanna/cabra-sound",
         replacement: fileURLToPath(
-          new URL("./src/lib/modules/screenshot-studio/local/router-shim.tsx", import.meta.url),
+          new URL("../../../packages/cabra-sound/src/index.ts", import.meta.url),
         ),
       },
       {
-        find: "@/server/fns",
-        replacement: fileURLToPath(
-          new URL("./src/lib/modules/screenshot-studio/local/fns.ts", import.meta.url),
-        ),
+        find: /^@\/server\/fns$/,
+        replacement: studioBrowserApi,
       },
       {
-        find: "@",
-        replacement: fileURLToPath(new URL("./src/lib/modules/screenshot-studio", import.meta.url)),
+        find: /^@\//,
+        replacement: studioSource,
+      },
+      {
+        find: "@assets/screenshot-studio",
+        replacement: studioSource,
+      },
+      {
+        find: "@assets/svg-compose",
+        replacement: fileURLToPath(new URL("../../../packages/svg-compose/src/", import.meta.url)),
       },
     ],
   },
@@ -49,5 +48,20 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 4173,
     strictPort: true,
+  },
+  optimizeDeps: {
+    include: [
+      "@tanstack/react-router > @tanstack/react-store",
+      "@tanstack/react-router > @tanstack/react-store > use-sync-external-store/shim/with-selector",
+    ],
+  },
+  build: {
+    outDir: "build",
+    emptyOutDir: true,
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["src/test/setup.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

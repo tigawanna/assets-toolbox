@@ -5,8 +5,7 @@ import { StudioSheet } from "@/components/studio-sheet";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { loadSettings } from "@/server/fns";
-import type { StudioSettings } from "@/server/settings";
+import { loadSettings, type StudioSettings } from "@/server/fns";
 
 function AppearanceRow() {
   const [theme, setTheme] = useTheme();
@@ -89,20 +88,23 @@ function CopyRow({
 export function SettingsDrawer({
   projectId,
   align = "ghost",
+  embedded = false,
 }: {
   projectId?: string;
   align?: "ghost" | "header";
+  embedded?: boolean;
 }) {
   const [settings, setSettings] = useState<StudioSettings | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (embedded) return;
     void loadSettings({ data: { projectId } })
       .then(setSettings)
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : "Could not load settings"),
       );
-  }, [projectId]);
+  }, [embedded, projectId]);
 
   const origin = typeof window === "undefined" ? settings?.origin : window.location.origin;
   const mcpUrl = origin === undefined ? "" : `${origin}/mcp`;
@@ -115,7 +117,11 @@ export function SettingsDrawer({
     <StudioSheet
       side="right"
       title="Settings"
-      description="Where boards live on disk, and how Cursor talks to this studio over MCP."
+      description={
+        embedded
+          ? "Board storage and desktop integration."
+          : "Where boards live on disk, and how Cursor talks to this studio over MCP."
+      }
       trigger={
         <Button
           variant="ghost"
@@ -125,16 +131,35 @@ export function SettingsDrawer({
           data-testid="open-settings"
         >
           <Settings />
-          Settings
+          {align === "header" && embedded ? null : "Settings"}
         </Button>
       }
     >
       {error === "" ? null : <p className="mb-3 text-sm text-destructive">{error}</p>}
       <div className="flex flex-col gap-6">
-        <AppearanceRow />
-        {settings === null ? (
+        {embedded ? null : <AppearanceRow />}
+        {embedded ? (
+          <>
+            <section className="grid gap-3">
+              <h3 className="text-sm text-foreground">Local boards</h3>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Boards, layers, and imported images are stored in this desktop app's IndexedDB.
+                Nothing is uploaded.
+              </p>
+            </section>
+            <section className="grid gap-3">
+              <h3 className="text-sm text-foreground">Embedded mode</h3>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                MCP, server files, and cross-tab live sync are unavailable here. Editing, history,
+                and PNG/ZIP export run locally.
+              </p>
+            </section>
+          </>
+        ) : null}
+        {!embedded && settings === null ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : (
+        ) : null}
+        {!embedded && settings !== null ? (
           <>
             <section className="grid gap-3">
               <h3 className="text-sm text-foreground">Files</h3>
@@ -170,7 +195,7 @@ export function SettingsDrawer({
               </p>
             </section>
           </>
-        )}
+        ) : null}
       </div>
     </StudioSheet>
   );

@@ -267,7 +267,7 @@ func workspaceIdentity(path string) string {
 }
 
 // LoadWorkspace and SaveWorkspace keep persistence available while Wails is
-// serving the UI from an external Vite development server.
+// serving the React SPA from an external development server.
 func (a *App) LoadWorkspace() (*WorkspaceDocument, error) {
 	return a.workspace.load()
 }
@@ -276,7 +276,7 @@ func (a *App) SaveWorkspace(document WorkspaceDocument) (WorkspaceDocument, erro
 	return a.workspace.save(document)
 }
 
-// newSPAHandler serves the SvelteKit fallback for client-side routes such as
+// newSPAHandler serves the React SPA fallback for client-side routes such as
 // /packages/svg-compose. Requests for missing assets still return a real 404.
 func newSPAHandler(frontend fs.FS) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

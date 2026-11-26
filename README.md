@@ -43,21 +43,27 @@ pnpm --filter @tigawanna/svg-compose dev
 
 ## Desktop app
 
-`apps/desktop` is a Wails + Go application with a SvelteKit frontend. SVG Compose,
-Cabra Sound, and Screenshot Studio are working desktop routes; the other packages
-have reserved module routes and mounting plans. The shell includes search,
-light/dark themes, and a native Go status bridge.
+`apps/desktop` is a Wails + Go application with a React 19 and TanStack Router
+frontend. SVG Compose, Cabra Sound, and Screenshot Studio are working desktop
+routes; the other packages have reserved module routes and integration plans.
+The shell keeps the original light/dark theme and card design, uses one React
+root, and imports the canonical React package sources instead of maintaining
+Svelte translations or copied package UIs. The previous Svelte implementation is
+preserved read-only at `apps/desktop-svelte` for reference.
 
 ```bash
 pnpm run desktop:dev
 pnpm run desktop:build
+
+# Browser-only frontend work
+pnpm --filter @assets-toolbox/desktop dev
 ```
 
 The executable is written to `apps/desktop/build/bin/assets-toolbox`. The generic
 `pnpm build`, `pnpm dev`, and `pnpm test` scripts exclude the native desktop target
 so web-only environments do not need Go, GTK, or WebKitGTK. Turborepo discovers the
-Go module through `go.work`; the explicit desktop commands build the frontend and
-native binary in one task graph:
+Go module through `go.work`; the explicit desktop commands build the React frontend
+and native binary in one task graph:
 
 ```bash
 pnpm exec turbo run build --filter=desktop
@@ -66,7 +72,7 @@ pnpm exec turbo run lint --filter=desktop
 ```
 
 See [`apps/desktop/README.md`](./apps/desktop/README.md) for prerequisites,
-architecture, and the package mounting workflow.
+architecture, and the package integration workflow.
 
 ## Quick use
 

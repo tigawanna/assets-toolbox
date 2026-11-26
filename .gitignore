@@ -25,5 +25,10 @@ apps/desktop/frontend/build/*
 !apps/desktop/frontend/build/.gitkeep
 apps/desktop/frontend/node_modules/
 apps/desktop/frontend/package.json.md5
-apps/desktop/frontend/.svelte-kit/
-apps/desktop/frontend/src/lib/wailsjs/wailsjs/
+apps/desktop/frontend/src/lib/wailsjs/
+apps/desktop-svelte/build/
+apps/desktop-svelte/frontend/build/*
+apps/desktop-svelte/frontend/node_modules/
+apps/desktop-svelte/frontend/package.json.md5
+apps/desktop-svelte/frontend/.svelte-kit/
+apps/desktop-svelte/frontend/src/lib/wailsjs/wailsjs/

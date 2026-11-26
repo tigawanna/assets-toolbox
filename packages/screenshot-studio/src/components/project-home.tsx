@@ -17,8 +17,8 @@ import {
   focusBoard,
   listBoards,
   loadStudio,
+  type ProjectSummary,
 } from "@/server/fns";
-import type { ProjectSummary } from "@/server/projects";
 
 function relativeTime(iso: string): string {
   const delta = Date.now() - new Date(iso).getTime();
@@ -32,8 +32,35 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function ProjectHome() {
+export type ProjectHomeProps = {
+  onOpenBoard?: (projectId: string) => void | Promise<void>;
+};
+
+export function ProjectHome(props: ProjectHomeProps) {
+  return props.onOpenBoard ? (
+    <ProjectHomeContent onOpenBoard={props.onOpenBoard} embedded />
+  ) : (
+    <RoutedProjectHome />
+  );
+}
+
+function RoutedProjectHome() {
   const navigate = useNavigate();
+  return (
+    <ProjectHomeContent
+      onOpenBoard={(projectId) => navigate({ to: "/board/$projectId", params: { projectId } })}
+      embedded={false}
+    />
+  );
+}
+
+function ProjectHomeContent({
+  onOpenBoard,
+  embedded,
+}: {
+  onOpenBoard: (projectId: string) => void | Promise<void>;
+  embedded: boolean;
+}) {
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -57,7 +84,7 @@ export function ProjectHome() {
     setError("");
     try {
       const project = await createBoard({ data: { name } });
-      await navigate({ to: "/board/$projectId", params: { projectId: project.id } });
+      await onOpenBoard(project.id);
     } catch (cause: unknown) {
       setError(cause instanceof Error ? cause.message : "Could not create a board");
       setCreating(false);
@@ -121,40 +148,47 @@ export function ProjectHome() {
   const locked = creating || busy !== "";
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <header className="flex h-12 items-center justify-between border-b border-border px-6">
-        <strong className="flex items-center gap-2 text-sm tracking-tight">
-          <ScreenshotStudioIcon className="size-6" />
-          Screenshot Studio
-        </strong>
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
-          <SettingsDrawer />
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-3xl px-6 py-16">
+    <div
+      className={`${embedded ? "screenshot-studio-root h-full min-h-0 overflow-y-auto" : "min-h-svh"} bg-background text-foreground`}
+    >
+      {embedded ? null : (
+        <header className="flex h-12 items-center justify-between border-b border-border px-6">
+          <strong className="flex items-center gap-2 text-sm tracking-tight">
+            <ScreenshotStudioIcon className="size-6" />
+            Screenshot Studio
+          </strong>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <SettingsDrawer />
+          </div>
+        </header>
+      )}
+      <main className={`mx-auto w-full max-w-3xl px-6 ${embedded ? "py-10" : "py-16"}`}>
         <p className="text-xs font-medium tracking-widest text-primary uppercase">Boards</p>
         <div className="mt-3 flex items-end justify-between gap-6">
           <h1 className="max-w-xl text-4xl leading-none font-medium tracking-tight text-foreground">
             One canvas for Play and the App Store.
           </h1>
-          {projects === null || empty ? null : (
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                disabled={locked}
-                data-testid="export-all-boards"
-                onClick={() => void exportAll()}
-              >
-                <Download />
-                {busy === "export-all" ? "Exporting" : "Export all"}
-              </Button>
-              <Button disabled={locked} onClick={() => void create()}>
-                <Plus />
-                New board
-              </Button>
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {projects === null || empty ? null : (
+              <>
+                <Button
+                  variant="outline"
+                  disabled={locked}
+                  data-testid="export-all-boards"
+                  onClick={() => void exportAll()}
+                >
+                  <Download />
+                  {busy === "export-all" ? "Exporting" : "Export all"}
+                </Button>
+                <Button disabled={locked} onClick={() => void create()}>
+                  <Plus />
+                  New board
+                </Button>
+              </>
+            )}
+            {embedded ? <SettingsDrawer embedded /> : null}
+          </div>
         </div>
         {error === "" ? null : <p className="mt-4 text-sm text-destructive">{error}</p>}
         {projects === null ? (
@@ -185,9 +219,7 @@ export function ProjectHome() {
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
-                  onClick={() =>
-                    void navigate({ to: "/board/$projectId", params: { projectId: project.id } })
-                  }
+                  onClick={() => void onOpenBoard(project.id)}
                 >
                   <span className="flex items-center gap-2 text-base text-foreground group-hover:text-primary">
                     {project.name}

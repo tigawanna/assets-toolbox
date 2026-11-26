@@ -1,0 +1,175 @@
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --studio-background: oklch(0.985 0.006 145);
+  --studio-foreground: oklch(0.21 0.02 145);
+  --studio-primary: oklch(0.58 0.15 145);
+  --studio-primary-foreground: oklch(0.985 0.01 145);
+  --studio-secondary: oklch(0.95 0.008 145);
+  --studio-secondary-foreground: oklch(0.25 0.02 145);
+  --studio-muted: oklch(0.95 0.008 145);
+  --studio-muted-foreground: oklch(0.5 0.02 145);
+  --studio-accent: oklch(0.92 0.015 145);
+  --studio-accent-foreground: oklch(0.25 0.02 145);
+  --studio-destructive: oklch(0.58 0.2 25);
+  --studio-border: oklch(0.88 0.01 145);
+  --studio-input: oklch(0.88 0.01 145);
+  --studio-ring: oklch(0.58 0.15 145);
+  --studio-popover: oklch(0.995 0.004 145);
+  --studio-popover-foreground: oklch(0.21 0.02 145);
+  --studio-sidebar: oklch(0.98 0.006 145);
+  --studio-sidebar-foreground: oklch(0.21 0.02 145);
+  --studio-sidebar-primary: oklch(0.58 0.15 145);
+  --studio-sidebar-primary-foreground: oklch(0.985 0.01 145);
+  --studio-sidebar-accent: oklch(0.92 0.015 145);
+  --studio-sidebar-accent-foreground: oklch(0.25 0.02 145);
+  --studio-sidebar-border: oklch(0.88 0.01 145);
+  --studio-sidebar-ring: oklch(0.58 0.15 145);
+  --studio-canvas-bg: oklch(0.965 0.005 145);
+  --studio-canvas-dot: oklch(0.86 0.012 145);
+  --studio-scrollbar-thumb: oklch(0.8 0.012 145);
+  --studio-scrollbar-thumb-hover: oklch(0.7 0.02 145);
+  --studio-radius: 8px;
+}
+
+[data-theme="dark"],
+.dark {
+  --studio-background: oklch(0.16 0.012 145);
+  --studio-foreground: oklch(0.93 0.01 140);
+  --studio-primary: oklch(0.82 0.18 135);
+  --studio-primary-foreground: oklch(0.18 0.02 140);
+  --studio-secondary: oklch(0.24 0.012 145);
+  --studio-secondary-foreground: oklch(0.93 0.01 140);
+  --studio-muted: oklch(0.24 0.01 145);
+  --studio-muted-foreground: oklch(0.7 0.02 140);
+  --studio-accent: oklch(0.28 0.02 145);
+  --studio-accent-foreground: oklch(0.93 0.01 140);
+  --studio-destructive: oklch(0.63 0.18 25);
+  --studio-border: oklch(0.32 0.012 145);
+  --studio-input: oklch(0.32 0.012 145);
+  --studio-ring: oklch(0.82 0.18 135);
+  --studio-popover: oklch(0.2 0.012 145);
+  --studio-popover-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar: oklch(0.2 0.012 145);
+  --studio-sidebar-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar-primary: oklch(0.82 0.18 135);
+  --studio-sidebar-primary-foreground: oklch(0.18 0.02 140);
+  --studio-sidebar-accent: oklch(0.28 0.02 145);
+  --studio-sidebar-accent-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar-border: oklch(0.32 0.012 145);
+  --studio-sidebar-ring: oklch(0.82 0.18 135);
+  --studio-canvas-bg: oklch(0.16 0.012 145);
+  --studio-canvas-dot: oklch(0.32 0.012 145);
+  --studio-scrollbar-thumb: oklch(0.36 0.012 145);
+  --studio-scrollbar-thumb-hover: oklch(0.48 0.02 145);
+}
+
+@theme inline {
+  --color-background: var(--studio-background);
+  --color-foreground: var(--studio-foreground);
+  --color-primary: var(--studio-primary);
+  --color-primary-foreground: var(--studio-primary-foreground);
+  --color-secondary: var(--studio-secondary);
+  --color-secondary-foreground: var(--studio-secondary-foreground);
+  --color-muted: var(--studio-muted);
+  --color-muted-foreground: var(--studio-muted-foreground);
+  --color-accent: var(--studio-accent);
+  --color-accent-foreground: var(--studio-accent-foreground);
+  --color-destructive: var(--studio-destructive);
+  --color-border: var(--studio-border);
+  --color-input: var(--studio-input);
+  --color-ring: var(--studio-ring);
+  --color-popover: var(--studio-popover);
+  --color-popover-foreground: var(--studio-popover-foreground);
+  --color-sidebar: var(--studio-sidebar);
+  --color-sidebar-foreground: var(--studio-sidebar-foreground);
+  --color-sidebar-primary: var(--studio-sidebar-primary);
+  --color-sidebar-primary-foreground: var(--studio-sidebar-primary-foreground);
+  --color-sidebar-accent: var(--studio-sidebar-accent);
+  --color-sidebar-accent-foreground: var(--studio-sidebar-accent-foreground);
+  --color-sidebar-border: var(--studio-sidebar-border);
+  --color-sidebar-ring: var(--studio-sidebar-ring);
+  --radius-sm: calc(var(--studio-radius) - 2px);
+  --radius-md: calc(var(--studio-radius) - 1px);
+  --radius-lg: var(--studio-radius);
+}
+
+.screenshot-studio-root {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--studio-background);
+  color: var(--studio-foreground);
+  font-family: var(--font-sans);
+}
+
+.screenshot-studio-root *,
+.screenshot-studio-root *::before,
+.screenshot-studio-root *::after {
+  box-sizing: border-box;
+}
+
+.screenshot-studio-root :where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure) {
+  margin: 0;
+}
+
+.screenshot-studio-root :where(button, input, select, textarea) {
+  font: inherit;
+}
+
+.screenshot-studio-root :where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screenshot-studio-root :where(img, svg) {
+  display: block;
+  vertical-align: middle;
+}
+
+.screenshot-studio-root .canvas-grid {
+  background-color: var(--studio-canvas-bg);
+  background-image: radial-gradient(var(--studio-canvas-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.screenshot-studio-root .no-scrollbar {
+  scrollbar-width: none;
+}
+
+.screenshot-studio-root .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.screenshot-studio-root * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--studio-scrollbar-thumb) transparent;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: var(--studio-scrollbar-thumb);
+  background-clip: content-box;
+}
+
+.screenshot-studio-root ::-webkit-scrollbar-thumb:hover {
+  background: var(--studio-scrollbar-thumb-hover);
+  background-clip: content-box;
+}

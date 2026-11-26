@@ -7,13 +7,25 @@ import { defineConfig } from "vite-plus";
  */
 export default defineConfig({
   fmt: {
-    ignorePatterns: ["**/dist/**", "references/**", "apps/desktop/frontend/src/lib/wailsjs/**"],
+    ignorePatterns: [
+      "**/dist/**",
+      "**/build/**",
+      "references/**",
+      "apps/desktop-svelte/**",
+      "apps/desktop/frontend/src/lib/wailsjs/**",
+    ],
   },
   staged: {
     "*": "vp check --fix",
   },
   lint: {
-    ignorePatterns: ["**/dist/**", "references/**", "apps/desktop/frontend/src/lib/wailsjs/**"],
+    ignorePatterns: [
+      "**/dist/**",
+      "**/build/**",
+      "references/**",
+      "apps/desktop-svelte/**",
+      "apps/desktop/frontend/src/lib/wailsjs/**",
+    ],
     options: { typeAware: true, typeCheck: true },
     jsPlugins: ["@shadcn/lint"],
     categories: { correctness: "error" },
@@ -61,22 +73,9 @@ export default defineConfig({
         rules: { "shadcn/no-unknown-classes": "off" },
       },
       {
-        // The desktop SVG port keeps the editor's runtime SVG styles.
-        files: ["apps/desktop/frontend/src/lib/modules/svg-compose/**"],
-        rules: {
-          "shadcn/no-unknown-classes": "off",
-          "shadcn/no-inline-styles": "off",
-          "shadcn/no-arbitrary-values": "off",
-        },
-      },
-      {
-        // Screenshot Studio uses its own Tailwind/shadcn component layer.
-        files: ["apps/desktop/frontend/src/lib/modules/screenshot-studio/**"],
-        rules: {
-          "shadcn/no-unknown-classes": "off",
-          "shadcn/no-inline-styles": "off",
-          "shadcn/no-arbitrary-values": "off",
-        },
+        // The desktop shell preserves its hand-written design-system classes.
+        files: ["apps/desktop/frontend/src/**/*.{ts,tsx}"],
+        rules: { "shadcn/no-unknown-classes": "off" },
       },
     ],
   },

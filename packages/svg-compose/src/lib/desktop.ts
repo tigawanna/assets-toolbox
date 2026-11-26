@@ -5,11 +5,29 @@ type WailsRuntime = {
   EventsEmit: (eventName: string, ...data: unknown[]) => void;
 };
 
+type NativeWorkspaceApp = {
+  WorkspaceID?: () => Promise<string>;
+};
+
 const FLUSH_REQUEST = "workspace:flush";
 const FLUSH_COMPLETE = "workspace:flushed";
 
 const desktopRuntime = (): WailsRuntime | undefined =>
-  (window as Window & { runtime?: WailsRuntime }).runtime;
+  typeof window === "undefined"
+    ? undefined
+    : (window as Window & { runtime?: WailsRuntime }).runtime;
+
+/** Read the native workspace namespace without making the package depend on the shell. */
+export async function getWorkspaceId(): Promise<string> {
+  if (typeof window === "undefined") return "";
+  const app = (window as Window & { go?: { main?: { App?: NativeWorkspaceApp } } }).go?.main?.App;
+  if (!app?.WorkspaceID) return "";
+  try {
+    return await app.WorkspaceID();
+  } catch {
+    return "";
+  }
+}
 
 /** Subscribe to the desktop shell's close-time save request. No-op in a browser. */
 export const onDesktopFlush = (callback: WailsEventCallback): (() => void) | undefined =>

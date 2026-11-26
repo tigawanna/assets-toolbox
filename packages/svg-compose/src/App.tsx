@@ -13,7 +13,7 @@ import { Layers } from "./components/layers";
 import { ShortcutsDialog, isShortcutHelp } from "./components/shortcuts";
 import { StatusHud, type DragStatus, type Notice } from "./components/status-hud";
 import { ToolRail } from "./components/tool-rail";
-import { completeDesktopFlush, onDesktopFlush } from "./lib/desktop";
+import { completeDesktopFlush, getWorkspaceId, onDesktopFlush } from "./lib/desktop";
 import {
   documentKey,
   loadWorkspaceFromLocal,
@@ -33,6 +33,16 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CopyIcon,
+  ExportIcon,
+  FitIcon,
+  FocusIcon,
+  HelpIcon,
+  ImageIcon,
+  ImportIcon,
+  LogoIcon,
+  RecenterIcon,
+  RedoIcon,
+  UndoIcon,
   DetachIcon,
   DownIcon,
   FrontIcon,
@@ -42,19 +52,28 @@ import {
   UngroupIcon,
   UpIcon,
 } from "./components/icons";
+import { createSaveQueue } from "./lib/save-queue";
 import { toolById } from "./tools/shapes";
 
-type SaveState = "loading" | "saving" | "saved" | "error" | "empty";
+type SaveState = "loading" | "saving" | "saved" | "backup" | "error" | "empty";
+type Flush = () => Promise<boolean>;
+
+export type AppProps = {
+  onReady?: (flush: Flush | null) => void;
+  onHome?: () => void;
+  embedded?: boolean;
+};
 
 const SAVE_LABELS: Record<SaveState, string> = {
   loading: "Loading…",
   saving: "Saving…",
   saved: "Saved locally",
-  error: "Browser backup",
+  backup: "Browser backup",
+  error: "Save failed",
   empty: "Autosave ready",
 };
 
-export default function App() {
+export default function App({ onReady, onHome, embedded = false }: AppProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Stage | null>(null);
   const noticeId = useRef(0);
@@ -68,7 +87,8 @@ export default function App() {
   );
   const saveTimerRef = useRef<number | null>(null);
   const saveRevisionRef = useRef(0);
-  const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
+  const saveQueueRef = useRef(createSaveQueue());
+  const workspaceIdRef = useRef("");
 
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -100,39 +120,41 @@ export default function App() {
     const pending = pendingSaveRef.current;
     if (!pending) return Promise.resolve(true);
     const revision = saveRevisionRef.current;
-    saveWorkspaceToLocal(pending);
+    const workspaceId = workspaceIdRef.current;
+    const localSaved = saveWorkspaceToLocal(pending, { workspaceId }) !== null;
     setSaveState("saving");
 
     const run = async (): Promise<boolean> => {
       try {
         const saved = await saveWorkspaceToServer(pending);
         if (revision === saveRevisionRef.current) {
-          saveWorkspaceToLocal(saved, saved.updatedAt);
+          saveWorkspaceToLocal(saved, { workspaceId, updatedAt: saved.updatedAt });
           pendingSaveRef.current = null;
           setLastSavedAt(saved.updatedAt);
           setSaveState("saved");
         }
         return true;
       } catch {
-        if (revision === saveRevisionRef.current) setSaveState("error");
-        return false;
+        if (revision === saveRevisionRef.current) {
+          setSaveState(localSaved ? "backup" : "error");
+        }
+        return localSaved;
       }
     };
 
-    const result = saveQueueRef.current.catch(() => {}).then(run);
-    saveQueueRef.current = result;
-    void result.finally(() => {
-      if (saveQueueRef.current === result) saveQueueRef.current = Promise.resolve(true);
-    });
-    return result;
+    return saveQueueRef.current(run);
   }, []);
 
   useEffect(() => {
     const unsubscribe = onDesktopFlush((requestId) => {
       void persistNow().then((succeeded) => completeDesktopFlush(succeeded, requestId));
     });
-    return unsubscribe;
-  }, [persistNow]);
+    onReady?.(persistNow);
+    return () => {
+      unsubscribe?.();
+      onReady?.(null);
+    };
+  }, [onReady, persistNow]);
 
   const queueSave = useCallback(
     (snapshot: StageSnapshot) => {
@@ -193,9 +215,12 @@ export default function App() {
     let cancelled = false;
     const restore = async () => {
       setSaveState("loading");
+      const workspaceId = await getWorkspaceId();
+      if (cancelled) return;
+      workspaceIdRef.current = workspaceId;
       const [server, local] = await Promise.all([
         loadWorkspaceFromServer().catch(() => null),
-        Promise.resolve(loadWorkspaceFromLocal()),
+        Promise.resolve(loadWorkspaceFromLocal(workspaceId)),
       ]);
       if (cancelled) return;
       const saved = newestWorkspace(server, local);
@@ -211,7 +236,7 @@ export default function App() {
         } finally {
           restoring = false;
         }
-        saveWorkspaceToLocal(saved, saved.updatedAt);
+        saveWorkspaceToLocal(saved, { workspaceId, updatedAt: saved.updatedAt });
         setLastSavedAt(saved.updatedAt);
         notify("Restored saved work");
       }
@@ -243,7 +268,7 @@ export default function App() {
     const flush = () => {
       const pending = pendingSaveRef.current;
       if (!pending) return;
-      saveWorkspaceToLocal(pending);
+      saveWorkspaceToLocal(pending, { workspaceId: workspaceIdRef.current });
       if (navigator.sendBeacon) {
         navigator.sendBeacon(
           "/api/workspace",
@@ -413,7 +438,7 @@ export default function App() {
           return;
         }
       }
-      if (meta && event.key.toLowerCase() === "b") {
+      if (!embedded && meta && event.key.toLowerCase() === "b") {
         event.preventDefault();
         setRailExpanded((value) => !value);
         notify("Tool rail", "Ctrl B");
@@ -465,13 +490,170 @@ export default function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [chooseTool, notify, toggleFocus]);
+  }, [chooseTool, embedded, notify, toggleFocus]);
 
   const activeTool = toolId ? (toolById(toolId)?.label ?? toolId) : null;
   const hasSelection = selectedIds.length > 0;
 
   return (
-    <div className="app">
+    <div className={embedded ? "app svg-compose-root" : "app"}>
+      {embedded ? (
+        <header data-svg-editor-header>
+          <div data-svg-header-brand>
+            {onHome ? (
+              <button
+                type="button"
+                className="button"
+                data-svg-icon-button
+                aria-label="Back to library"
+                title="Back to library"
+                onClick={onHome}
+              >
+                <LogoIcon />
+              </button>
+            ) : (
+              <span data-svg-header-mark>
+                <LogoIcon />
+              </span>
+            )}
+            <div data-svg-header-title>
+              <strong>SVG Compose</strong>
+              <span>
+                Untitled · {Math.round(zoom * 100)}% · {SAVE_LABELS[saveState]}
+              </span>
+            </div>
+          </div>
+
+          <div data-svg-header-actions>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Undo"
+              title="Undo · ⌘Z"
+              disabled={!canUndo}
+              onClick={() => {
+                stageRef.current?.undo();
+                notify("Undo", "⌘Z");
+              }}
+            >
+              <UndoIcon />
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Redo"
+              title="Redo · ⌘⇧Z"
+              disabled={!canRedo}
+              onClick={() => {
+                stageRef.current?.redo();
+                notify("Redo", "⌘⇧Z");
+              }}
+            >
+              <RedoIcon />
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Fit view"
+              title="Fit view · ⌘0"
+              onClick={() => {
+                stageRef.current?.fitToDocument();
+                notify("Fit to view", "⌘0");
+              }}
+            >
+              <FitIcon />
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Recenter"
+              title="Recenter · C"
+              onClick={() => {
+                stageRef.current?.recenter();
+                notify("Recenter view", "C");
+              }}
+            >
+              <RecenterIcon />
+            </button>
+            <label
+              className="button"
+              data-svg-icon-button
+              aria-label="Import SVG"
+              title="Import SVG"
+            >
+              <ImportIcon />
+              <input
+                type="file"
+                accept=".svg,image/svg+xml"
+                multiple
+                onChange={(event) => {
+                  void importFiles(Array.from(event.target.files ?? []));
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="button"
+              disabled={!hasSelection}
+              onClick={() => {
+                stageRef.current?.duplicateSelection();
+                notify("Duplicated", "⌘D");
+              }}
+            >
+              <CopyIcon />
+              <span>Copy</span>
+            </button>
+            <button
+              type="button"
+              className="button"
+              onClick={() => {
+                stageRef.current?.downloadSvg("compose");
+                notify("Exported SVG");
+              }}
+            >
+              <ExportIcon />
+              <span>Download</span>
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Download PNG"
+              title="Download PNG"
+              onClick={exportPng}
+            >
+              <ImageIcon />
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Focus mode"
+              aria-pressed={focusMode}
+              title="Focus mode · \\"
+              onClick={toggleFocus}
+            >
+              <FocusIcon />
+            </button>
+            <button
+              type="button"
+              className="button"
+              data-svg-icon-button
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts · ⇧?"
+              onClick={() => setShowShortcuts(true)}
+            >
+              <HelpIcon />
+            </button>
+          </div>
+        </header>
+      ) : null}
+
       <main className="workspace">
         <ToolRail
           tool={toolId}
@@ -506,6 +688,7 @@ export default function App() {
           focusMode={focusMode}
           onToggleFocus={toggleFocus}
           onScaleHint={() => notify("Drag a corner box to scale · Shift keeps proportions", "S")}
+          showActions={!embedded}
         />
 
         <section
