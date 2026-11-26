@@ -338,7 +338,7 @@
   max-width: 1280px;
   height: 100%;
   margin: 0 auto;
-  padding: 24px 38px 48px;
+  padding: 24px 38px 96px;
 }
 
 .app-shell.editor-route .main-scroll {
@@ -485,7 +485,7 @@
   }
 
   .page-content {
-    padding: 30px 22px 40px;
+    padding: 30px 22px 88px;
   }
 }
 
@@ -502,7 +502,7 @@
   }
 
   .page-content {
-    padding: 25px 16px 34px;
+    padding: 25px 16px 80px;
   }
 }
 
