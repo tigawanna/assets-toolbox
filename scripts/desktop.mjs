@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import net from "node:net";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -11,15 +12,34 @@ if (!command) {
   process.exit(1);
 }
 
+function isPortInUse(address) {
+  const separator = address.lastIndexOf(":");
+  const host = address.slice(0, separator) || "127.0.0.1";
+  const port = Number(address.slice(separator + 1));
+  if (!Number.isInteger(port)) return Promise.resolve(false);
+
+  return new Promise((resolve) => {
+    const socket = net.connect({ host, port });
+    const finish = (inUse) => {
+      socket.destroy();
+      resolve(inUse);
+    };
+    socket.setTimeout(500, () => finish(false));
+    socket.once("connect", () => finish(true));
+    socket.once("error", () => finish(false));
+  });
+}
+
 const env = { ...process.env };
 
 if (env.SKIP_ASSET_PACKAGE_BUILD !== "1") {
+  const rootBin = path.join(repositoryRoot, "node_modules", ".bin");
   const packageBuild = spawnSync(
     "pnpm",
     ["--filter", "@tigawanna/expo-assets", "--filter", "@tigawanna/brand-assets", "build"],
     {
       cwd: repositoryRoot,
-      env,
+      env: { ...env, PATH: `${rootBin}${path.delimiter}${env.PATH ?? ""}` },
       stdio: "inherit",
     },
   );
@@ -40,18 +60,20 @@ if (command === "dev") {
   env.WAILS_DEV_ALLOWED_HOSTS = [...allowedHosts].join(",");
 }
 
+const apiAddress = env.SOCIAL_INSPECT_API_ADDR ?? "127.0.0.1:4332";
+const shouldStartApi = command === "dev" && env.SOCIAL_INSPECT_DEV_API !== "0";
+const apiAlreadyRunning = shouldStartApi && (await isPortInUse(apiAddress));
+if (apiAlreadyRunning) {
+  console.log(`Reusing the Social Inspect API already listening on ${apiAddress}.`);
+}
+
 const apiServer =
-  command === "dev" && env.SOCIAL_INSPECT_DEV_API !== "0"
-    ? spawn(
-        "go",
-        [
-          "run",
-          "./cmd/social-inspect-api",
-          "-addr",
-          env.SOCIAL_INSPECT_API_ADDR ?? "127.0.0.1:4332",
-        ],
-        { cwd: desktopDirectory, env, stdio: "inherit" },
-      )
+  shouldStartApi && !apiAlreadyRunning
+    ? spawn("go", ["run", "./cmd/social-inspect-api", "-addr", apiAddress], {
+        cwd: desktopDirectory,
+        env,
+        stdio: "inherit",
+      })
     : null;
 
 apiServer?.on("error", (error) => {
