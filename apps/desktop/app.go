@@ -52,6 +52,7 @@ type App struct {
 	emit          func(context.Context, string, ...interface{})
 	eventCleanup  []func()
 	assetManager  *assetgen.Manager
+	directories   *directoryStore
 	assetInputsMu sync.Mutex
 	assetInputs   map[string]string
 }
@@ -71,6 +72,7 @@ func NewApp() *App {
 		emit:          wailsruntime.EventsEmit,
 		flushTimeout:  3 * time.Second,
 		assetManager:  newAssetManager(),
+		directories:   newDirectoryStore(defaultDirectoryStorePath()),
 		assetInputs:   make(map[string]string),
 	}
 }

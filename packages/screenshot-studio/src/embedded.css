@@ -138,16 +138,16 @@
   background: var(--studio-background);
   color: var(--studio-foreground);
   font-family: var(--font-sans);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .screenshot-studio-root :where(.text-xs) {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .screenshot-studio-root :where(.text-sm) {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .screenshot-studio-root :where(.text-base) {
@@ -155,23 +155,23 @@
 }
 
 .screenshot-studio-root :where(.text-lg) {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .screenshot-studio-root :where(.text-xl) {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .screenshot-studio-root :where(.text-2xl) {
-  font-size: 20px;
+  font-size: 21px;
 }
 
 .screenshot-studio-root :where(.text-3xl) {
-  font-size: 28px;
+  font-size: 30px;
 }
 
 .screenshot-studio-root :where(.text-4xl) {
-  font-size: 32px;
+  font-size: 34px;
 }
 
 .screenshot-studio-root > header {

@@ -63,7 +63,8 @@ board navigation. Social Inspect uses its canonical React page with Go-backed
 `/api/inspect` and `/api/asset` handlers. Cabra Sound uses the canonical Web Audio
 engine with a native React interface. Expo Assets runs the canonical Sharp
 generators in a per-job Node sidecar; Go stages inputs, handles native file
-dialogs, validates artifacts, and saves previews or ZIP sets.
+dialogs, validates artifacts, and saves previews or ZIP sets. Native open/save
+dialogs remember their last folders in `assets-toolbox/dialogs.json`.
 
 ## Routes
 

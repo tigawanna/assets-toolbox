@@ -84,7 +84,7 @@
 
 .brand-copy small {
   color: var(--text-subtle);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .sidebar-nav {
@@ -104,7 +104,7 @@
   padding: 0 10px 9px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -119,7 +119,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   text-decoration: none;
   transition:
@@ -159,7 +159,7 @@
   border-radius: 5px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   text-align: center;
 }
 
@@ -174,7 +174,7 @@
   align-items: center;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .backend-meta {
@@ -185,7 +185,7 @@
   padding-left: 0;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .sidebar-footer {
@@ -212,7 +212,7 @@
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -274,7 +274,7 @@
   align-items: center;
   gap: 10px;
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .breadcrumb strong {

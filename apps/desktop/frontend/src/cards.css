@@ -121,7 +121,7 @@
 .category {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -156,7 +156,7 @@
   z-index: 1;
   padding-top: 16px;
   border-top: 1px solid var(--line);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .featured .card-footer {
@@ -190,6 +190,7 @@
   overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

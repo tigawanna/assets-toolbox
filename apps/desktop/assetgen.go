@@ -91,6 +91,13 @@ func resolveAssetWorkerPath() string {
 	return filepath.Join("sidecar", "src", "worker.mjs")
 }
 
+func (a *App) rememberAssetDialogDirectory(key, selectedPath string) {
+	if a.directories == nil {
+		return
+	}
+	_ = a.directories.set(key, filepath.Dir(selectedPath))
+}
+
 func newAssetHandle() (string, error) {
 	bytes := make([]byte, 12)
 	if _, err := rand.Read(bytes); err != nil {
@@ -109,7 +116,8 @@ func (a *App) SelectAssetImage(role string) (AssetInput, error) {
 	}
 
 	selected, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
-		Title: "Choose a source image",
+		Title:            "Choose a source image",
+		DefaultDirectory: existingDirectory(a.directories.get(assetDialogKeyOpen)),
 		Filters: []wailsruntime.FileFilter{
 			{DisplayName: "SVG or PNG", Pattern: "*.svg;*.png"},
 		},
@@ -140,6 +148,7 @@ func (a *App) SelectAssetImage(role string) (AssetInput, error) {
 	a.assetInputsMu.Lock()
 	a.assetInputs[handle] = selected
 	a.assetInputsMu.Unlock()
+	a.rememberAssetDialogDirectory(assetDialogKeyOpen, selected)
 
 	return AssetInput{
 		Handle:   handle,
@@ -316,8 +325,9 @@ func (a *App) SaveAssetArtifact(jobID, name string) (string, error) {
 		return "", err
 	}
 	destination, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "Save asset",
-		DefaultFilename: name,
+		Title:            "Save asset",
+		DefaultDirectory: existingDirectory(a.directories.get(assetDialogKeySave)),
+		DefaultFilename:  name,
 	})
 	if err != nil {
 		return "", err
@@ -332,6 +342,7 @@ func (a *App) SaveAssetArtifact(jobID, name string) (string, error) {
 	if err := os.WriteFile(destination, contents, 0o644); err != nil {
 		return "", err
 	}
+	a.rememberAssetDialogDirectory(assetDialogKeySave, destination)
 	return destination, nil
 }
 
@@ -345,8 +356,9 @@ func (a *App) SaveAssetSet(jobID, suggestedName string) (string, error) {
 		suggestedName = "expo-assets.zip"
 	}
 	destination, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		Title:           "Save asset set",
-		DefaultFilename: suggestedName,
+		Title:            "Save asset set",
+		DefaultDirectory: existingDirectory(a.directories.get(assetDialogKeySave)),
+		DefaultFilename:  suggestedName,
 		Filters: []wailsruntime.FileFilter{
 			{DisplayName: "ZIP archive", Pattern: "*.zip"},
 		},
@@ -397,6 +409,7 @@ func (a *App) SaveAssetSet(jobID, suggestedName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	a.rememberAssetDialogDirectory(assetDialogKeySave, destination)
 	return destination, nil
 }
 

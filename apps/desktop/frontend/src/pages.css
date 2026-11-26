@@ -69,7 +69,7 @@
   border-radius: 5px;
   background: var(--surface-muted);
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.04em;
 }
 
@@ -170,7 +170,7 @@
 .mount-strategy span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -262,7 +262,7 @@
 .module-details dt {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -417,7 +417,7 @@
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
