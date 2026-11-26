@@ -112,6 +112,39 @@
   background: var(--surface-muted);
 }
 
+.expo-source-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+}
+
+.expo-source-preview,
+.expo-source-placeholder {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  overflow: hidden;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text-subtle);
+}
+
+.expo-source-preview {
+  cursor: pointer;
+}
+
+.expo-source-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .expo-source-copy {
   display: flex;
   min-width: 0;
@@ -311,6 +344,11 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-muted);
+}
+
+button.expo-artifact-preview {
+  border: 0;
+  cursor: pointer;
 }
 
 .expo-artifact-preview {

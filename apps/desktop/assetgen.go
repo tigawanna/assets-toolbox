@@ -159,6 +159,19 @@ func (a *App) resolveAssetInput(handle string) (string, error) {
 	return selected, nil
 }
 
+// GetAssetInputPreview returns a base64 preview for a previously selected source image.
+func (a *App) GetAssetInputPreview(handle string) (string, error) {
+	selected, err := a.resolveAssetInput(handle)
+	if err != nil {
+		return "", err
+	}
+	contents, err := os.ReadFile(selected)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(contents), nil
+}
+
 // GenerateExpoAssets runs the canonical Expo generator in an isolated job.
 func (a *App) GenerateExpoAssets(request ExpoGenerateRequest) (assetgen.Result, error) {
 	if request.Icon == "" {

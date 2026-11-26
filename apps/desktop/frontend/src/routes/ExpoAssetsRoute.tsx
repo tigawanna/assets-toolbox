@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { EXPO_ASSET_DEFAULTS } from "@assets/expo-assets/types";
 
+import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
+import { ColorField } from "../components/ColorField";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -49,6 +51,8 @@ export function ExpoAssetsRoute() {
   const [outDir, setOutDir] = useState<string>(EXPO_ASSET_DEFAULTS.outDir);
   const [result, setResult] = useState<AssetJobResult | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [sourcePreviews, setSourcePreviews] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<{ title: string; src: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
@@ -108,6 +112,11 @@ export function ExpoAssetsRoute() {
     try {
       const selected = await app.SelectAssetImage(role);
       setSources((current) => ({ ...current, [role]: selected }));
+      const encoded = await app.GetAssetInputPreview(selected.handle);
+      setSourcePreviews((current) => ({
+        ...current,
+        [role]: `data:${selected.mimeType || "image/png"};base64,${encoded}`,
+      }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not select an image.");
     }
@@ -219,13 +228,34 @@ export function ExpoAssetsRoute() {
                 const selected = sources[source.role];
                 return (
                   <div className="expo-source" key={source.role}>
-                    <div className="expo-source-copy">
-                      <strong>{source.label}</strong>
-                      <span>
-                        {selected
-                          ? `${selected.name} · ${Math.round(selected.size / 1024)} KB`
-                          : source.hint}
-                      </span>
+                    <div className="expo-source-main">
+                      {sourcePreviews[source.role] ? (
+                        <button
+                          type="button"
+                          className="expo-source-preview"
+                          aria-label={`Enlarge ${source.label}`}
+                          onClick={() =>
+                            setExpanded({
+                              title: selected?.name ?? source.label,
+                              src: sourcePreviews[source.role],
+                            })
+                          }
+                        >
+                          <img src={sourcePreviews[source.role]} alt="" />
+                        </button>
+                      ) : (
+                        <span className="expo-source-placeholder" aria-hidden="true">
+                          <FolderOpen size={16} />
+                        </span>
+                      )}
+                      <div className="expo-source-copy">
+                        <strong>{source.label}</strong>
+                        <span>
+                          {selected
+                            ? `${selected.name} · ${Math.round(selected.size / 1024)} KB`
+                            : source.hint}
+                        </span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -244,17 +274,12 @@ export function ExpoAssetsRoute() {
           <div className="expo-card">
             <h2>Colors</h2>
             <div className="expo-field-grid">
-              <label>
-                <span>Brand color</span>
-                <input value={brandColor} onChange={(event) => setBrandColor(event.target.value)} />
-              </label>
-              <label>
-                <span>Splash background</span>
-                <input
-                  value={splashBackground}
-                  onChange={(event) => setSplashBackground(event.target.value)}
-                />
-              </label>
+              <ColorField label="Brand color" value={brandColor} onChange={setBrandColor} />
+              <ColorField
+                label="Splash background"
+                value={splashBackground}
+                onChange={setSplashBackground}
+              />
             </div>
             <label className="expo-inline-field">
               <span>Output folder</span>
@@ -352,13 +377,22 @@ export function ExpoAssetsRoute() {
                 <div className="expo-artifact-grid">
                   {result.artifacts.map((artifact) => (
                     <article className="expo-artifact" key={artifact.name}>
-                      <div className="expo-artifact-preview">
-                        {previews[artifact.name] && artifact.name.endsWith(".png") ? (
+                      {previews[artifact.name]?.startsWith("data:") ? (
+                        <button
+                          type="button"
+                          className="expo-artifact-preview"
+                          aria-label={`Enlarge ${artifact.name}`}
+                          onClick={() =>
+                            setExpanded({ title: artifact.name, src: previews[artifact.name] })
+                          }
+                        >
                           <img src={previews[artifact.name]} alt="" />
-                        ) : (
+                        </button>
+                      ) : (
+                        <div className="expo-artifact-preview">
                           <span>{artifact.width || "—"}×</span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       <div className="expo-artifact-meta">
                         <strong>{artifact.name}</strong>
                         <span>
@@ -398,6 +432,11 @@ export function ExpoAssetsRoute() {
           </div>
         </div>
       </div>
+      <AssetPreviewDialog
+        title={expanded?.title ?? ""}
+        src={expanded?.src}
+        onClose={() => setExpanded(null)}
+      />
     </section>
   );
 

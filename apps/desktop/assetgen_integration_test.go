@@ -2,12 +2,31 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
 )
+
+func TestGetAssetInputPreview(t *testing.T) {
+	app := NewApp()
+	defer app.assetManager.Close()
+	app.assetInputs["preview-handle"] = "../../packages/expo-assets/test/fixtures/logo.svg"
+
+	encoded, err := app.GetAssetInputPreview("preview-handle")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(contents) == 0 {
+		t.Fatal("expected a non-empty preview")
+	}
+}
 
 func TestBrandGenerationWithCanonicalSidecar(t *testing.T) {
 	worker := resolveAssetWorkerPath()

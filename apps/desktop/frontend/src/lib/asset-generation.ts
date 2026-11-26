@@ -57,6 +57,7 @@ export interface AssetJobResult {
 
 interface AssetApp {
   SelectAssetImage(role: string): Promise<AssetInput>;
+  GetAssetInputPreview(handle: string): Promise<string>;
   GenerateExpoAssets(request: ExpoGenerateRequest): Promise<AssetJobResult>;
   GenerateBrandAssets(request: BrandGenerateRequest): Promise<AssetJobResult>;
   GetAssetArtifact(jobID: string, name: string): Promise<string>;

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { defaultIconSizes } from "@assets/brand-assets/types";
 
+import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
+import { ColorField } from "../components/ColorField";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -53,6 +55,8 @@ export function BrandAssetsRoute() {
   const [outDir, setOutDir] = useState("out");
   const [result, setResult] = useState<AssetJobResult | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [sourcePreview, setSourcePreview] = useState("");
+  const [expanded, setExpanded] = useState<{ title: string; src: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
@@ -111,7 +115,10 @@ export function BrandAssetsRoute() {
     const app = getAssetApp();
     if (!app) return;
     try {
-      setIcon(await app.SelectAssetImage("icon"));
+      const selected = await app.SelectAssetImage("icon");
+      setIcon(selected);
+      const encoded = await app.GetAssetInputPreview(selected.handle);
+      setSourcePreview(`data:${selected.mimeType || "image/png"};base64,${encoded}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not select an icon.");
     }
@@ -233,11 +240,29 @@ export function BrandAssetsRoute() {
           <div className="brand-card">
             <h2>Source mark</h2>
             <div className="brand-source">
-              <span>
-                {icon
-                  ? `${icon.name} · ${Math.round(icon.size / 1024)} KB`
-                  : "Transparent SVG or PNG"}
-              </span>
+              <div className="brand-source-main">
+                {sourcePreview ? (
+                  <button
+                    type="button"
+                    className="brand-source-preview"
+                    aria-label={`Enlarge ${icon?.name ?? "source image"}`}
+                    onClick={() =>
+                      setExpanded({ title: icon?.name ?? "Source image", src: sourcePreview })
+                    }
+                  >
+                    <img src={sourcePreview} alt="" />
+                  </button>
+                ) : (
+                  <span className="brand-source-placeholder" aria-hidden="true">
+                    <FolderOpen size={16} />
+                  </span>
+                )}
+                <span>
+                  {icon
+                    ? `${icon.name} · ${Math.round(icon.size / 1024)} KB`
+                    : "Transparent SVG or PNG"}
+                </span>
+              </div>
               <button type="button" disabled={!native} onClick={() => void chooseIcon()}>
                 {icon ? <Check size={14} /> : <FolderOpen size={14} />}
                 {icon ? "Change" : "Choose"}
@@ -248,10 +273,7 @@ export function BrandAssetsRoute() {
 
           <div className="brand-card">
             <h2>Icons and plate</h2>
-            <label className="brand-field">
-              <span>Plate color</span>
-              <input value={plate} onChange={(event) => setPlate(event.target.value)} />
-            </label>
+            <ColorField label="Plate color" value={plate} onChange={setPlate} />
             <label className="brand-check">
               <input
                 type="checkbox"
@@ -342,20 +364,12 @@ export function BrandAssetsRoute() {
                 </label>
               </div>
               <div className="brand-field-row">
-                <label className="brand-field">
-                  <span>Theme</span>
-                  <input
-                    value={themeColor}
-                    onChange={(event) => setThemeColor(event.target.value)}
-                  />
-                </label>
-                <label className="brand-field">
-                  <span>Background</span>
-                  <input
-                    value={backgroundColor}
-                    onChange={(event) => setBackgroundColor(event.target.value)}
-                  />
-                </label>
+                <ColorField label="Theme" value={themeColor} onChange={setThemeColor} />
+                <ColorField
+                  label="Background"
+                  value={backgroundColor}
+                  onChange={setBackgroundColor}
+                />
               </div>
               <div className="brand-field-row">
                 <label className="brand-field">
@@ -414,13 +428,22 @@ export function BrandAssetsRoute() {
                 <div className="brand-artifact-grid">
                   {result.artifacts.map((artifact) => (
                     <article className="brand-artifact" key={artifact.name}>
-                      <div className="brand-artifact-preview">
-                        {previews[artifact.name]?.startsWith("data:") ? (
+                      {previews[artifact.name]?.startsWith("data:") ? (
+                        <button
+                          type="button"
+                          className="brand-artifact-preview"
+                          aria-label={`Enlarge ${artifact.name}`}
+                          onClick={() =>
+                            setExpanded({ title: artifact.name, src: previews[artifact.name] })
+                          }
+                        >
                           <img src={previews[artifact.name]} alt="" />
-                        ) : (
+                        </button>
+                      ) : (
+                        <div className="brand-artifact-preview">
                           <span>{artifact.name.split(".").at(-1)?.toUpperCase()}</span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       <div className="brand-artifact-meta">
                         <strong>{artifact.name}</strong>
                         <span>{Math.round(artifact.bytes / 1024)} KB</span>
@@ -462,6 +485,11 @@ export function BrandAssetsRoute() {
           </div>
         </div>
       </div>
+      <AssetPreviewDialog
+        title={expanded?.title ?? ""}
+        src={expanded?.src}
+        onClose={() => setExpanded(null)}
+      />
     </section>
   );
 
