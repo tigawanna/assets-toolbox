@@ -157,7 +157,13 @@ export function BrandAssetsRoute() {
     };
 
     try {
-      setResult(await app.GenerateBrandAssets(request));
+      const generated = await app.GenerateBrandAssets(request);
+      if (ogDesign && generated.artifacts.some((artifact) => artifact.name === "og.png")) {
+        const encoded = ogDesign.dataUrl.split(",")[1] ?? "";
+        await app.ReplaceAssetArtifact(generated.jobId, "og.png", encoded);
+        setPreviews((current) => ({ ...current, "og.png": ogDesign.dataUrl }));
+      }
+      setResult(generated);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not generate brand assets.");
     } finally {
@@ -170,6 +176,7 @@ export function BrandAssetsRoute() {
     icon,
     manifestEnabled,
     name,
+    ogDesign,
     ogDescription,
     ogEnabled,
     ogHeight,

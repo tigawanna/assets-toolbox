@@ -356,6 +356,23 @@ func (a *App) GetAssetArtifact(jobID, name string) (string, error) {
 	return base64.StdEncoding.EncodeToString(contents), nil
 }
 
+// ReplaceAssetArtifact overwrites a validated generated artifact with a
+// user-designed PNG before it is previewed or saved.
+func (a *App) ReplaceAssetArtifact(jobID, name, base64Data string) error {
+	filePath, err := a.assetManager.ArtifactPath(jobID, name)
+	if err != nil {
+		return err
+	}
+	contents, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return err
+	}
+	if len(contents) == 0 || len(contents) > 16<<20 {
+		return errors.New("the replacement image must be between 1 byte and 16 MiB")
+	}
+	return os.WriteFile(filePath, contents, 0o644)
+}
+
 // SaveAssetArtifact writes one artifact to a user-chosen destination.
 func (a *App) SaveAssetArtifact(jobID, name string) (string, error) {
 	filePath, err := a.assetManager.ArtifactPath(jobID, name)

@@ -45,6 +45,18 @@ func TestBrandGenerationWithCustomOGComponent(t *testing.T) {
 	if !found {
 		t.Fatal("expected og.png from the custom template")
 	}
+
+	const replacement = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=="
+	if err := app.ReplaceAssetArtifact(result.JobID, "og.png", replacement); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := app.GetAssetArtifact(result.JobID, "og.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if encoded != replacement {
+		t.Fatal("the generated og.png was not replaced")
+	}
 }
 
 func TestGetAssetInputPreview(t *testing.T) {

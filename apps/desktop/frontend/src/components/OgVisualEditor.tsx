@@ -625,6 +625,24 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     [addLayer, designHeight, designWidth],
   );
 
+  const applyFormText = useCallback(() => {
+    setLayers((current) =>
+      current.map((layer) => {
+        if (layer.kind !== "text") return layer;
+        if (layer.name === "Site label") {
+          return { ...layer, text: props.siteLabel?.trim() || "PROJECT" };
+        }
+        if (layer.name === "Headline") {
+          return { ...layer, text: props.title?.trim() || "Your headline" };
+        }
+        if (layer.name === "Description") {
+          return { ...layer, text: props.description?.trim() || "" };
+        }
+        return layer;
+      }),
+    );
+  }, [props.description, props.siteLabel, props.title]);
+
   const openFilePicker = useCallback((targetId: string | null) => {
     fileTargetRef.current = targetId;
     fileRef.current?.click();
@@ -838,6 +856,14 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
               onClick={() => addTextLayer("subtext")}
             >
               <AlignLeft size={13} aria-hidden="true" /> Subtext
+            </button>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={applyFormText}
+              aria-label="Apply form text to layers"
+            >
+              <Type size={13} aria-hidden="true" /> Apply form text
             </button>
             <button
               type="button"

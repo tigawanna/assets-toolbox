@@ -63,6 +63,7 @@ interface AssetApp {
   GenerateExpoAssets(request: ExpoGenerateRequest): Promise<AssetJobResult>;
   GenerateBrandAssets(request: BrandGenerateRequest): Promise<AssetJobResult>;
   GetAssetArtifact(jobID: string, name: string): Promise<string>;
+  ReplaceAssetArtifact(jobID: string, name: string, base64Data: string): Promise<void>;
   SaveAssetArtifact(jobID: string, name: string): Promise<string>;
   SaveAssetSet(jobID: string, suggestedName: string): Promise<string>;
   CopyAssetText(jobID: string, name: string): Promise<void>;
