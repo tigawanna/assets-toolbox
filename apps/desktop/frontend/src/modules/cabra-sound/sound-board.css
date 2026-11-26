@@ -429,12 +429,13 @@
 
 .sound-download {
   position: absolute;
-  top: 8px;
+  top: 50%;
   right: 8px;
   display: grid;
   width: 26px;
   height: 26px;
   place-items: center;
+  transform: translateY(-50%);
   border: 0;
   border-radius: 6px;
   background: transparent;
