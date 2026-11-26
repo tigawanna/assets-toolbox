@@ -281,23 +281,25 @@
   color: var(--text);
 }
 
-.brand-code-editor {
+.brand-og-thumb {
+  display: block;
   width: 100%;
-  min-height: 180px;
-  max-height: 320px;
-  resize: vertical;
-  padding: 10px;
+  overflow: hidden;
+  padding: 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--canvas);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.55;
-  tab-size: 2;
+  cursor: pointer;
 }
 
-.brand-code-editor:focus-visible {
+.brand-og-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.brand-og-thumb:focus-visible {
   border-color: var(--accent);
   outline: 3px solid var(--focus);
   outline-offset: 0;

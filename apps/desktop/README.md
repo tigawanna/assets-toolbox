@@ -65,7 +65,7 @@ engine with a native React interface. Expo Assets runs the canonical Sharp
 generators in a per-job Node sidecar; Go stages inputs, handles native file
 dialogs, validates artifacts, and saves previews or ZIP sets. Native open/save
 dialogs remember their last folders in `assets-toolbox/dialogs.json`. Brand Assets
-also includes an inline TSX editor for custom OG card templates.
+also includes a visual OG card editor for placing text, shapes, and images before exporting a PNG.
 
 ## Routes
 

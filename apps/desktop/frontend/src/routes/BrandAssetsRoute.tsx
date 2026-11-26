@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Check,
   Download,
@@ -11,6 +11,7 @@ import { defaultIconSizes } from "@assets/brand-assets/types";
 
 import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
+import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEditor";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -18,7 +19,6 @@ import {
   type AssetJobResult,
   type BrandGenerateRequest,
 } from "../lib/asset-generation";
-import { DEFAULT_OG_TEMPLATE } from "../modules/brand-assets/og-template";
 import "./../modules/brand-assets/brand-assets.css";
 
 function previewMime(extension: string | undefined): string {
@@ -44,9 +44,8 @@ export function BrandAssetsRoute() {
   const [ogTitle, setOgTitle] = useState("");
   const [ogDescription, setOgDescription] = useState("");
   const [ogSiteLabel, setOgSiteLabel] = useState("");
-  const [ogCustomEnabled, setOgCustomEnabled] = useState(false);
-  const [ogComponentSource, setOgComponentSource] = useState(DEFAULT_OG_TEMPLATE);
-  const [ogExportName, setOgExportName] = useState("");
+  const [ogEditorOpen, setOgEditorOpen] = useState(false);
+  const [ogDesign, setOgDesign] = useState<OgDesignResult | null>(null);
   const [ogWidth, setOgWidth] = useState(1200);
   const [ogHeight, setOgHeight] = useState(630);
   const [manifestEnabled, setManifestEnabled] = useState(true);
@@ -64,7 +63,6 @@ export function BrandAssetsRoute() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
-  const componentFileRef = useRef<HTMLInputElement>(null);
 
   const native = hasAssetGeneration();
 
@@ -146,8 +144,6 @@ export function BrandAssetsRoute() {
       ogTitle,
       ogDescription,
       ogSiteLabel,
-      ogComponentSource: ogCustomEnabled ? ogComponentSource : "",
-      ogExportName,
       ogWidth: Number(ogWidth),
       ogHeight: Number(ogHeight),
       manifestEnabled,
@@ -174,11 +170,8 @@ export function BrandAssetsRoute() {
     icon,
     manifestEnabled,
     name,
-    ogComponentSource,
-    ogCustomEnabled,
     ogDescription,
     ogEnabled,
-    ogExportName,
     ogHeight,
     ogSiteLabel,
     ogTitle,
@@ -222,6 +215,16 @@ export function BrandAssetsRoute() {
       setError("Clipboard access was blocked.");
     }
   }, [result]);
+
+  const downloadOgDesign = useCallback(() => {
+    if (!ogDesign) return;
+    const link = document.createElement("a");
+    link.href = ogDesign.dataUrl;
+    link.download = "og.png";
+    document.body.append(link);
+    link.click();
+    link.remove();
+  }, [ogDesign]);
 
   return (
     <section className="brand-page">
@@ -348,61 +351,35 @@ export function BrandAssetsRoute() {
                 </label>
               </div>
               <div className="brand-custom-og">
-                <label className="brand-switch">
-                  <input
-                    type="checkbox"
-                    checked={ogCustomEnabled}
-                    onChange={(event) => setOgCustomEnabled(event.target.checked)}
-                  />
-                  Custom template
-                </label>
-                {ogCustomEnabled ? (
-                  <>
-                    <div className="brand-og-actions">
-                      <button
-                        type="button"
-                        onClick={() => setOgComponentSource(DEFAULT_OG_TEMPLATE)}
-                      >
-                        Use starter
-                      </button>
-                      <button type="button" onClick={() => componentFileRef.current?.click()}>
-                        Open .tsx
-                      </button>
-                      <input
-                        ref={componentFileRef}
-                        type="file"
-                        accept=".tsx,.ts"
-                        hidden
-                        onChange={async (event) => {
-                          const input = event.currentTarget;
-                          const file = input.files?.[0];
-                          if (!file) return;
-                          setOgComponentSource(await file.text());
-                          input.value = "";
-                        }}
-                      />
-                    </div>
-                    <label className="brand-field">
-                      <span>Export name (optional)</span>
-                      <input
-                        value={ogExportName}
-                        onChange={(event) => setOgExportName(event.target.value)}
-                        placeholder="default export is used when empty"
-                      />
-                    </label>
-                    <textarea
-                      className="brand-code-editor"
-                      value={ogComponentSource}
-                      onChange={(event) => setOgComponentSource(event.target.value)}
-                      spellCheck={false}
-                      aria-label="Custom OG component source"
-                    />
-                    <p className="brand-hint">
-                      Template code runs in an isolated one-job process. Only use components you
-                      trust.
-                    </p>
-                  </>
-                ) : null}
+                <div className="brand-og-actions">
+                  <button type="button" onClick={() => setOgEditorOpen(true)}>
+                    Open visual editor
+                  </button>
+                  {ogDesign ? (
+                    <button type="button" onClick={downloadOgDesign}>
+                      Download PNG
+                    </button>
+                  ) : null}
+                  {ogDesign ? (
+                    <button type="button" onClick={() => setOgDesign(null)}>
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+                {ogDesign ? (
+                  <button
+                    type="button"
+                    className="brand-og-thumb"
+                    onClick={() => setOgEditorOpen(true)}
+                    aria-label="Reopen visual editor"
+                  >
+                    <img src={ogDesign.dataUrl} alt="Custom social card design" />
+                  </button>
+                ) : (
+                  <p className="brand-hint">
+                    Place text, shapes, and images on a card, then export the whole box as a PNG.
+                  </p>
+                )}
               </div>
             </fieldset>
           </div>
@@ -459,13 +436,7 @@ export function BrandAssetsRoute() {
           <button
             className="brand-generate"
             type="button"
-            disabled={
-              !native ||
-              busy ||
-              !icon ||
-              (ogEnabled && !ogTitle) ||
-              (ogEnabled && ogCustomEnabled && !ogComponentSource.trim())
-            }
+            disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
             onClick={() => void generate()}
           >
             {busy ? <LoaderCircle className="brand-spin" size={15} /> : <Download size={15} />}
@@ -558,6 +529,21 @@ export function BrandAssetsRoute() {
           </div>
         </div>
       </div>
+      {ogEditorOpen ? (
+        <OgVisualEditor
+          title={ogTitle}
+          description={ogDescription}
+          siteLabel={ogSiteLabel}
+          imageUrl={sourcePreview || undefined}
+          width={Number(ogWidth)}
+          height={Number(ogHeight)}
+          onExport={(design) => {
+            setOgDesign(design);
+            setOgEditorOpen(false);
+          }}
+          onClose={() => setOgEditorOpen(false)}
+        />
+      ) : null}
       <AssetPreviewDialog
         title={expanded?.title ?? ""}
         src={expanded?.src}
