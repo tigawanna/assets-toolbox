@@ -74,8 +74,9 @@ const packageSeed = [
     icon: "device",
     tags: ["Expo", "Mobile", "Icons"],
     source: "packages/expo-assets",
-    stack: "TypeScript + Sharp",
-    mount: "New desktop UI with native or sidecar rendering",
+    stack: "React + Sharp sidecar",
+    mount: "Canonical generator in a Node sidecar with native file handling",
+    mounted: true,
   },
   {
     id: "screenshot-studio",

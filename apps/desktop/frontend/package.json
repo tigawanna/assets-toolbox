@@ -14,6 +14,7 @@
   "dependencies": {
     "@tanstack/react-router": "1.170.41",
     "@tigawanna/cabra-sound": "workspace:*",
+    "@tigawanna/expo-assets": "workspace:*",
     "@tigawanna/screenshot-studio": "workspace:*",
     "@tigawanna/social-inspect": "workspace:*",
     "@tigawanna/svg-compose": "workspace:*",

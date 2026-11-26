@@ -44,9 +44,9 @@ pnpm --filter @tigawanna/svg-compose dev
 ## Desktop app
 
 `apps/desktop` is a Wails + Go application with a React 19 and TanStack Router
-frontend. SVG Compose, Social Inspect, Cabra Sound, and Screenshot Studio are
-working desktop routes; Brand Assets and Expo Assets have reserved routes and
-integration plans.
+frontend. SVG Compose, Social Inspect, Expo Assets, Cabra Sound, and Screenshot
+Studio are working desktop routes; Brand Assets has a reserved route while its
+integration is built.
 The shell keeps the original light/dark theme and card design, uses one React
 root, and imports the canonical React package sources instead of maintaining
 Svelte translations or copied package UIs. The previous Svelte implementation is

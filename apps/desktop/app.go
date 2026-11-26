@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -50,6 +51,9 @@ type App struct {
 	quit          func(context.Context)
 	emit          func(context.Context, string, ...interface{})
 	eventCleanup  []func()
+	assetManager  *assetgen.Manager
+	assetInputsMu sync.Mutex
+	assetInputs   map[string]string
 }
 
 type flushRequest struct {
@@ -66,6 +70,8 @@ func NewApp() *App {
 		quit:          wailsruntime.Quit,
 		emit:          wailsruntime.EventsEmit,
 		flushTimeout:  3 * time.Second,
+		assetManager:  newAssetManager(),
+		assetInputs:   make(map[string]string),
 	}
 }
 
@@ -96,6 +102,9 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	if a.assetManager != nil {
+		a.assetManager.Close()
+	}
 	for _, cleanup := range a.eventCleanup {
 		cleanup()
 	}

@@ -12,6 +12,7 @@ describe("TanStack desktop routes", () => {
     ["/packages/screenshot-studio/board/launch", "/packages/screenshot-studio/board/$projectId"],
     ["/packages/cabra-sound", "/packages/cabra-sound"],
     ["/packages/social-inspect", "/packages/social-inspect"],
+    ["/packages/expo-assets", "/packages/expo-assets"],
     ["/packages/brand-assets", "/packages/$slug"],
   ])("matches %s without a router shim", (path, route) => {
     expect(router.matchRoutes(path).at(-1)?.fullPath).toBe(route);

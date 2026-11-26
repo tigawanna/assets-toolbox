@@ -52,13 +52,17 @@ framework. Vite aliases import the canonical React sources directly:
 
 - `@assets/svg-compose/*` → `packages/svg-compose/src/*`
 - `@assets/screenshot-studio/*` → `packages/screenshot-studio/src/*`
+- `@assets/social-inspect/*` → `packages/social-inspect/app/src/*`
+- `@assets/expo-assets/*` → `packages/expo-assets/src/*`
 - `@/server/fns` → Screenshot Studio's IndexedDB-backed browser adapter
 
 SVG Compose keeps its native Go workspace bridge and HTTP/browser fallback.
 Screenshot Studio uses IndexedDB in the desktop and real TanStack routes for
 board navigation. Social Inspect uses its canonical React page with Go-backed
 `/api/inspect` and `/api/asset` handlers. Cabra Sound uses the canonical Web Audio
-engine with a native React interface.
+engine with a native React interface. Expo Assets runs the canonical Sharp
+generator in a per-job Node sidecar; Go stages inputs, handles native file
+dialogs, validates artifacts, and saves previews or ZIP sets.
 
 ## Routes
 
@@ -68,6 +72,7 @@ engine with a native React interface.
 - `/packages/screenshot-studio` — Studio board list
 - `/packages/screenshot-studio/board/:projectId` — Studio editor
 - `/packages/social-inspect` — social metadata inspector
+- `/packages/expo-assets` — Expo asset generator
 - `/packages/cabra-sound` — sound browser and exporter
 
 ## Persistence

@@ -66,6 +66,9 @@ const CabraSoundRoute = lazy(() =>
 const SocialInspectRoute = lazy(() =>
   import("./routes/SocialInspectRoute").then((module) => ({ default: module.SocialInspectRoute })),
 );
+const ExpoAssetsRoute = lazy(() =>
+  import("./routes/ExpoAssetsRoute").then((module) => ({ default: module.ExpoAssetsRoute })),
+);
 
 const svgComposeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -91,6 +94,12 @@ const cabraSoundRoute = createRoute({
   component: CabraSoundRoute,
 });
 
+const expoAssetsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "packages/expo-assets",
+  component: ExpoAssetsRoute,
+});
+
 const socialInspectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/social-inspect",
@@ -106,6 +115,7 @@ export const routeTree = rootRoute.addChildren([
   screenshotStudioRoute,
   screenshotBoardRoute,
   cabraSoundRoute,
+  expoAssetsRoute,
   socialInspectRoute,
   packageRoute,
 ]);

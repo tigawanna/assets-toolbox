@@ -1,0 +1,17 @@
+{
+  "name": "@assets-toolbox/desktop-expo-sidecar",
+  "version": "0.0.0",
+  "private": true,
+  "description": "One-shot Node worker that generates Expo assets for the desktop app.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/worker.mjs",
+    "test": "node scripts/test-worker.mjs"
+  },
+  "dependencies": {
+    "@tigawanna/expo-assets": "workspace:*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

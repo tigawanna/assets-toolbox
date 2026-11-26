@@ -50,6 +50,10 @@ export default defineConfig({
         replacement: socialAppSource,
       },
       {
+        find: "@assets/expo-assets",
+        replacement: fileURLToPath(new URL("../../../packages/expo-assets/src/", import.meta.url)),
+      },
+      {
         find: "@assets/svg-compose",
         replacement: fileURLToPath(new URL("../../../packages/svg-compose/src/", import.meta.url)),
       },

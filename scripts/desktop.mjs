@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -12,6 +12,19 @@ if (!command) {
 }
 
 const env = { ...process.env };
+
+if (env.SKIP_ASSET_PACKAGE_BUILD !== "1") {
+  const packageBuild = spawnSync("pnpm", ["--filter", "@tigawanna/expo-assets", "build"], {
+    cwd: repositoryRoot,
+    env,
+    stdio: "inherit",
+  });
+  if (packageBuild.error || packageBuild.status !== 0) {
+    console.error(packageBuild.error?.message ?? "Could not build the Expo Assets package.");
+    process.exit(packageBuild.status ?? 1);
+  }
+}
+
 if (command === "dev") {
   const allowedHosts = new Set(
     (env.WAILS_DEV_ALLOWED_HOSTS ?? "")
