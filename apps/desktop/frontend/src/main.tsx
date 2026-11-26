@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 
 import "./styles/studio.css";
+import "@assets/social-inspect/embedded.css";
 import "@assets/svg-compose/embedded.css";
 import "./app.css";
 import "./shell.css";

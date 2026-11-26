@@ -21,7 +21,9 @@
       "@/server/fns": ["../../../packages/screenshot-studio/src/desktop/browser-fns.ts"],
       "@/*": ["../../../packages/screenshot-studio/src/*"],
       "@assets/screenshot-studio/*": ["../../../packages/screenshot-studio/src/*"],
-      "@assets/svg-compose/*": ["../../../packages/svg-compose/src/*"]
+      "@assets/social-inspect/*": ["../../../packages/social-inspect/app/src/*"],
+      "@assets/svg-compose/*": ["../../../packages/svg-compose/src/*"],
+      "@inspect/*": ["../../../packages/social-inspect/src/*"]
     }
   },
   "include": ["src", "vite.config.ts"]

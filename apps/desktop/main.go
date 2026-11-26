@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/socialinspect"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -21,6 +22,12 @@ func main() {
 	}
 
 	app := NewApp()
+	socialHandler := socialinspect.NewHandler(http.DefaultClient)
+	apiRoutes := map[string]http.Handler{
+		"/api/workspace": app.workspace.handler(),
+		"/api/inspect":   socialHandler,
+		"/api/asset":     socialHandler,
+	}
 	err = wails.Run(&options.App{
 		Title:            appName,
 		Width:            1180,
@@ -32,7 +39,7 @@ func main() {
 			Assets:  frontend,
 			Handler: newSPAHandler(frontend),
 			Middleware: func(next http.Handler) http.Handler {
-				return newModuleMiddleware(app.workspace.handler(), next)
+				return newModuleMiddleware(apiRoutes, next)
 			},
 		},
 		OnStartup:     app.startup,

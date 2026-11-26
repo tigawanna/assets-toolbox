@@ -260,10 +260,10 @@ func (s *workspaceStore) handler() http.Handler {
 	})
 }
 
-func newModuleMiddleware(workspace http.Handler, next http.Handler) http.Handler {
+func newModuleMiddleware(routes map[string]http.Handler, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/workspace" {
-			workspace.ServeHTTP(w, r)
+		if handler, ok := routes[r.URL.Path]; ok {
+			handler.ServeHTTP(w, r)
 			return
 		}
 		next.ServeHTTP(w, r)

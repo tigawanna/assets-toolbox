@@ -50,6 +50,9 @@ importers:
       '@tigawanna/screenshot-studio':
         specifier: workspace:*
         version: link:../../../packages/screenshot-studio
+      '@tigawanna/social-inspect':
+        specifier: workspace:*
+        version: link:../../../packages/social-inspect
       '@tigawanna/svg-compose':
         specifier: workspace:*
         version: link:../../../packages/svg-compose

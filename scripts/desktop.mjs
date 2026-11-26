@@ -23,23 +23,46 @@ if (command === "dev") {
   env.WAILS_DEV_ALLOWED_HOSTS = [...allowedHosts].join(",");
 }
 
+const apiServer =
+  command === "dev" && env.SOCIAL_INSPECT_DEV_API !== "0"
+    ? spawn(
+        "go",
+        [
+          "run",
+          "./cmd/social-inspect-api",
+          "-addr",
+          env.SOCIAL_INSPECT_API_ADDR ?? "127.0.0.1:4332",
+        ],
+        { cwd: desktopDirectory, env, stdio: "inherit" },
+      )
+    : null;
+
+apiServer?.on("error", (error) => {
+  console.error(`Could not start the Social Inspect API: ${error.message}`);
+});
+
 const child = spawn("wails", [command, ...args], {
   cwd: desktopDirectory,
   env,
   stdio: "inherit",
 });
 
+const children = [child, ...(apiServer ? [apiServer] : [])];
 const signalNumbers = { SIGINT: 2, SIGTERM: 15 };
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () => child.kill(signal));
+  process.on(signal, () => {
+    for (const runningProcess of children) runningProcess.kill(signal);
+  });
 }
 
 child.on("error", (error) => {
   console.error(`Could not start Wails: ${error.message}`);
+  apiServer?.kill("SIGTERM");
   process.exit(1);
 });
 
 child.on("exit", (code, signal) => {
+  apiServer?.kill("SIGTERM");
   process.removeAllListeners("SIGINT");
   process.removeAllListeners("SIGTERM");
   if (signal) {

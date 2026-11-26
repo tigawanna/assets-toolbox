@@ -9,7 +9,7 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "command": ["wails", "dev"]
+      "command": ["node", "../../scripts/desktop.mjs", "dev"]
     },
     "test": {
       "dependsOn": [

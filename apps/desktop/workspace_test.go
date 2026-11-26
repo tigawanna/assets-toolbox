@@ -97,27 +97,46 @@ func TestWorkspaceMethodNotAllowed(t *testing.T) {
 	}
 }
 
-func TestModuleMiddlewareInterceptsWorkspaceOnly(t *testing.T) {
+func TestModuleMiddlewareInterceptsRegisteredAPIRoutes(t *testing.T) {
 	workspaceCalled := false
+	inspectCalled := false
 	nextCalled := false
 	workspace := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		workspaceCalled = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	inspect := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		inspectCalled = true
 		w.WriteHeader(http.StatusNoContent)
 	})
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextCalled = true
 		w.WriteHeader(http.StatusNotFound)
 	})
-	handler := newModuleMiddleware(workspace, next)
+	handler := newModuleMiddleware(
+		map[string]http.Handler{"/api/workspace": workspace, "/api/inspect": inspect},
+		next,
+	)
 
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/api/workspace", nil))
 	if !workspaceCalled || nextCalled {
 		t.Fatalf("workspace called = %v, next called = %v", workspaceCalled, nextCalled)
 	}
 
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/api/inspect", nil))
+	if !inspectCalled || nextCalled {
+		t.Fatalf("inspect called = %v, next called = %v", inspectCalled, nextCalled)
+	}
+
 	workspaceCalled = false
+	inspectCalled = false
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/packages/svg-compose", nil))
-	if workspaceCalled || !nextCalled {
-		t.Fatalf("workspace called = %v, next called = %v", workspaceCalled, nextCalled)
+	if workspaceCalled || inspectCalled || !nextCalled {
+		t.Fatalf(
+			"workspace called = %v, inspect called = %v, next called = %v",
+			workspaceCalled,
+			inspectCalled,
+			nextCalled,
+		)
 	}
 }

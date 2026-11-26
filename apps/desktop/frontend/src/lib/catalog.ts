@@ -49,8 +49,9 @@ const packageSeed = [
     icon: "scan",
     tags: ["Open Graph", "Metadata", "Preview"],
     source: "packages/social-inspect/app",
-    stack: "TanStack Start",
-    mount: "Static SPA with Go-backed inspection routes",
+    stack: "React + Go inspector",
+    mount: "Canonical React UI with Go-backed inspection and asset routes",
+    mounted: true,
   },
   {
     id: "brand-assets",

@@ -1,0 +1,83 @@
+/* Standalone document chrome. Embedded consumers import embedded.css only. */
+:root {
+  color-scheme: dark;
+
+  --bg: #0b0c0d;
+  --sunken: #0e0f11;
+  --surface: #121316;
+  --raised: #17191d;
+  --line: #24272c;
+  --line-soft: #1b1e22;
+
+  --ink: #f0f0ed;
+  --ink-2: #a1a5ad;
+  --ink-3: #6b7079;
+
+  --accent: #c7ef7d;
+  --accent-ink: #131706;
+
+  --good: #c7ef7d;
+  --warn: #e6b566;
+  --bad: #f07b6f;
+
+  --sans: "Geist Variable", Geist, ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  min-height: 100dvh;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(
+    70% 40% at 50% -12%,
+    rgba(199, 239, 125, 0.045),
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(199, 239, 125, 0.25);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

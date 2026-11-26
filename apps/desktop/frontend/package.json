@@ -15,6 +15,7 @@
     "@tanstack/react-router": "1.170.41",
     "@tigawanna/cabra-sound": "workspace:*",
     "@tigawanna/screenshot-studio": "workspace:*",
+    "@tigawanna/social-inspect": "workspace:*",
     "@tigawanna/svg-compose": "workspace:*",
     "lucide-react": "0.554.0",
     "react": "19.2.5",

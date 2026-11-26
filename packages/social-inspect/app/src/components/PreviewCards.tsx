@@ -46,9 +46,9 @@ function useFields(report: InspectReport, proxy: (url: string) => string) {
 
 function Image({ src, alt }: { src?: string | undefined; alt: string }) {
   if (!src) {
-    return <div className="preview-empty-img">No OG image declared</div>;
+    return <div className="inspect-preview-empty-img">No OG image declared</div>;
   }
-  return <img className="preview-img" src={src} alt={alt} />;
+  return <img className="inspect-preview-img" src={src} alt={alt} />;
 }
 
 export function PreviewCards({ report, proxy }: Props) {
@@ -57,14 +57,14 @@ export function PreviewCards({ report, proxy }: Props) {
 
   return (
     <div>
-      <div className="tabs" role="tablist" aria-label="Platform previews">
+      <div className="inspect-tabs" role="tablist" aria-label="Platform previews">
         {platforms.map((platform) => (
           <button
             key={platform}
             type="button"
             role="tab"
             aria-selected={active === platform}
-            className={`tab ${active === platform ? "active" : ""}`}
+            className={`inspect-tab ${active === platform ? "inspect-active" : ""}`}
             onClick={() => setActive(platform)}
           >
             {platform}
@@ -72,57 +72,57 @@ export function PreviewCards({ report, proxy }: Props) {
         ))}
       </div>
 
-      <div className="stage">
+      <div className="inspect-stage">
         {active === "Google" ? (
-          <div className="preview-card" style={{ padding: "16px 18px" }}>
+          <div className="inspect-preview-card" style={{ padding: "16px 18px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
               {f.favicon ? (
                 <img src={f.favicon} width={22} height={22} alt="" style={{ borderRadius: 4 }} />
               ) : null}
               <div>
                 <div style={{ fontSize: 12, color: "#202124" }}>{f.siteName}</div>
-                <div className="preview-host">{f.host}</div>
+                <div className="inspect-preview-host">{f.host}</div>
               </div>
             </div>
-            <div className="google-title">{f.title}</div>
-            <div className="preview-desc">{f.description}</div>
+            <div className="inspect-google-title">{f.title}</div>
+            <div className="inspect-preview-desc">{f.description}</div>
           </div>
         ) : null}
 
         {active === "X / Twitter" ? (
-          <div className="preview-card">
+          <div className="inspect-preview-card">
             <Image src={f.image} alt={f.title} />
-            <div className="preview-body">
-              <div className="preview-host">{f.host}</div>
-              <div className="preview-title">{f.title}</div>
-              <div className="preview-desc">{f.description}</div>
-              <div className="preview-site">{report.twitter.card || "summary"}</div>
+            <div className="inspect-preview-body">
+              <div className="inspect-preview-host">{f.host}</div>
+              <div className="inspect-preview-title">{f.title}</div>
+              <div className="inspect-preview-desc">{f.description}</div>
+              <div className="inspect-preview-site">{report.twitter.card || "summary"}</div>
             </div>
           </div>
         ) : null}
 
         {active === "Facebook" ? (
-          <div className="preview-card">
+          <div className="inspect-preview-card">
             <Image src={f.image} alt={f.title} />
-            <div className="preview-body">
-              <div className="preview-host">{f.host.toUpperCase()}</div>
-              <div className="preview-title" style={{ fontSize: 20 }}>
+            <div className="inspect-preview-body">
+              <div className="inspect-preview-host">{f.host.toUpperCase()}</div>
+              <div className="inspect-preview-title" style={{ fontSize: 20 }}>
                 {f.title}
               </div>
-              <div className="preview-desc">{f.description}</div>
+              <div className="inspect-preview-desc">{f.description}</div>
             </div>
           </div>
         ) : null}
 
         {active === "Discord" ? (
-          <div className="preview-card discord">
+          <div className="inspect-preview-card inspect-discord">
             <div style={{ padding: "16px 16px 0" }}>
-              <div className="discord-author">
+              <div className="inspect-discord-author">
                 <strong>{f.siteName}</strong>
                 <time>Today at 12:00</time>
               </div>
-              <div className="discord-body">
-                <div className="discord-site">{f.host}</div>
+              <div className="inspect-discord-body">
+                <div className="inspect-discord-site">{f.host}</div>
                 <div style={{ fontWeight: 700, fontSize: 14, marginTop: 4 }}>{f.title}</div>
                 <div style={{ fontSize: 13, color: "#b5bac1", marginTop: 4 }}>{f.description}</div>
                 {f.image ? (
@@ -139,42 +139,42 @@ export function PreviewCards({ report, proxy }: Props) {
         ) : null}
 
         {active === "LinkedIn" ? (
-          <div className="preview-card">
+          <div className="inspect-preview-card">
             <Image src={f.image} alt={f.title} />
-            <div className="preview-body">
-              <div className="preview-title">{f.title}</div>
-              <div className="preview-desc">{f.description}</div>
-              <div className="preview-site">{f.host}</div>
+            <div className="inspect-preview-body">
+              <div className="inspect-preview-title">{f.title}</div>
+              <div className="inspect-preview-desc">{f.description}</div>
+              <div className="inspect-preview-site">{f.host}</div>
             </div>
           </div>
         ) : null}
 
         {active === "WhatsApp" ? (
-          <div className="preview-card whatsapp" style={{ padding: 14 }}>
+          <div className="inspect-preview-card inspect-whatsapp" style={{ padding: 14 }}>
             <Image src={f.image} alt={f.title} />
-            <div className="whatsapp-bubble">
-              <div style={{ color: "#00a884", fontSize: 11, fontFamily: "var(--mono)" }}>
+            <div className="inspect-whatsapp-bubble">
+              <div style={{ color: "#00a884", fontSize: 11, fontFamily: "var(--inspect-mono)" }}>
                 {f.host}
               </div>
               <div style={{ fontWeight: 600, fontSize: 14, marginTop: 3 }}>{f.title}</div>
-              <div className="preview-desc" style={{ marginTop: 3 }}>
+              <div className="inspect-preview-desc" style={{ marginTop: 3 }}>
                 {f.description}
               </div>
             </div>
-            <div className="whatsapp-time">12:00 ✓✓</div>
+            <div className="inspect-whatsapp-time">12:00 ✓✓</div>
           </div>
         ) : null}
 
         {active === "Slack" ? (
-          <div className="preview-card" style={{ padding: 18 }}>
-            <div className="slack-name">
+          <div className="inspect-preview-card" style={{ padding: 18 }}>
+            <div className="inspect-slack-name">
               {f.favicon ? (
                 <img src={f.favicon} width={20} height={20} alt="" style={{ borderRadius: 4 }} />
               ) : null}
               {f.siteName}
             </div>
             <div style={{ fontWeight: 700, marginTop: 8 }}>{f.title}</div>
-            <div className="preview-desc" style={{ marginTop: 4 }}>
+            <div className="inspect-preview-desc" style={{ marginTop: 4 }}>
               {f.description}
             </div>
             {f.image ? (
@@ -184,14 +184,14 @@ export function PreviewCards({ report, proxy }: Props) {
         ) : null}
 
         {active === "Telegram" ? (
-          <div className="preview-card" style={{ padding: 0 }}>
+          <div className="inspect-preview-card" style={{ padding: 0 }}>
             {f.image ? (
               <img src={f.image} alt="" style={{ width: "100%", display: "block" }} />
             ) : null}
-            <div className="preview-body">
-              <div className="telegram-name">{f.siteName}</div>
-              <div className="preview-title">{f.title}</div>
-              <div className="preview-desc">{f.description}</div>
+            <div className="inspect-preview-body">
+              <div className="inspect-telegram-name">{f.siteName}</div>
+              <div className="inspect-preview-title">{f.title}</div>
+              <div className="inspect-preview-desc">{f.description}</div>
             </div>
           </div>
         ) : null}

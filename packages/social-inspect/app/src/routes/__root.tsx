@@ -4,6 +4,7 @@ import "@fontsource-variable/jetbrains-mono/index.css";
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import standaloneCss from "../standalone.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -16,7 +17,10 @@ export const Route = createRootRoute({
           "Inspect Open Graph tags, favicons, and social previews for any local or remote URL.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: standaloneCss },
+      { rel: "stylesheet", href: appCss },
+    ],
   }),
   shellComponent: RootDocument,
 });

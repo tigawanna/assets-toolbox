@@ -27,6 +27,9 @@ For browser-only UI work:
 pnpm --filter @assets-toolbox/desktop dev
 ```
 
+`pnpm run desktop:dev` also starts the headless Social Inspect API used by Vite's
+`/api` proxy. Set `SOCIAL_INSPECT_DEV_API=0` to skip it.
+
 The frontend uses one React root and one TanStack Router instance. Browser history
 is used for shell and Screenshot Studio board routes; the Go asset server returns
 `index.html` for client-side routes while missing assets still return 404.
@@ -53,8 +56,9 @@ framework. Vite aliases import the canonical React sources directly:
 
 SVG Compose keeps its native Go workspace bridge and HTTP/browser fallback.
 Screenshot Studio uses IndexedDB in the desktop and real TanStack routes for
-board navigation. Cabra Sound uses the canonical Web Audio engine with a native
-React interface.
+board navigation. Social Inspect uses its canonical React page with Go-backed
+`/api/inspect` and `/api/asset` handlers. Cabra Sound uses the canonical Web Audio
+engine with a native React interface.
 
 ## Routes
 
@@ -63,6 +67,7 @@ React interface.
 - `/packages/svg-compose` — SVG editor
 - `/packages/screenshot-studio` — Studio board list
 - `/packages/screenshot-studio/board/:projectId` — Studio editor
+- `/packages/social-inspect` — social metadata inspector
 - `/packages/cabra-sound` — sound browser and exporter
 
 ## Persistence
