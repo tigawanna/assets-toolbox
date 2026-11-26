@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@tigawanna/brand-assets": "workspace:*",
-    "@tigawanna/expo-assets": "workspace:*"
+    "@tigawanna/expo-assets": "workspace:*",
+    "react": "19.2.5"
   },
   "engines": {
     "node": ">=20"

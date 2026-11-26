@@ -111,6 +111,9 @@ importers:
       '@tigawanna/expo-assets':
         specifier: workspace:*
         version: link:../../../packages/expo-assets
+      react:
+        specifier: 19.2.5
+        version: 19.2.5
 
   packages/brand-assets:
     dependencies:

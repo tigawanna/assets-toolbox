@@ -27,6 +27,8 @@ export interface BrandGenerateRequest {
   ogTitle?: string;
   ogDescription?: string;
   ogSiteLabel?: string;
+  ogComponentSource?: string;
+  ogExportName?: string;
   ogWidth?: number;
   ogHeight?: number;
   manifestEnabled?: boolean;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   Download,
@@ -18,6 +18,7 @@ import {
   type AssetJobResult,
   type BrandGenerateRequest,
 } from "../lib/asset-generation";
+import { DEFAULT_OG_TEMPLATE } from "../modules/brand-assets/og-template";
 import "./../modules/brand-assets/brand-assets.css";
 
 function previewMime(extension: string | undefined): string {
@@ -43,6 +44,9 @@ export function BrandAssetsRoute() {
   const [ogTitle, setOgTitle] = useState("");
   const [ogDescription, setOgDescription] = useState("");
   const [ogSiteLabel, setOgSiteLabel] = useState("");
+  const [ogCustomEnabled, setOgCustomEnabled] = useState(false);
+  const [ogComponentSource, setOgComponentSource] = useState(DEFAULT_OG_TEMPLATE);
+  const [ogExportName, setOgExportName] = useState("");
   const [ogWidth, setOgWidth] = useState(1200);
   const [ogHeight, setOgHeight] = useState(630);
   const [manifestEnabled, setManifestEnabled] = useState(true);
@@ -60,6 +64,7 @@ export function BrandAssetsRoute() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const componentFileRef = useRef<HTMLInputElement>(null);
 
   const native = hasAssetGeneration();
 
@@ -141,6 +146,8 @@ export function BrandAssetsRoute() {
       ogTitle,
       ogDescription,
       ogSiteLabel,
+      ogComponentSource: ogCustomEnabled ? ogComponentSource : "",
+      ogExportName,
       ogWidth: Number(ogWidth),
       ogHeight: Number(ogHeight),
       manifestEnabled,
@@ -167,8 +174,11 @@ export function BrandAssetsRoute() {
     icon,
     manifestEnabled,
     name,
+    ogComponentSource,
+    ogCustomEnabled,
     ogDescription,
     ogEnabled,
+    ogExportName,
     ogHeight,
     ogSiteLabel,
     ogTitle,
@@ -337,6 +347,63 @@ export function BrandAssetsRoute() {
                   />
                 </label>
               </div>
+              <div className="brand-custom-og">
+                <label className="brand-switch">
+                  <input
+                    type="checkbox"
+                    checked={ogCustomEnabled}
+                    onChange={(event) => setOgCustomEnabled(event.target.checked)}
+                  />
+                  Custom template
+                </label>
+                {ogCustomEnabled ? (
+                  <>
+                    <div className="brand-og-actions">
+                      <button
+                        type="button"
+                        onClick={() => setOgComponentSource(DEFAULT_OG_TEMPLATE)}
+                      >
+                        Use starter
+                      </button>
+                      <button type="button" onClick={() => componentFileRef.current?.click()}>
+                        Open .tsx
+                      </button>
+                      <input
+                        ref={componentFileRef}
+                        type="file"
+                        accept=".tsx,.ts"
+                        hidden
+                        onChange={async (event) => {
+                          const input = event.currentTarget;
+                          const file = input.files?.[0];
+                          if (!file) return;
+                          setOgComponentSource(await file.text());
+                          input.value = "";
+                        }}
+                      />
+                    </div>
+                    <label className="brand-field">
+                      <span>Export name (optional)</span>
+                      <input
+                        value={ogExportName}
+                        onChange={(event) => setOgExportName(event.target.value)}
+                        placeholder="default export is used when empty"
+                      />
+                    </label>
+                    <textarea
+                      className="brand-code-editor"
+                      value={ogComponentSource}
+                      onChange={(event) => setOgComponentSource(event.target.value)}
+                      spellCheck={false}
+                      aria-label="Custom OG component source"
+                    />
+                    <p className="brand-hint">
+                      Template code runs in an isolated one-job process. Only use components you
+                      trust.
+                    </p>
+                  </>
+                ) : null}
+              </div>
             </fieldset>
           </div>
 
@@ -392,7 +459,13 @@ export function BrandAssetsRoute() {
           <button
             className="brand-generate"
             type="button"
-            disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
+            disabled={
+              !native ||
+              busy ||
+              !icon ||
+              (ogEnabled && !ogTitle) ||
+              (ogEnabled && ogCustomEnabled && !ogComponentSource.trim())
+            }
             onClick={() => void generate()}
           >
             {busy ? <LoaderCircle className="brand-spin" size={15} /> : <Download size={15} />}

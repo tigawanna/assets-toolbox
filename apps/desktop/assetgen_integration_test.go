@@ -10,6 +10,43 @@ import (
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
 )
 
+func TestBrandGenerationWithCustomOGComponent(t *testing.T) {
+	worker := resolveAssetWorkerPath()
+	if _, err := os.Stat(worker); err != nil {
+		t.Skipf("sidecar is unavailable: %v", err)
+	}
+	if _, err := os.Stat("../../packages/brand-assets/dist/index.mjs"); err != nil {
+		t.Skipf("build @tigawanna/brand-assets before running the sidecar integration test: %v", err)
+	}
+
+	const component = `export default function TestCard(props) {
+  return <div style={{ width: '100%', height: '100%', backgroundColor: '#16304a', color: '#ffffff', fontSize: 48 }}>{props.title}</div>;
+}`
+
+	app := NewApp()
+	defer app.assetManager.Close()
+	app.assetInputs["custom-og-icon"] = "../../packages/brand-assets/test/fixtures/icon.svg"
+
+	result, err := app.GenerateBrandAssets(BrandGenerateRequest{
+		Icon:              "custom-og-icon",
+		OgEnabled:         true,
+		OgTitle:           "Custom Card",
+		OgComponentSource: component,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, artifact := range result.Artifacts {
+		if artifact.Name == "og.png" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected og.png from the custom template")
+	}
+}
+
 func TestGetAssetInputPreview(t *testing.T) {
 	app := NewApp()
 	defer app.assetManager.Close()

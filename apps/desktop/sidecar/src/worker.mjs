@@ -9,6 +9,7 @@
 import {
   constants as fsConstants,
   closeSync,
+  copyFileSync,
   fstatSync,
   lstatSync,
   mkdtempSync,
@@ -22,8 +23,10 @@ import {
   writeSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const workerDirectory = dirname(fileURLToPath(import.meta.url));
 const MAX_REQUEST_BYTES = 1024 * 1024;
 const MAX_INPUT_BYTES = 8 * 1024 * 1024;
 const MAX_DIMENSION = 4096;
@@ -290,6 +293,7 @@ function validateOgOptions(raw) {
         break;
       case "description":
       case "siteLabel":
+      case "exportName":
         if (typeof value !== "string") throw validation(`og.${key} must be a string`);
         og[key] = value;
         break;
@@ -434,14 +438,16 @@ function brandAgentPrompt(root, outDir, hasManifest) {
   );
 }
 
-function brandOgOptions(og) {
-  const { title, description, siteLabel, width, height } = og;
+function brandOgOptions(og, component) {
+  const { title, description, siteLabel, width, height, exportName } = og;
   return {
     title,
     ...(description !== undefined ? { description } : {}),
     ...(siteLabel !== undefined ? { siteLabel } : {}),
     ...(width !== undefined ? { width } : {}),
     ...(height !== undefined ? { height } : {}),
+    ...(component !== undefined ? { component } : {}),
+    ...(exportName !== undefined && exportName !== "" ? { exportName } : {}),
     fonts: [],
   };
 }
@@ -507,6 +513,7 @@ async function generateBrand(generateBrandAssets, options) {
 
 async function main() {
   let stagingDir;
+  let customComponentDir;
   try {
     const request = await withTimeout(
       readRequest(),
@@ -532,14 +539,26 @@ async function main() {
       const outDir = resolveWithin(root, outPath, "outDir");
       stagingDir = mkdtempSync(join(tmpdir(), "brand-assets-sidecar-"));
       const stagedIcon = stageInput(root, iconPath, stagingDir, "icon");
-      const generateBrandAssets = await loadBrandGenerator();
       const { plate, copySvg, og, manifest } = options;
+      const componentPath =
+        og?.enabled === true && request.inputs.ogComponent !== undefined
+          ? safeRelative(request.inputs.ogComponent, "inputs.ogComponent")
+          : undefined;
+      const stagedComponent =
+        componentPath && stageInput(root, componentPath, stagingDir, "ogComponent");
+      let componentForGenerator;
+      if (stagedComponent) {
+        customComponentDir = mkdtempSync(join(workerDirectory, ".og-component-"));
+        componentForGenerator = join(customComponentDir, "custom-og.tsx");
+        copyFileSync(stagedComponent, componentForGenerator);
+      }
+      const generateBrandAssets = await loadBrandGenerator();
       const result = await generateBrand(generateBrandAssets, {
         icon: stagedIcon,
         outDir,
         ...(plate !== undefined ? { plate } : {}),
         ...(copySvg !== undefined ? { copySvg } : {}),
-        og: og?.enabled === true ? brandOgOptions(og) : false,
+        og: og?.enabled === true ? brandOgOptions(og, componentForGenerator) : false,
         manifest: manifest?.enabled === true ? brandManifestOptions(manifest) : false,
       });
 
@@ -616,6 +635,7 @@ async function main() {
     process.exitCode = 1;
   } finally {
     if (stagingDir) rmSync(stagingDir, { recursive: true, force: true });
+    if (customComponentDir) rmSync(customComponentDir, { recursive: true, force: true });
   }
 }
 

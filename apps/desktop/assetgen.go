@@ -44,23 +44,25 @@ type ExpoGenerateRequest struct {
 
 // BrandGenerateRequest holds browser-safe options for the Brand Assets generator.
 type BrandGenerateRequest struct {
-	Icon            string `json:"icon"`
-	Plate           string `json:"plate,omitempty"`
-	CopySvg         bool   `json:"copySvg,omitempty"`
-	OgEnabled       bool   `json:"ogEnabled,omitempty"`
-	OgTitle         string `json:"ogTitle,omitempty"`
-	OgDescription   string `json:"ogDescription,omitempty"`
-	OgSiteLabel     string `json:"ogSiteLabel,omitempty"`
-	OgWidth         int    `json:"ogWidth,omitempty"`
-	OgHeight        int    `json:"ogHeight,omitempty"`
-	ManifestEnabled bool   `json:"manifestEnabled,omitempty"`
-	Name            string `json:"name,omitempty"`
-	ShortName       string `json:"shortName,omitempty"`
-	ThemeColor      string `json:"themeColor,omitempty"`
-	BackgroundColor string `json:"backgroundColor,omitempty"`
-	StartUrl        string `json:"startUrl,omitempty"`
-	Display         string `json:"display,omitempty"`
-	OutDir          string `json:"outDir,omitempty"`
+	Icon              string `json:"icon"`
+	Plate             string `json:"plate,omitempty"`
+	CopySvg           bool   `json:"copySvg,omitempty"`
+	OgEnabled         bool   `json:"ogEnabled,omitempty"`
+	OgTitle           string `json:"ogTitle,omitempty"`
+	OgDescription     string `json:"ogDescription,omitempty"`
+	OgSiteLabel       string `json:"ogSiteLabel,omitempty"`
+	OgComponentSource string `json:"ogComponentSource,omitempty"`
+	OgExportName      string `json:"ogExportName,omitempty"`
+	OgWidth           int    `json:"ogWidth,omitempty"`
+	OgHeight          int    `json:"ogHeight,omitempty"`
+	ManifestEnabled   bool   `json:"manifestEnabled,omitempty"`
+	Name              string `json:"name,omitempty"`
+	ShortName         string `json:"shortName,omitempty"`
+	ThemeColor        string `json:"themeColor,omitempty"`
+	BackgroundColor   string `json:"backgroundColor,omitempty"`
+	StartUrl          string `json:"startUrl,omitempty"`
+	Display           string `json:"display,omitempty"`
+	OutDir            string `json:"outDir,omitempty"`
 }
 
 func newAssetManager() *assetgen.Manager {
@@ -96,6 +98,29 @@ func (a *App) rememberAssetDialogDirectory(key, selectedPath string) {
 		return
 	}
 	_ = a.directories.set(key, filepath.Dir(selectedPath))
+}
+
+const maxOgComponentBytes = 256 << 10
+
+func writeOgComponentSource(source string) (string, func(), error) {
+	if len(source) > maxOgComponentBytes {
+		return "", nil, fmt.Errorf("the custom OG template must be under %d KB", maxOgComponentBytes>>10)
+	}
+	file, err := os.CreateTemp("", "assets-toolbox-og-*.tsx")
+	if err != nil {
+		return "", nil, err
+	}
+	cleanup := func() { _ = os.Remove(file.Name()) }
+	if _, err := file.WriteString(source); err != nil {
+		_ = file.Close()
+		cleanup()
+		return "", nil, err
+	}
+	if err := file.Close(); err != nil {
+		cleanup()
+		return "", nil, err
+	}
+	return file.Name(), cleanup, nil
 }
 
 func newAssetHandle() (string, error) {
@@ -244,6 +269,16 @@ func (a *App) GenerateBrandAssets(request BrandGenerateRequest) (assetgen.Result
 		return assetgen.Result{}, err
 	}
 
+	inputPaths := map[string]string{"icon": selected}
+	if request.OgEnabled && strings.TrimSpace(request.OgComponentSource) != "" {
+		componentPath, cleanup, err := writeOgComponentSource(request.OgComponentSource)
+		if err != nil {
+			return assetgen.Result{}, err
+		}
+		defer cleanup()
+		inputPaths["ogComponent"] = componentPath
+	}
+
 	options := map[string]any{
 		"copySvg":  request.CopySvg,
 		"og":       map[string]any{"enabled": request.OgEnabled},
@@ -263,6 +298,9 @@ func (a *App) GenerateBrandAssets(request BrandGenerateRequest) (assetgen.Result
 		}
 		if request.OgSiteLabel != "" {
 			og["siteLabel"] = request.OgSiteLabel
+		}
+		if request.OgExportName != "" {
+			og["exportName"] = request.OgExportName
 		}
 		if request.OgWidth > 0 {
 			og["width"] = request.OgWidth
@@ -299,7 +337,7 @@ func (a *App) GenerateBrandAssets(request BrandGenerateRequest) (assetgen.Result
 	}
 	return a.assetManager.Start(a.ctx, assetgen.Request{
 		Tool:       "brand",
-		InputPaths: map[string]string{"icon": selected},
+		InputPaths: inputPaths,
 		Options:    options,
 		OutDir:     outDir,
 	})

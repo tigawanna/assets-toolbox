@@ -249,6 +249,67 @@
   margin: 10px 0;
 }
 
+.brand-custom-og {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.brand-og-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.brand-og-actions button {
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+
+.brand-og-actions button:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.brand-code-editor {
+  width: 100%;
+  min-height: 180px;
+  max-height: 320px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.brand-code-editor:focus-visible {
+  border-color: var(--accent);
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+}
+
+.brand-hint {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .brand-generate {
   min-height: 36px;
   border-color: var(--accent);
