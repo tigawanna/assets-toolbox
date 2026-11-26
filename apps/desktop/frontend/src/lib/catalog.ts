@@ -62,8 +62,9 @@ const packageSeed = [
     icon: "swatchbook",
     tags: ["Favicons", "Icons", "Social cards"],
     source: "packages/brand-assets",
-    stack: "TypeScript + Sharp",
-    mount: "New desktop UI with native or sidecar rendering",
+    stack: "React + Sharp sidecar",
+    mount: "Canonical icon, OG, and manifest generators in a Node sidecar",
+    mounted: true,
   },
   {
     id: "expo-assets",

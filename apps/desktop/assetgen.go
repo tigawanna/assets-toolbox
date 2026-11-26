@@ -42,6 +42,27 @@ type ExpoGenerateRequest struct {
 	OutDir           string `json:"outDir,omitempty"`
 }
 
+// BrandGenerateRequest holds browser-safe options for the Brand Assets generator.
+type BrandGenerateRequest struct {
+	Icon            string `json:"icon"`
+	Plate           string `json:"plate,omitempty"`
+	CopySvg         bool   `json:"copySvg,omitempty"`
+	OgEnabled       bool   `json:"ogEnabled,omitempty"`
+	OgTitle         string `json:"ogTitle,omitempty"`
+	OgDescription   string `json:"ogDescription,omitempty"`
+	OgSiteLabel     string `json:"ogSiteLabel,omitempty"`
+	OgWidth         int    `json:"ogWidth,omitempty"`
+	OgHeight        int    `json:"ogHeight,omitempty"`
+	ManifestEnabled bool   `json:"manifestEnabled,omitempty"`
+	Name            string `json:"name,omitempty"`
+	ShortName       string `json:"shortName,omitempty"`
+	ThemeColor      string `json:"themeColor,omitempty"`
+	BackgroundColor string `json:"backgroundColor,omitempty"`
+	StartUrl        string `json:"startUrl,omitempty"`
+	Display         string `json:"display,omitempty"`
+	OutDir          string `json:"outDir,omitempty"`
+}
+
 func newAssetManager() *assetgen.Manager {
 	return assetgen.NewManager(resolveAssetWorkerPath())
 }
@@ -186,6 +207,77 @@ func (a *App) GenerateExpoAssets(request ExpoGenerateRequest) (assetgen.Result, 
 	return a.assetManager.Start(a.ctx, assetgen.Request{
 		Tool:       "expo",
 		InputPaths: inputs,
+		Options:    options,
+		OutDir:     outDir,
+	})
+}
+
+// GenerateBrandAssets runs the canonical icon/OG/manifest generators in an isolated job.
+func (a *App) GenerateBrandAssets(request BrandGenerateRequest) (assetgen.Result, error) {
+	if request.Icon == "" {
+		return assetgen.Result{}, errors.New("choose a brand icon")
+	}
+	selected, err := a.resolveAssetInput(request.Icon)
+	if err != nil {
+		return assetgen.Result{}, err
+	}
+
+	options := map[string]any{
+		"copySvg":  request.CopySvg,
+		"og":       map[string]any{"enabled": request.OgEnabled},
+		"manifest": map[string]any{"enabled": request.ManifestEnabled},
+	}
+	if request.Plate != "" {
+		options["plate"] = request.Plate
+	}
+	if request.OgEnabled {
+		if request.OgTitle == "" {
+			return assetgen.Result{}, errors.New("add a title for the social card")
+		}
+		og := options["og"].(map[string]any)
+		og["title"] = request.OgTitle
+		if request.OgDescription != "" {
+			og["description"] = request.OgDescription
+		}
+		if request.OgSiteLabel != "" {
+			og["siteLabel"] = request.OgSiteLabel
+		}
+		if request.OgWidth > 0 {
+			og["width"] = request.OgWidth
+		}
+		if request.OgHeight > 0 {
+			og["height"] = request.OgHeight
+		}
+	}
+	if request.ManifestEnabled {
+		manifest := options["manifest"].(map[string]any)
+		if request.Name != "" {
+			manifest["name"] = request.Name
+		}
+		if request.ShortName != "" {
+			manifest["shortName"] = request.ShortName
+		}
+		if request.ThemeColor != "" {
+			manifest["themeColor"] = request.ThemeColor
+		}
+		if request.BackgroundColor != "" {
+			manifest["backgroundColor"] = request.BackgroundColor
+		}
+		if request.StartUrl != "" {
+			manifest["startUrl"] = request.StartUrl
+		}
+		if request.Display != "" {
+			manifest["display"] = request.Display
+		}
+	}
+
+	outDir := request.OutDir
+	if outDir == "" {
+		outDir = "out"
+	}
+	return a.assetManager.Start(a.ctx, assetgen.Request{
+		Tool:       "brand",
+		InputPaths: map[string]string{"icon": selected},
 		Options:    options,
 		OutDir:     outDir,
 	})

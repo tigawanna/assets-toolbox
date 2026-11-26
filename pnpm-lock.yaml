@@ -44,6 +44,9 @@ importers:
       '@tanstack/react-router':
         specifier: 1.170.41
         version: 1.170.41(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@tigawanna/brand-assets':
+        specifier: workspace:*
+        version: link:../../../packages/brand-assets
       '@tigawanna/cabra-sound':
         specifier: workspace:*
         version: link:../../../packages/cabra-sound
@@ -108,6 +111,9 @@ importers:
 
   apps/desktop/sidecar:
     dependencies:
+      '@tigawanna/brand-assets':
+        specifier: workspace:*
+        version: link:../../../packages/brand-assets
       '@tigawanna/expo-assets':
         specifier: workspace:*
         version: link:../../../packages/expo-assets

@@ -19,6 +19,26 @@ export interface ExpoGenerateRequest {
   outDir?: string;
 }
 
+export interface BrandGenerateRequest {
+  icon: string;
+  plate?: string;
+  copySvg?: boolean;
+  ogEnabled?: boolean;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogSiteLabel?: string;
+  ogWidth?: number;
+  ogHeight?: number;
+  manifestEnabled?: boolean;
+  name?: string;
+  shortName?: string;
+  themeColor?: string;
+  backgroundColor?: string;
+  startUrl?: string;
+  display?: string;
+  outDir?: string;
+}
+
 export interface AssetArtifact {
   name: string;
   path: string;
@@ -38,6 +58,7 @@ export interface AssetJobResult {
 interface AssetApp {
   SelectAssetImage(role: string): Promise<AssetInput>;
   GenerateExpoAssets(request: ExpoGenerateRequest): Promise<AssetJobResult>;
+  GenerateBrandAssets(request: BrandGenerateRequest): Promise<AssetJobResult>;
   GetAssetArtifact(jobID: string, name: string): Promise<string>;
   SaveAssetArtifact(jobID: string, name: string): Promise<string>;
   SaveAssetSet(jobID: string, suggestedName: string): Promise<string>;

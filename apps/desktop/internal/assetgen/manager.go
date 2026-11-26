@@ -408,7 +408,7 @@ func (m *Manager) resolveWorkerPath() (string, error) {
 }
 
 func validateRequest(req Request) error {
-	if req.Tool != "expo" {
+	if req.Tool != "expo" && req.Tool != "brand" {
 		return fmt.Errorf("%w: %q", ErrUnsupportedTool, req.Tool)
 	}
 	if req.JobID != "" && !safeJobIDRE.MatchString(req.JobID) {

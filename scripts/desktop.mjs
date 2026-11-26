@@ -14,13 +14,17 @@ if (!command) {
 const env = { ...process.env };
 
 if (env.SKIP_ASSET_PACKAGE_BUILD !== "1") {
-  const packageBuild = spawnSync("pnpm", ["--filter", "@tigawanna/expo-assets", "build"], {
-    cwd: repositoryRoot,
-    env,
-    stdio: "inherit",
-  });
+  const packageBuild = spawnSync(
+    "pnpm",
+    ["--filter", "@tigawanna/expo-assets", "--filter", "@tigawanna/brand-assets", "build"],
+    {
+      cwd: repositoryRoot,
+      env,
+      stdio: "inherit",
+    },
+  );
   if (packageBuild.error || packageBuild.status !== 0) {
-    console.error(packageBuild.error?.message ?? "Could not build the Expo Assets package.");
+    console.error(packageBuild.error?.message ?? "Could not build the asset generator packages.");
     process.exit(packageBuild.status ?? 1);
   }
 }

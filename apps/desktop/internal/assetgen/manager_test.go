@@ -42,6 +42,26 @@ function main(req) {
 }
 `
 
+const brandWorker = `
+function main(req) {
+  if (req.tool !== 'brand' || req.jobId !== 'brand-job') throw new Error('bad request');
+  const icon = fs.readFileSync(path.join(req.root, req.inputs.icon), 'utf8');
+  if (icon !== '<svg/>') throw new Error('input staging failed: ' + icon);
+  if (fs.realpathSync(process.cwd()) !== fs.realpathSync(req.root)) throw new Error('worker cwd mismatch');
+  const outDir = path.join(req.root, req.outDir);
+  function write(name, text, width, height) {
+    const p = path.join(outDir, name);
+    fs.writeFileSync(p, text);
+    return {name:name, path:path.join(req.outDir, name), bytes:fs.statSync(p).size, width:width, height:height};
+  }
+  emit({ok:true, artifacts:[
+    write('favicon.ico', 'ICODATA', 32, 32),
+    write('og.png', 'OGDATA', 1200, 630),
+    write('site.webmanifest', JSON.stringify({name:'Test'}), 0, 0)
+  ], config:{generatedBy:'brand'}, agentPrompt:'Use the generated brand assets.'});
+}
+`
+
 const errorWorker = `
 function main() { emit({ok:false, error:'bad config', code:'E_CONFIG'}); }
 `
@@ -226,6 +246,72 @@ func TestStartSuccess(t *testing.T) {
 	}
 }
 
+func TestStartBrandSuccess(t *testing.T) {
+	requireNode(t)
+	worker := writeWorker(t, brandWorker)
+	input := writeInput(t, "my-icon.svg", "<svg/>")
+	optional := writeInput(t, "wordmark.svg", "<wordmark/>")
+	m := NewManager(worker)
+	defer m.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, err := m.Start(ctx, Request{
+		Tool:  "brand",
+		JobID: "brand-job",
+		// Brand uses role "icon"; extra safe roles are staged as well.
+		InputPaths: map[string]string{"icon": input, "wordmark": optional},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.JobID != "brand-job" || len(result.Artifacts) != 3 {
+		t.Fatalf("unexpected result: %+v", result)
+	}
+	want := []struct {
+		name   string
+		bytes  int64
+		width  int
+		height int
+	}{
+		{"favicon.ico", int64(len("ICODATA")), 32, 32},
+		{"og.png", int64(len("OGDATA")), 1200, 630},
+		{"site.webmanifest", int64(len(`{"name":"Test"}`)), 0, 0},
+	}
+	for i, expected := range want {
+		got := result.Artifacts[i]
+		if got.Name != expected.name || got.Bytes != expected.bytes || got.Width != expected.width || got.Height != expected.height {
+			t.Fatalf("unexpected artifact %d: %+v", i, got)
+		}
+		if got.Data != nil {
+			t.Fatalf("artifact %q bytes must not be embedded in the result", got.Name)
+		}
+		path, err := m.ArtifactPath("brand-job", got.Name)
+		if err != nil || path != got.Path {
+			t.Fatalf("ArtifactPath(%q): %q, %v", got.Name, path, err)
+		}
+	}
+	if result.Config["generatedBy"] != "brand" {
+		t.Fatalf("unexpected config: %v", result.Config)
+	}
+	if result.AgentPrompt != "Use the generated brand assets." {
+		t.Fatalf("unexpected prompt: %q", result.AgentPrompt)
+	}
+
+	root, err := m.JobRoot("brand-job")
+	if err != nil {
+		t.Fatal(err)
+	}
+	staged, err := os.ReadFile(filepath.Join(root, "inputs", "icon.svg"))
+	if err != nil || string(staged) != "<svg/>" {
+		t.Fatalf("staged icon: %v, %q", err, staged)
+	}
+	stagedOptional, err := os.ReadFile(filepath.Join(root, "inputs", "wordmark.svg"))
+	if err != nil || string(stagedOptional) != "<wordmark/>" {
+		t.Fatalf("staged optional role: %v, %q", err, stagedOptional)
+	}
+}
+
 func TestRequestValidation(t *testing.T) {
 	cases := []struct {
 		name string
@@ -233,11 +319,15 @@ func TestRequestValidation(t *testing.T) {
 		want string
 	}{
 		{"unsupported tool", Request{Tool: "nextjs"}, "unsupported"},
+		{"uppercase expo", Request{Tool: "EXPO"}, "unsupported"},
+		{"mixed case brand", Request{Tool: "Brand"}, "unsupported"},
 		{"unsafe job id", Request{Tool: "expo", JobID: "../bad"}, "unsafe job id"},
 		{"unsafe role", Request{Tool: "expo", InputPaths: map[string]string{"../icon": "x"}}, "unsafe input role"},
 		{"absolute outDir", Request{Tool: "expo", OutDir: "/tmp/out"}, "relative"},
 		{"traversal outDir", Request{Tool: "expo", OutDir: "../out"}, "unsafe segment"},
 		{"backslash outDir", Request{Tool: "expo", OutDir: "..\\out"}, "illegal character"},
+		{"brand traversal outDir", Request{Tool: "brand", OutDir: "../out"}, "unsafe segment"},
+		{"brand absolute outDir", Request{Tool: "brand", OutDir: "/tmp/out"}, "relative"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

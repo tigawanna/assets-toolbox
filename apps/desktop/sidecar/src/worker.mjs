@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * One-shot Expo asset sidecar.
+ * One-shot asset sidecar for Expo and brand assets.
  *
  * Reads a single JSON request from stdin, validates it, delegates generation to
- * the canonical `@tigawanna/expo-assets` build, and writes exactly one JSON
- * line to stdout. Diagnostics go to stderr only.
+ * the canonical `@tigawanna/expo-assets` or `@tigawanna/brand-assets` build,
+ * and writes exactly one JSON line to stdout. Diagnostics go to stderr only.
  */
 import {
   constants as fsConstants,
@@ -13,6 +13,7 @@ import {
   lstatSync,
   mkdtempSync,
   openSync,
+  readFileSync,
   readSync,
   realpathSync,
   rmSync,
@@ -26,8 +27,11 @@ import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 const MAX_REQUEST_BYTES = 1024 * 1024;
 const MAX_INPUT_BYTES = 8 * 1024 * 1024;
 const MAX_DIMENSION = 4096;
+const MIN_OG_DIMENSION = 64;
 const STDIN_TIMEOUT_MS = 10_000;
 const GENERATION_TIMEOUT_MS = 60_000;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const MANIFEST_DISPLAYS = ["standalone", "fullscreen", "minimal-ui", "browser"];
 
 class SidecarError extends Error {
   constructor(code, message) {
@@ -43,7 +47,7 @@ const input = (message) => new SidecarError("INPUT", message);
 const generation = (message) => new SidecarError("GENERATION", message);
 
 function log(message) {
-  writeSync(2, `[expo-sidecar] ${message}\n`);
+  writeSync(2, `[asset-sidecar] ${message}\n`);
 }
 
 let responseSent = false;
@@ -85,7 +89,7 @@ async function readRequest() {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw protocol("request must be a JSON object");
   }
-  if (parsed.tool !== "expo") {
+  if (parsed.tool !== "expo" && parsed.tool !== "brand") {
     throw protocol(`unsupported tool: ${String(parsed.tool)}`);
   }
   if (typeof parsed.jobId !== "string" || parsed.jobId.length === 0) {
@@ -237,6 +241,118 @@ function validateOptions(raw) {
   return options;
 }
 
+function validateBrandOptions(raw) {
+  if (raw === undefined) return {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw validation("options must be an object");
+  }
+  const options = {};
+  for (const [key, value] of Object.entries(raw)) {
+    switch (key) {
+      case "plate":
+        if (
+          typeof value !== "string" ||
+          !/^#?(?:[\da-fA-F]{3}|[\da-fA-F]{6})$/.test(value.trim())
+        ) {
+          throw validation("plate must be a 3- or 6-digit hex color");
+        }
+        options[key] = value.trim();
+        break;
+      case "copySvg":
+        if (typeof value !== "boolean") throw validation("copySvg must be a boolean");
+        options[key] = value;
+        break;
+      case "og":
+        options.og = validateOgOptions(value);
+        break;
+      case "manifest":
+        options.manifest = validateManifestOptions(value);
+        break;
+      default:
+        throw validation(`unknown option: ${key}`);
+    }
+  }
+  return options;
+}
+
+function validateOgOptions(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw validation("og must be an object");
+  }
+  const og = {};
+  for (const [key, value] of Object.entries(raw)) {
+    switch (key) {
+      case "title":
+        if (typeof value !== "string" || value.trim().length === 0) {
+          throw validation("og.title must be a non-empty string");
+        }
+        og.title = value;
+        break;
+      case "description":
+      case "siteLabel":
+        if (typeof value !== "string") throw validation(`og.${key} must be a string`);
+        og[key] = value;
+        break;
+      case "width":
+      case "height":
+        if (
+          typeof value !== "number" ||
+          !Number.isInteger(value) ||
+          value < MIN_OG_DIMENSION ||
+          value > MAX_DIMENSION
+        ) {
+          throw validation(
+            `og.${key} must be an integer between ${MIN_OG_DIMENSION} and ${MAX_DIMENSION}`,
+          );
+        }
+        og[key] = value;
+        break;
+      case "enabled":
+        if (typeof value !== "boolean") throw validation("og.enabled must be a boolean");
+        og.enabled = value;
+        break;
+      default:
+        throw validation(`unknown og option: ${key}`);
+    }
+  }
+  if (typeof og.title !== "string" || og.title.trim().length === 0) {
+    throw validation("og.title is required");
+  }
+  return og;
+}
+
+function validateManifestOptions(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw validation("manifest must be an object");
+  }
+  const manifest = {};
+  for (const [key, value] of Object.entries(raw)) {
+    switch (key) {
+      case "name":
+      case "shortName":
+      case "themeColor":
+      case "backgroundColor":
+      case "startUrl":
+        if (typeof value !== "string") throw validation(`manifest.${key} must be a string`);
+        manifest[key] = value;
+        break;
+      case "display":
+        if (typeof value !== "string" || !MANIFEST_DISPLAYS.includes(value)) {
+          throw validation(`manifest.display must be one of ${MANIFEST_DISPLAYS.join(", ")}`);
+        }
+        manifest[key] = value;
+        break;
+      case "enabled":
+        if (typeof value !== "boolean") throw validation("manifest.enabled must be a boolean");
+        manifest.enabled = value;
+        break;
+      default:
+        throw validation(`unknown manifest option: ${key}`);
+    }
+  }
+  return manifest;
+}
+
 function projectRelative(root, absolute) {
   return relative(root, absolute).split(sep).join("/");
 }
@@ -264,6 +380,131 @@ async function loadGenerator() {
   }
 }
 
+/** Read PNG/ICO dimensions from file headers; return 0x0 for anything else. */
+function readImageSize(file) {
+  try {
+    const fd = openSync(file, "r");
+    try {
+      const header = Buffer.alloc(24);
+      const read = readSync(fd, header, 0, header.length, 0);
+      if (read >= 24 && header.subarray(0, 8).equals(PNG_SIGNATURE)) {
+        const width = header.readUInt32BE(16);
+        const height = header.readUInt32BE(20);
+        if (width > 0 && height > 0) return { width, height };
+      }
+      if (read >= 8 && header.readUInt16LE(0) === 0 && header.readUInt16LE(2) === 1) {
+        if (header.readUInt16LE(4) > 0) {
+          // ICO entries encode 256 as a zero byte.
+          const width = header[6] === 0 ? 256 : header[6];
+          const height = header[7] === 0 ? 256 : header[7];
+          return { width, height };
+        }
+      }
+    } finally {
+      closeSync(fd);
+    }
+  } catch {
+    // Unknown file type or unreadable header: leave dimensions as zero.
+  }
+  return { width: 0, height: 0 };
+}
+
+function brandArtifact(file, root) {
+  const { width, height } = readImageSize(file.path);
+  return {
+    name: file.name,
+    path: projectRelative(root, resolve(root, file.path)),
+    bytes: file.bytes,
+    width,
+    height,
+  };
+}
+
+function brandAgentPrompt(root, outDir, hasManifest) {
+  const relativeDir = projectRelative(root, outDir);
+  const prefix = relativeDir ? `./${relativeDir}` : ".";
+  const links = [
+    `<link rel="icon" href="${prefix}/favicon.ico">`,
+    `<link rel="apple-touch-icon" href="${prefix}/apple-touch-icon.png">`,
+  ];
+  if (hasManifest) links.push(`<link rel="manifest" href="${prefix}/site.webmanifest">`);
+  return (
+    `Copy the generated files from ${prefix} into your project's public directory, ` +
+    `then add ${links.join(" and ")} to your HTML <head>.`
+  );
+}
+
+function brandOgOptions(og) {
+  const { title, description, siteLabel, width, height } = og;
+  return {
+    title,
+    ...(description !== undefined ? { description } : {}),
+    ...(siteLabel !== undefined ? { siteLabel } : {}),
+    ...(width !== undefined ? { width } : {}),
+    ...(height !== undefined ? { height } : {}),
+    fonts: [],
+  };
+}
+
+function brandManifestOptions(manifest) {
+  const { name, shortName, themeColor, backgroundColor, startUrl, display } = manifest;
+  return {
+    ...(name !== undefined ? { name } : {}),
+    ...(shortName !== undefined ? { shortName } : {}),
+    ...(themeColor !== undefined ? { themeColor } : {}),
+    ...(backgroundColor !== undefined ? { backgroundColor } : {}),
+    ...(startUrl !== undefined ? { startUrl } : {}),
+    ...(display !== undefined ? { display } : {}),
+  };
+}
+
+async function loadBrandGenerator() {
+  try {
+    const module = await import("@tigawanna/brand-assets");
+    if (typeof module.generateBrandAssets !== "function") {
+      throw new Error("generateBrandAssets export is missing");
+    }
+    return module.generateBrandAssets;
+  } catch (err) {
+    throw generation(`cannot load @tigawanna/brand-assets: ${err.message}`);
+  }
+}
+
+/**
+ * Try the requested fonts first, then retry without an explicit font list if
+ * the renderer rejects an empty list. The env hook lets the test suite exercise
+ * the fallback path without patching the generator.
+ */
+async function generateBrand(generateBrandAssets, options) {
+  const attempt = (withEmptyFonts) => {
+    const request = { ...options };
+    if (request.og) {
+      request.og = { ...request.og };
+      if (withEmptyFonts) request.og.fonts = [];
+      else delete request.og.fonts;
+    }
+    return withTimeout(
+      generateBrandAssets(request),
+      GENERATION_TIMEOUT_MS,
+      "GENERATION",
+      `asset generation timed out after ${GENERATION_TIMEOUT_MS}ms`,
+    );
+  };
+
+  try {
+    if (process.env.ASSET_SIDECAR_FORCE_FONT_FAILURE === "1") {
+      throw new Error("fonts: [] could not be rendered (forced by test hook)");
+    }
+    return await attempt(true);
+  } catch (err) {
+    if (options.og && /font/i.test(err?.message ?? "")) {
+      log(`warning: fonts: [] could not be rendered (${err?.message}); retrying without fonts`);
+      return attempt(false);
+    }
+    throw err;
+  }
+}
+
 async function main() {
   let stagingDir;
   try {
@@ -280,8 +521,46 @@ async function main() {
       process.chdir(root);
     }
 
-    const options = validateOptions(request.options);
+    const isBrand = request.tool === "brand";
+    const options = isBrand
+      ? validateBrandOptions(request.options)
+      : validateOptions(request.options);
     const iconPath = safeRelative(request.inputs.icon, "inputs.icon");
+
+    if (isBrand) {
+      const outPath = safeRelative(request.outDir, "outDir", { allowCurrentDir: true });
+      const outDir = resolveWithin(root, outPath, "outDir");
+      stagingDir = mkdtempSync(join(tmpdir(), "brand-assets-sidecar-"));
+      const stagedIcon = stageInput(root, iconPath, stagingDir, "icon");
+      const generateBrandAssets = await loadBrandGenerator();
+      const { plate, copySvg, og, manifest } = options;
+      const result = await generateBrand(generateBrandAssets, {
+        icon: stagedIcon,
+        outDir,
+        ...(plate !== undefined ? { plate } : {}),
+        ...(copySvg !== undefined ? { copySvg } : {}),
+        og: og?.enabled === true ? brandOgOptions(og) : false,
+        manifest: manifest?.enabled === true ? brandManifestOptions(manifest) : false,
+      });
+
+      const artifacts = [
+        ...result.icons.map((file) => brandArtifact(file, root)),
+        ...(result.og ? [brandArtifact(result.og, root)] : []),
+        ...(result.manifest ? [brandArtifact(result.manifest, root)] : []),
+      ];
+      const configFile = result.manifest;
+      const configPath = configFile ? projectRelative(root, resolve(root, configFile.path)) : null;
+      emit({
+        ok: true,
+        tool: "brand",
+        artifacts,
+        config: configFile ? JSON.parse(readFileSync(configFile.path, "utf8")) : null,
+        configPath,
+        agentPrompt: brandAgentPrompt(root, outDir, Boolean(configFile)),
+      });
+      return;
+    }
+
     const darkPath =
       request.inputs.darkIcon === undefined
         ? undefined

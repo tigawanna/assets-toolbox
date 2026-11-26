@@ -13,7 +13,8 @@ describe("TanStack desktop routes", () => {
     ["/packages/cabra-sound", "/packages/cabra-sound"],
     ["/packages/social-inspect", "/packages/social-inspect"],
     ["/packages/expo-assets", "/packages/expo-assets"],
-    ["/packages/brand-assets", "/packages/$slug"],
+    ["/packages/brand-assets", "/packages/brand-assets"],
+    ["/packages/unknown", "/packages/$slug"],
   ])("matches %s without a router shim", (path, route) => {
     expect(router.matchRoutes(path).at(-1)?.fullPath).toBe(route);
   });
