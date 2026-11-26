@@ -3,36 +3,68 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-:root {
-  --studio-background: var(--canvas);
-  --studio-foreground: var(--text);
-  --studio-primary: var(--accent);
-  --studio-primary-foreground: var(--surface);
-  --studio-secondary: var(--surface-muted);
-  --studio-secondary-foreground: var(--text);
-  --studio-muted: var(--surface-muted);
-  --studio-muted-foreground: var(--text-muted);
-  --studio-accent: var(--surface-hover);
-  --studio-accent-foreground: var(--text);
-  --studio-destructive: var(--accent);
-  --studio-border: var(--line);
-  --studio-input: var(--line);
-  --studio-ring: var(--accent);
-  --studio-popover: var(--surface);
-  --studio-popover-foreground: var(--text);
-  --studio-sidebar: var(--sidebar);
-  --studio-sidebar-foreground: var(--text);
-  --studio-sidebar-primary: var(--accent);
-  --studio-sidebar-primary-foreground: var(--surface);
-  --studio-sidebar-accent: var(--sidebar-active);
-  --studio-sidebar-accent-foreground: var(--text);
-  --studio-sidebar-border: var(--line);
-  --studio-sidebar-ring: var(--accent);
-  --studio-canvas-bg: var(--canvas);
-  --studio-canvas-dot: var(--line-strong);
-  --studio-scrollbar-thumb: var(--line-strong);
-  --studio-scrollbar-thumb-hover: var(--text-subtle);
+.screenshot-studio-root {
+  --studio-background: oklch(0.985 0.006 145);
+  --studio-foreground: oklch(0.21 0.02 145);
+  --studio-primary: oklch(0.58 0.15 145);
+  --studio-primary-foreground: oklch(0.985 0.01 145);
+  --studio-secondary: oklch(0.95 0.008 145);
+  --studio-secondary-foreground: oklch(0.25 0.02 145);
+  --studio-muted: oklch(0.95 0.008 145);
+  --studio-muted-foreground: oklch(0.5 0.02 145);
+  --studio-accent: oklch(0.92 0.015 145);
+  --studio-accent-foreground: oklch(0.25 0.02 145);
+  --studio-destructive: oklch(0.58 0.2 25);
+  --studio-border: oklch(0.88 0.01 145);
+  --studio-input: oklch(0.88 0.01 145);
+  --studio-ring: oklch(0.58 0.15 145);
+  --studio-popover: oklch(0.995 0.004 145);
+  --studio-popover-foreground: oklch(0.21 0.02 145);
+  --studio-sidebar: oklch(0.98 0.006 145);
+  --studio-sidebar-foreground: oklch(0.21 0.02 145);
+  --studio-sidebar-primary: oklch(0.58 0.15 145);
+  --studio-sidebar-primary-foreground: oklch(0.985 0.01 145);
+  --studio-sidebar-accent: oklch(0.92 0.015 145);
+  --studio-sidebar-accent-foreground: oklch(0.25 0.02 145);
+  --studio-sidebar-border: oklch(0.88 0.01 145);
+  --studio-sidebar-ring: oklch(0.58 0.15 145);
+  --studio-canvas-bg: oklch(0.965 0.005 145);
+  --studio-canvas-dot: oklch(0.86 0.012 145);
+  --studio-scrollbar-thumb: oklch(0.8 0.012 145);
+  --studio-scrollbar-thumb-hover: oklch(0.7 0.02 145);
   --studio-radius: 8px;
+}
+
+[data-theme="dark"] .screenshot-studio-root,
+.dark .screenshot-studio-root {
+  --studio-background: oklch(0.16 0.012 145);
+  --studio-foreground: oklch(0.93 0.01 140);
+  --studio-primary: oklch(0.82 0.18 135);
+  --studio-primary-foreground: oklch(0.18 0.02 140);
+  --studio-secondary: oklch(0.24 0.012 145);
+  --studio-secondary-foreground: oklch(0.93 0.01 140);
+  --studio-muted: oklch(0.24 0.01 145);
+  --studio-muted-foreground: oklch(0.7 0.02 140);
+  --studio-accent: oklch(0.28 0.02 145);
+  --studio-accent-foreground: oklch(0.93 0.01 140);
+  --studio-destructive: oklch(0.63 0.18 25);
+  --studio-border: oklch(0.32 0.012 145);
+  --studio-input: oklch(0.32 0.012 145);
+  --studio-ring: oklch(0.82 0.18 135);
+  --studio-popover: oklch(0.2 0.012 145);
+  --studio-popover-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar: oklch(0.2 0.012 145);
+  --studio-sidebar-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar-primary: oklch(0.82 0.18 135);
+  --studio-sidebar-primary-foreground: oklch(0.18 0.02 140);
+  --studio-sidebar-accent: oklch(0.28 0.02 145);
+  --studio-sidebar-accent-foreground: oklch(0.93 0.01 140);
+  --studio-sidebar-border: oklch(0.32 0.012 145);
+  --studio-sidebar-ring: oklch(0.82 0.18 135);
+  --studio-canvas-bg: oklch(0.16 0.012 145);
+  --studio-canvas-dot: oklch(0.32 0.012 145);
+  --studio-scrollbar-thumb: oklch(0.36 0.012 145);
+  --studio-scrollbar-thumb-hover: oklch(0.48 0.02 145);
 }
 
 @theme inline {
