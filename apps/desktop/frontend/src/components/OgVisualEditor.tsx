@@ -18,6 +18,7 @@ import {
   Circle,
   Download,
   ImagePlus,
+  LayoutTemplate,
   Redo2,
   Square,
   Trash2,
@@ -260,6 +261,441 @@ export function createOgLayers(
 
   return layers;
 }
+
+type OgTemplateInput = {
+  title?: string;
+  description?: string;
+  siteLabel?: string;
+  imageUrl?: string;
+};
+
+function textLayer(
+  name: string,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  fontSize: number,
+  color: string,
+  fontWeight = 600,
+  align: TextAlign = "left",
+): TextLayer {
+  return {
+    id: makeLayerId(),
+    kind: "text",
+    name,
+    x,
+    y,
+    width,
+    height,
+    text,
+    fontSize,
+    fontWeight,
+    lineHeight: 1.2,
+    color,
+    align,
+  };
+}
+
+function rectLayer(
+  name: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  fill: string,
+  radius = 0,
+): ShapeLayer {
+  return { id: makeLayerId(), kind: "rect", name, x, y, width, height, fill, radius };
+}
+
+export interface OgTemplate {
+  id: string;
+  name: string;
+  description: string;
+  create: (input: OgTemplateInput, width: number, height: number) => Layer[];
+}
+
+export const OG_TEMPLATES: readonly OgTemplate[] = [
+  {
+    id: "gradient",
+    name: "Bold gradient",
+    description: "Warm full-bleed gradient with a strong headline and your mark.",
+    create: (input, width, height) => {
+      const layers: Layer[] = [
+        {
+          ...rectLayer("Background", 0, 0, width, height, "#ff7a18"),
+          fillGradient: { start: "#ff7a18", end: "#c3137e", angle: 135 },
+        },
+        textLayer(
+          "Site label",
+          input.siteLabel?.trim() || "PROJECT",
+          width * 0.07,
+          height * 0.1,
+          width * 0.5,
+          height * 0.08,
+          width * 0.022,
+          "#3a1408",
+          700,
+        ),
+        textLayer(
+          "Headline",
+          input.title?.trim() || "Your headline",
+          width * 0.07,
+          height * 0.4,
+          width * (input.imageUrl ? 0.58 : 0.86),
+          height * 0.34,
+          width * 0.066,
+          "#ffffff",
+          800,
+        ),
+      ];
+      if (input.description?.trim()) {
+        layers.push(
+          textLayer(
+            "Description",
+            input.description.trim(),
+            width * 0.07,
+            height * 0.77,
+            width * 0.55,
+            height * 0.14,
+            width * 0.025,
+            "#fff1e8",
+            400,
+          ),
+        );
+      }
+      if (input.imageUrl) {
+        layers.push({
+          id: makeLayerId(),
+          kind: "image",
+          name: "Image",
+          x: width * 0.68,
+          y: height * 0.12,
+          width: width * 0.25,
+          height: width * 0.25,
+          src: input.imageUrl,
+        });
+      }
+      return layers;
+    },
+  },
+  {
+    id: "minimal",
+    name: "Minimal clean",
+    description: "Quiet white canvas, centered type, and a thin accent rule.",
+    create: (input, width, height) => {
+      const layers: Layer[] = [
+        rectLayer("Background", 0, 0, width, height, "#faf9f5"),
+        textLayer(
+          "Site label",
+          input.siteLabel?.trim() || "PROJECT",
+          width * 0.1,
+          height * 0.14,
+          width * 0.8,
+          height * 0.06,
+          width * 0.018,
+          "#8a8d82",
+          600,
+          "center",
+        ),
+        textLayer(
+          "Headline",
+          input.title?.trim() || "Your headline",
+          width * 0.1,
+          height * 0.32,
+          width * 0.8,
+          height * 0.32,
+          width * 0.058,
+          "#20241d",
+          600,
+          "center",
+        ),
+        rectLayer("Rule", width * 0.46, height * 0.68, width * 0.08, 3, ACCENT_FILL, 2),
+      ];
+      if (input.description?.trim()) {
+        layers.push(
+          textLayer(
+            "Description",
+            input.description.trim(),
+            width * 0.18,
+            height * 0.73,
+            width * 0.64,
+            height * 0.14,
+            width * 0.024,
+            "#6c7065",
+            400,
+            "center",
+          ),
+        );
+      }
+      if (input.imageUrl) {
+        layers.push({
+          id: makeLayerId(),
+          kind: "image",
+          name: "Image",
+          x: width * 0.46,
+          y: height * 0.05,
+          width: width * 0.08,
+          height: width * 0.08,
+          src: input.imageUrl,
+        });
+      }
+      return layers;
+    },
+  },
+  {
+    id: "magazine",
+    name: "Magazine",
+    description: "Editorial split with a category tag, headline, and image.",
+    create: (input, width, height) => {
+      const layers: Layer[] = [
+        rectLayer("Background", 0, 0, width, height, "#f2f4f8"),
+        rectLayer(
+          "Category tag",
+          width * 0.06,
+          height * 0.12,
+          width * 0.16,
+          height * 0.07,
+          "#dce7ff",
+          6,
+        ),
+        textLayer(
+          "Category",
+          (input.siteLabel?.trim() || "PROJECT").toUpperCase(),
+          width * 0.07,
+          height * 0.135,
+          width * 0.14,
+          height * 0.05,
+          width * 0.018,
+          "#2d5bd6",
+          700,
+        ),
+        textLayer(
+          "Headline",
+          input.title?.trim() || "Your headline",
+          width * 0.06,
+          height * 0.3,
+          width * (input.imageUrl ? 0.52 : 0.86),
+          height * 0.32,
+          width * 0.058,
+          "#151a24",
+          700,
+        ),
+      ];
+      if (input.description?.trim()) {
+        layers.push(
+          textLayer(
+            "Description",
+            input.description.trim(),
+            width * 0.06,
+            height * 0.65,
+            width * 0.5,
+            height * 0.16,
+            width * 0.024,
+            "#4b5666",
+            400,
+          ),
+        );
+      }
+      if (input.imageUrl) {
+        layers.push({
+          id: makeLayerId(),
+          kind: "image",
+          name: "Image",
+          x: width * 0.62,
+          y: height * 0.12,
+          width: width * 0.32,
+          height: height * 0.7,
+          src: input.imageUrl,
+        });
+      }
+      layers.push({
+        id: makeLayerId(),
+        kind: "ellipse",
+        name: "Accent dot",
+        x: width * 0.9,
+        y: height * 0.08,
+        width: 18,
+        height: 18,
+        fill: "#3b7bf0",
+        radius: 0,
+      });
+      return layers;
+    },
+  },
+  {
+    id: "dev",
+    name: "Dev card",
+    description: "Developer-style card with a code panel and accent dots.",
+    create: (input, width, height) => {
+      const layers: Layer[] = [
+        {
+          ...rectLayer("Background", 0, 0, width, height, "#0d1117"),
+          fillGradient: { start: "#111827", end: "#0d1117", angle: 180 },
+        },
+        textLayer(
+          "Site label",
+          (input.siteLabel?.trim() || "PROJECT").toUpperCase(),
+          width * 0.06,
+          height * 0.12,
+          width * 0.5,
+          height * 0.07,
+          width * 0.02,
+          "#7dd3fc",
+          700,
+        ),
+        textLayer(
+          "Headline",
+          input.title?.trim() || "Your headline",
+          width * 0.06,
+          height * 0.3,
+          width * 0.5,
+          height * 0.3,
+          width * 0.056,
+          "#f3f4f6",
+          700,
+        ),
+        rectLayer(
+          "Code panel",
+          width * 0.59,
+          height * 0.16,
+          width * 0.35,
+          height * 0.68,
+          "#171d27",
+          12,
+        ),
+        textLayer(
+          "Code line 1",
+          "const app = createApp();",
+          width * 0.62,
+          height * 0.24,
+          width * 0.3,
+          height * 0.05,
+          width * 0.018,
+          "#f9a8d4",
+          500,
+        ),
+        textLayer(
+          "Code line 2",
+          "await app.build();",
+          width * 0.62,
+          height * 0.34,
+          width * 0.3,
+          height * 0.05,
+          width * 0.018,
+          "#86efac",
+          500,
+        ),
+        textLayer(
+          "Code line 3",
+          "console.log('done');",
+          width * 0.62,
+          height * 0.44,
+          width * 0.3,
+          height * 0.05,
+          width * 0.018,
+          "#93c5fd",
+          500,
+        ),
+      ];
+      if (input.description?.trim()) {
+        layers.push(
+          textLayer(
+            "Description",
+            input.description.trim(),
+            width * 0.06,
+            height * 0.64,
+            width * 0.48,
+            height * 0.14,
+            width * 0.024,
+            "#9ca3af",
+            400,
+          ),
+        );
+      }
+      if (input.imageUrl) {
+        layers.push({
+          id: makeLayerId(),
+          kind: "ellipse",
+          name: "Avatar",
+          x: width * 0.88,
+          y: height * 0.78,
+          width: width * 0.07,
+          height: width * 0.07,
+          fill: "#1f2937",
+          fillImage: input.imageUrl,
+          radius: 0,
+        });
+      }
+      return layers;
+    },
+  },
+  {
+    id: "corporate",
+    name: "Corporate split",
+    description: "Two-panel brand layout with a bold accent rule.",
+    create: (input, width, height) => {
+      const layers: Layer[] = [
+        rectLayer("Background", 0, 0, width, height, "#eef2fb"),
+        rectLayer("Brand panel", 0, 0, width * 0.42, height, "#dbe6ff"),
+        rectLayer("Accent rule", width * 0.42, 0, 5, height, "#2563eb"),
+        textLayer(
+          "Company",
+          input.siteLabel?.trim() || "PROJECT",
+          width * 0.05,
+          height * 0.34,
+          width * 0.32,
+          height * 0.12,
+          width * 0.042,
+          "#1d4ed8",
+          700,
+        ),
+        textLayer(
+          "Headline",
+          input.title?.trim() || "Your headline",
+          width * 0.49,
+          height * 0.26,
+          width * 0.46,
+          height * 0.34,
+          width * 0.052,
+          "#111827",
+          700,
+        ),
+        rectLayer("Underline", width * 0.49, height * 0.72, width * 0.12, 4, "#2563eb", 2),
+      ];
+      if (input.description?.trim()) {
+        layers.push(
+          textLayer(
+            "Description",
+            input.description.trim(),
+            width * 0.49,
+            height * 0.62,
+            width * 0.44,
+            height * 0.14,
+            width * 0.024,
+            "#4b5563",
+            400,
+          ),
+        );
+      }
+      if (input.imageUrl) {
+        layers.push({
+          id: makeLayerId(),
+          kind: "image",
+          name: "Image",
+          x: width * 0.13,
+          y: height * 0.1,
+          width: width * 0.16,
+          height: width * 0.16,
+          src: input.imageUrl,
+        });
+      }
+      return layers;
+    },
+  },
+];
 
 function normalizeHex(value: string, fallback = "#000000"): string {
   const trimmed = value.trim();
@@ -668,6 +1104,10 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const [scale, setScale] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [showTemplates, setShowTemplates] = useState(
+    !props.initialDraft || props.initialDraft.layers.length === 0,
+  );
+  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
 
   const headingId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -695,6 +1135,31 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
       height: designHeight,
     });
   }, [designHeight, designWidth, layers, selectedId, props.onDraftChange]);
+
+  useEffect(() => {
+    let active = true;
+    const input = {
+      title: props.title,
+      description: props.description,
+      siteLabel: props.siteLabel,
+      imageUrl: props.imageUrl,
+    };
+    void Promise.all(
+      OG_TEMPLATES.map(async (template) => {
+        const dataUrl = await renderOgLayers(
+          template.create(input, designWidth, designHeight),
+          designWidth,
+          designHeight,
+        );
+        return [template.id, dataUrl] as const;
+      }),
+    ).then((entries) => {
+      if (active) setTemplatePreviews(Object.fromEntries(entries));
+    });
+    return () => {
+      active = false;
+    };
+  }, [designHeight, designWidth, props.description, props.imageUrl, props.siteLabel, props.title]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -1039,6 +1504,35 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     [updateLayer],
   );
 
+  const chooseTemplate = useCallback(
+    (template: OgTemplate) => {
+      pushHistory();
+      setLayers(
+        template.create(
+          {
+            title: props.title,
+            description: props.description,
+            siteLabel: props.siteLabel,
+            imageUrl: props.imageUrl,
+          },
+          designWidth,
+          designHeight,
+        ),
+      );
+      setSelectedId(null);
+      setShowTemplates(false);
+    },
+    [
+      designHeight,
+      designWidth,
+      props.description,
+      props.imageUrl,
+      props.siteLabel,
+      props.title,
+      pushHistory,
+    ],
+  );
+
   const moveSelected = useCallback(
     (offset: number) => {
       if (!selectedId) return;
@@ -1212,6 +1706,14 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             <button
               type="button"
               className="og-editor-button"
+              onClick={() => setShowTemplates(true)}
+              aria-label="Choose a template"
+            >
+              <LayoutTemplate size={13} aria-hidden="true" /> Templates
+            </button>
+            <button
+              type="button"
+              className="og-editor-button"
               onClick={undo}
               disabled={history.length === 0}
               aria-label="Undo"
@@ -1231,6 +1733,42 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
               Ctrl+Z to undo · drag layers to move · drag corners to resize
             </span>
           </div>
+
+          {showTemplates ? (
+            <div className="og-editor-templates">
+              <div className="og-editor-templates-head">
+                <div>
+                  <strong>Start with a template</strong>
+                  <span>Pick a layout, then adjust anything in the editor.</span>
+                </div>
+                <button
+                  type="button"
+                  className="og-editor-button"
+                  onClick={() => setShowTemplates(false)}
+                >
+                  Keep current design
+                </button>
+              </div>
+              <div className="og-editor-template-grid">
+                {OG_TEMPLATES.map((template) => (
+                  <button
+                    className="og-editor-template-card"
+                    type="button"
+                    key={template.id}
+                    onClick={() => chooseTemplate(template)}
+                  >
+                    <span className="og-editor-template-preview">
+                      {templatePreviews[template.id] ? (
+                        <img src={templatePreviews[template.id]} alt="" />
+                      ) : null}
+                    </span>
+                    <strong>{template.name}</strong>
+                    <span>{template.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div
             className="og-editor-stage"

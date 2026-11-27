@@ -135,6 +135,107 @@
   user-select: none;
 }
 
+.og-editor-dialog:has(.og-editor-templates) .og-editor-stage,
+.og-editor-dialog:has(.og-editor-templates) .og-editor-inspector {
+  display: none;
+}
+
+.og-editor-templates {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.og-editor-templates-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.og-editor-templates-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.og-editor-templates-head strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.og-editor-templates-head span {
+  color: var(--text-subtle);
+  font-size: 10px;
+}
+
+.og-editor-template-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.og-editor-template-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 150ms var(--ease),
+    background-color 150ms var(--ease);
+}
+
+.og-editor-template-card:hover,
+.og-editor-template-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.og-editor-template-preview {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--canvas);
+}
+
+.og-editor-template-preview img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+}
+
+.og-editor-template-card strong {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.og-editor-template-card > span:last-child {
+  color: var(--text-subtle);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .og-editor-template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .og-editor-layer {
   position: absolute;
   top: var(--og-y, 0px);
