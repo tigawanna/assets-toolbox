@@ -10,9 +10,13 @@
   justify-content: space-between;
   gap: 12px;
   padding: 0 12px;
-  /* Cancel .page-content padding so the header spans the whole scroll surface. */
-  width: calc(100% + 76px);
-  margin: -24px -38px 18px;
+  /* Full-bleed: escape .page-content's max-width and padding so the header
+     always spans the workspace from the sidebar edge to the window edge. */
+  width: calc(100vw - var(--sidebar-width, 208px));
+  margin-top: -24px;
+  margin-right: auto;
+  margin-bottom: 18px;
+  margin-left: calc(50% - 50vw + var(--sidebar-width, 208px) / 2);
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
@@ -138,8 +142,7 @@
 
 @media (max-width: 900px) {
   [data-slot="tool-header"] {
-    width: calc(100% + 44px);
-    margin: -30px -22px 18px;
+    margin-top: -30px;
   }
 }
 
@@ -151,7 +154,7 @@
 
 @media (max-width: 480px) {
   [data-slot="tool-header"] {
-    width: calc(100% + 32px);
-    margin: -25px -16px 16px;
+    margin-top: -25px;
+    margin-bottom: 16px;
   }
 }

@@ -330,6 +330,7 @@
 .main-scroll {
   min-height: 0;
   flex: 1;
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-color: var(--line-strong) transparent;
   scrollbar-width: thin;
