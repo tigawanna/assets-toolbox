@@ -379,6 +379,13 @@ export const loadStudio: Fn<ProjectRef, StudioSnapshot> = async ({ data }) => {
   return loadSnapshot(data.projectId);
 };
 
+export const putStudio: Fn<ProjectRef & { snapshot: StudioSnapshot }, StudioSnapshot> = async ({
+  data,
+}) => {
+  await writeProject(resolveProjectId(data.projectId), data.snapshot);
+  return data.snapshot;
+};
+
 export const addAsset: Fn<
   ProjectRef & { name: string; mime: string; data: string },
   StudioSnapshot & { assetId: string }

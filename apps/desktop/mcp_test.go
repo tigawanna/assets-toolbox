@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -135,6 +136,30 @@ func TestMCPGatewayProjectAndAssetFlow(t *testing.T) {
 	status := call("status", "", nil, false)
 	if status["backend"] != "wails" {
 		t.Fatalf("unexpected status: %v", status)
+	}
+}
+
+func TestMCPBridgeRoundTrip(t *testing.T) {
+	app := NewApp()
+	app.emit = func(_ context.Context, name string, data ...interface{}) {
+		if name != "mcp:request" {
+			return
+		}
+		id, _ := data[0].(string)
+		app.mcpBridgeMu.Lock()
+		channel := app.mcpBridgeRequests[id]
+		app.mcpBridgeMu.Unlock()
+		if channel != nil {
+			channel <- mcpBridgeResult{result: map[string]any{"ok": true}}
+		}
+	}
+	result, err := app.mcpBridge("studio.get_board", map[string]any{"projectId": "p_test"})
+	if err != nil {
+		t.Fatalf("bridge failed: %v", err)
+	}
+	payload, _ := result.(map[string]any)
+	if payload["ok"] != true {
+		t.Fatalf("unexpected bridge result: %v", payload)
 	}
 }
 

@@ -336,6 +336,123 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 			},
 		},
 		{
+			ID: "studio.list_boards", Summary: "List Studio boards from the WebView storage.",
+			InputSchema: objectSchema(map[string]any{}),
+			Run: func(args map[string]any) (any, error) {
+				return a.mcpBridge("studio.list_boards", map[string]any{})
+			},
+		},
+		{
+			ID: "studio.get_board", Summary: "Read a Studio board snapshot (layers, scene strips, assets).",
+			InputSchema: objectSchema(map[string]any{"projectId": strProp()}, "projectId"),
+			Run: func(args map[string]any) (any, error) {
+				projectID, err := mcpString(args, "projectId")
+				if err != nil {
+					return nil, err
+				}
+				return a.mcpBridge("studio.get_board", map[string]any{"projectId": projectID})
+			},
+		},
+		{
+			ID: "studio.put_board", Summary: "Replace a Studio board with a snapshot.", Mutating: true,
+			InputSchema: objectSchema(map[string]any{"projectId": strProp(), "snapshot": anyProp()}, "projectId", "snapshot"),
+			Run: func(args map[string]any) (any, error) {
+				projectID, err := mcpString(args, "projectId")
+				if err != nil {
+					return nil, err
+				}
+				snapshot, ok := args["snapshot"]
+				if !ok {
+					return nil, fmt.Errorf("snapshot is required")
+				}
+				return a.mcpBridge("studio.put_board", map[string]any{
+					"projectId": projectID, "snapshot": snapshot,
+				})
+			},
+		},
+		{
+			ID: "templates.list", Summary: "List global templates, shared by every project.",
+			InputSchema: objectSchema(map[string]any{"tool": strProp()}, "tool"),
+			Run: func(args map[string]any) (any, error) {
+				tool, err := mcpString(args, "tool")
+				if err != nil {
+					return nil, err
+				}
+				return a.mcpBridge("templates.list", map[string]any{"tool": tool})
+			},
+		},
+		{
+			ID: "templates.save", Summary: "Save a template using the editor's own representation.", Mutating: true,
+			InputSchema: objectSchema(map[string]any{
+				"tool": strProp(), "name": strProp(), "description": strProp(), "data": anyProp(),
+			}, "tool", "name", "data"),
+			Run: func(args map[string]any) (any, error) {
+				tool, err := mcpString(args, "tool")
+				if err != nil {
+					return nil, err
+				}
+				name, err := mcpString(args, "name")
+				if err != nil {
+					return nil, err
+				}
+				return a.mcpBridge("templates.save", map[string]any{
+					"tool": tool, "name": name,
+					"description": optString(args, "description"), "data": args["data"],
+				})
+			},
+		},
+		{
+			ID: "templates.apply", Summary: "Apply a global template to a project's brand document or Studio board.", Mutating: true,
+			InputSchema: objectSchema(map[string]any{
+				"tool": strProp(), "templateId": strProp(), "projectId": strProp(),
+			}, "tool", "templateId", "projectId"),
+			Run: func(args map[string]any) (any, error) {
+				tool, err := mcpString(args, "tool")
+				if err != nil {
+					return nil, err
+				}
+				templateID, err := mcpString(args, "templateId")
+				if err != nil {
+					return nil, err
+				}
+				projectID, err := mcpString(args, "projectId")
+				if err != nil {
+					return nil, err
+				}
+				listed, err := a.mcpBridge("templates.list", map[string]any{"tool": tool})
+				if err != nil {
+					return nil, err
+				}
+				payload, _ := listed.(map[string]any)
+				templates, _ := payload["templates"].([]any)
+				for _, item := range templates {
+					template, _ := item.(map[string]any)
+					if template["id"] != templateID {
+						continue
+					}
+					if tool == "studio" {
+						return a.mcpBridge("studio.put_board", map[string]any{
+							"projectId": projectID, "snapshot": template["data"],
+						})
+					}
+					return a.projectsCall(http.MethodPut, "/api/projects/"+projectID+"/documents/brand",
+						map[string]any{"data": template["data"]})
+				}
+				return nil, fmt.Errorf("template not found: %s", templateID)
+			},
+		},
+		{
+			ID: "templates.delete", Summary: "Delete a global template.", Mutating: true,
+			InputSchema: objectSchema(map[string]any{"id": strProp()}, "id"),
+			Run: func(args map[string]any) (any, error) {
+				id, err := mcpString(args, "id")
+				if err != nil {
+					return nil, err
+				}
+				return a.mcpBridge("templates.delete", map[string]any{"id": id})
+			},
+		},
+		{
 			ID: "sound.favorites.set", Summary: "Write the favorites list into a project's sound document.", Mutating: true,
 			InputSchema: objectSchema(map[string]any{"projectId": strProp(), "favorites": arrayProp()}, "projectId", "favorites"),
 			Run: func(args map[string]any) (any, error) {

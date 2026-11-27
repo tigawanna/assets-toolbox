@@ -3,8 +3,10 @@ import { LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
 import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 
 import { findPackage, toolPackages } from "../lib/catalog";
-import { useFlushRegistry } from "../lib/flush";
+import { useDesktopFlush, useFlushRegistry } from "../lib/flush";
 import { getActiveProjectId } from "../lib/projects/client";
+import { registerMcpBridge } from "../lib/mcp";
+import { setDesktopModuleActive } from "../lib/desktop";
 import { formatPlatform, getSystemInfo, type NativeSystemInfo } from "../lib/native";
 import { toggleTheme, useTheme } from "../lib/theme";
 import { PackageIcon } from "./PackageIcon";
@@ -30,6 +32,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { flushAll } = useFlushRegistry();
+  const mcpFlush = useCallback(async () => true, []);
+  useDesktopFlush("mcp", mcpFlush);
+
+  useEffect(() => {
+    const unregister = registerMcpBridge();
+    setDesktopModuleActive("mcp", true);
+    return () => {
+      unregister();
+      setDesktopModuleActive("mcp", false);
+    };
+  }, []);
 
   const pathParts = location.pathname.split("/").filter(Boolean);
   const currentSlug = pathParts[0] === "projects" ? (pathParts[2] ?? "") : (pathParts[1] ?? "");

@@ -12,7 +12,9 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
@@ -38,24 +40,32 @@ type SystemInfo struct {
 
 // App owns the Wails application lifecycle and native services.
 type App struct {
-	ctx           context.Context
-	workspace     *workspaceStore
-	projects      *projectsStore
-	closeMu       sync.Mutex
-	activeModules map[string]bool
-	closing       bool
-	quitApproved  bool
-	flushRequests map[string]flushRequest
-	flushSequence uint64
-	closeSequence uint64
-	flushTimeout  time.Duration
-	quit          func(context.Context)
-	emit          func(context.Context, string, ...interface{})
-	eventCleanup  []func()
-	assetManager  *assetgen.Manager
-	directories   *directoryStore
-	assetInputsMu sync.Mutex
-	assetInputs   map[string]string
+	ctx               context.Context
+	workspace         *workspaceStore
+	projects          *projectsStore
+	closeMu           sync.Mutex
+	activeModules     map[string]bool
+	closing           bool
+	quitApproved      bool
+	flushRequests     map[string]flushRequest
+	flushSequence     uint64
+	closeSequence     uint64
+	flushTimeout      time.Duration
+	quit              func(context.Context)
+	emit              func(context.Context, string, ...interface{})
+	eventCleanup      []func()
+	assetManager      *assetgen.Manager
+	directories       *directoryStore
+	assetInputsMu     sync.Mutex
+	assetInputs       map[string]string
+	mcpBridgeMu       sync.Mutex
+	mcpBridgeRequests map[string]chan mcpBridgeResult
+	mcpBridgeSeq      uint64
+}
+
+type mcpBridgeResult struct {
+	result any
+	err    error
 }
 
 type flushRequest struct {
@@ -66,22 +76,23 @@ type flushRequest struct {
 // NewApp creates the desktop application.
 func NewApp() *App {
 	return &App{
-		workspace:     newWorkspaceStore(defaultWorkspacePath()),
-		projects:      newProjectsStore(defaultProjectsRoot()),
-		activeModules: make(map[string]bool),
-		flushRequests: make(map[string]flushRequest),
-		quit:          wailsruntime.Quit,
-		emit:          wailsruntime.EventsEmit,
-		flushTimeout:  3 * time.Second,
-		assetManager:  newAssetManager(),
-		directories:   newDirectoryStore(defaultDirectoryStorePath()),
-		assetInputs:   make(map[string]string),
+		workspace:         newWorkspaceStore(defaultWorkspacePath()),
+		projects:          newProjectsStore(defaultProjectsRoot()),
+		activeModules:     make(map[string]bool),
+		flushRequests:     make(map[string]flushRequest),
+		quit:              wailsruntime.Quit,
+		emit:              wailsruntime.EventsEmit,
+		flushTimeout:      3 * time.Second,
+		assetManager:      newAssetManager(),
+		directories:       newDirectoryStore(defaultDirectoryStorePath()),
+		assetInputs:       make(map[string]string),
+		mcpBridgeRequests: make(map[string]chan mcpBridgeResult),
 	}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	for _, module := range []string{"workspace", "studio", "projects"} {
+	for _, module := range []string{"workspace", "studio", "projects", "mcp"} {
 		module := module
 		a.eventCleanup = append(a.eventCleanup,
 			wailsruntime.EventsOn(ctx, module+":active", func(...interface{}) {
@@ -102,6 +113,56 @@ func (a *App) startup(ctx context.Context) {
 				a.acknowledgeFlush(module, data...)
 			}),
 		)
+	}
+	a.eventCleanup = append(a.eventCleanup,
+		wailsruntime.EventsOn(ctx, "mcp:response", func(data ...interface{}) {
+			if len(data) < 2 {
+				return
+			}
+			id, ok := data[0].(string)
+			if !ok {
+				return
+			}
+			a.mcpBridgeMu.Lock()
+			channel := a.mcpBridgeRequests[id]
+			delete(a.mcpBridgeRequests, id)
+			a.mcpBridgeMu.Unlock()
+			if channel == nil {
+				return
+			}
+			var bridgeErr error
+			if len(data) > 2 {
+				if message, ok := data[2].(string); ok && message != "" {
+					bridgeErr = fmt.Errorf("%s", message)
+				}
+			}
+			channel <- mcpBridgeResult{result: data[1], err: bridgeErr}
+		}),
+	)
+}
+
+// mcpBridge asks the frontend to run a tool whose state lives in the WebView
+// (Studio boards, global templates) and waits for the response event.
+func (a *App) mcpBridge(tool string, args map[string]any) (any, error) {
+	if a.emit == nil {
+		return nil, fmt.Errorf("frontend bridge is unavailable")
+	}
+	id := strconv.FormatUint(atomic.AddUint64(&a.mcpBridgeSeq, 1), 10)
+	channel := make(chan mcpBridgeResult, 1)
+	a.mcpBridgeMu.Lock()
+	a.mcpBridgeRequests[id] = channel
+	a.mcpBridgeMu.Unlock()
+	defer func() {
+		a.mcpBridgeMu.Lock()
+		delete(a.mcpBridgeRequests, id)
+		a.mcpBridgeMu.Unlock()
+	}()
+	a.emit(a.ctx, "mcp:request", id, tool, args)
+	select {
+	case response := <-channel:
+		return response.result, response.err
+	case <-time.After(3 * time.Second):
+		return nil, fmt.Errorf("frontend bridge timed out for %s", tool)
 	}
 }
 
