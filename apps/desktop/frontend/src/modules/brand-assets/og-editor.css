@@ -339,6 +339,62 @@
   cursor: pointer;
 }
 
+.og-editor-field-stack input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.og-editor-gradient-presets {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.og-editor-gradient-preset {
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background-image: var(--og-preset-image, none);
+  cursor: pointer;
+}
+
+.og-editor-gradient-preset:hover,
+.og-editor-gradient-preset:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.og-editor-directions {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.og-editor-direction {
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.og-editor-direction:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.og-editor-direction.selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-ink);
+}
+
 .og-editor-grid {
   display: grid;
   min-width: 0;

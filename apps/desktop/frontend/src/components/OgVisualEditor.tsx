@@ -79,7 +79,36 @@ interface ShapeGradient {
   start: string;
   end: string;
   angle: number;
+  startPosition?: number;
+  endPosition?: number;
+  middle?: { color: string; position: number } | null;
 }
+
+const GRADIENT_DIRECTIONS: ReadonlyArray<{ angle: number; label: string; glyph: string }> = [
+  { angle: 0, label: "Bottom to top", glyph: "↑" },
+  { angle: 45, label: "Bottom-left to top-right", glyph: "↗" },
+  { angle: 90, label: "Left to right", glyph: "→" },
+  { angle: 135, label: "Bottom-right to top-left", glyph: "↖" },
+  { angle: 180, label: "Top to bottom", glyph: "↓" },
+  { angle: 225, label: "Top-right to bottom-left", glyph: "↙" },
+  { angle: 270, label: "Right to left", glyph: "←" },
+  { angle: 315, label: "Top-left to bottom-right", glyph: "↘" },
+];
+
+const GRADIENT_PRESETS: ReadonlyArray<{ start: string; end: string; angle: number }> = [
+  { start: "#ff7a18", end: "#af002d", angle: 180 },
+  { start: "#f6d365", end: "#fda085", angle: 135 },
+  { start: "#ff9a9e", end: "#fecfef", angle: 180 },
+  { start: "#a1c4fd", end: "#c2e9fb", angle: 135 },
+  { start: "#84fab0", end: "#8fd3f4", angle: 135 },
+  { start: "#fbc2eb", end: "#a6c1ee", angle: 135 },
+  { start: "#4facfe", end: "#00f2fe", angle: 90 },
+  { start: "#43e97b", end: "#38f9d7", angle: 135 },
+  { start: "#fa709a", end: "#fee140", angle: 135 },
+  { start: "#30cfd0", end: "#330867", angle: 135 },
+  { start: "#c471ed", end: "#f64f59", angle: 135 },
+  { start: "#0f100f", end: "#b65e37", angle: 135 },
+];
 
 interface ShapeLayer extends LayerBase {
   kind: "rect" | "ellipse";
@@ -392,8 +421,13 @@ function applyShapeFill(context: CanvasRenderingContext2D, layer: ShapeLayer): v
     centerX + deltaX,
     centerY + deltaY,
   );
-  fill.addColorStop(0, gradient.start);
-  fill.addColorStop(1, gradient.end);
+  const clampStop = (value: number | undefined, fallback: number) =>
+    Math.min(1, Math.max(0, (Number.isFinite(value) ? (value as number) : fallback) / 100));
+  fill.addColorStop(clampStop(gradient.startPosition, 0), gradient.start);
+  if (gradient.middle) {
+    fill.addColorStop(clampStop(gradient.middle.position, 50), gradient.middle.color);
+  }
+  fill.addColorStop(clampStop(gradient.endPosition, 100), gradient.end);
   context.fillStyle = fill;
 }
 
@@ -479,8 +513,13 @@ function layerVars(layer: Layer, scale: number): StyleVars {
     };
   }
   if (layer.kind === "image") return base;
-  const gradient = layer.fillGradient
-    ? `linear-gradient(${layer.fillGradient.angle}deg, ${layer.fillGradient.start}, ${layer.fillGradient.end})`
+  const gradientStyle = layer.fillGradient;
+  const gradient = gradientStyle
+    ? `linear-gradient(${gradientStyle.angle}deg, ${gradientStyle.start} ${gradientStyle.startPosition ?? 0}%${
+        gradientStyle.middle
+          ? `, ${gradientStyle.middle.color} ${gradientStyle.middle.position}%`
+          : ""
+      }, ${gradientStyle.end} ${gradientStyle.endPosition ?? 100}%)`
     : "none";
   return {
     ...base,
@@ -516,6 +555,32 @@ function ColorControl({ label, value, onChange }: ColorControlProps): JSX.Elemen
         />
       </div>
     </div>
+  );
+}
+
+function RangeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}): JSX.Element {
+  return (
+    <label className="og-editor-field-stack">
+      <span>
+        {label} · {Math.round(value)}%
+      </span>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(event) => onChange(Number(event.currentTarget.value))}
+        aria-label={label}
+      />
+    </label>
   );
 }
 
@@ -1323,12 +1388,73 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                     </label>
                     {selectedLayer.fillGradient ? (
                       <>
+                        <div className="og-editor-gradient-presets" aria-label="Gradient presets">
+                          {GRADIENT_PRESETS.map((preset) => {
+                            const presetStyle: StyleVars = {
+                              "--og-preset-image": `linear-gradient(${preset.angle}deg, ${preset.start}, ${preset.end})`,
+                            };
+                            return (
+                              <button
+                                key={`${preset.start}-${preset.end}`}
+                                type="button"
+                                className="og-editor-gradient-preset"
+                                style={presetStyle}
+                                aria-label={`Gradient ${preset.start} to ${preset.end}`}
+                                onClick={() =>
+                                  updateLayer(selectedLayer.id, {
+                                    fillGradient: {
+                                      ...selectedLayer.fillGradient!,
+                                      start: preset.start,
+                                      end: preset.end,
+                                      angle: preset.angle,
+                                      middle: null,
+                                    },
+                                  })
+                                }
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="og-editor-directions" aria-label="Gradient direction">
+                          {GRADIENT_DIRECTIONS.map((direction) => (
+                            <button
+                              key={direction.angle}
+                              type="button"
+                              className={`og-editor-direction${
+                                selectedLayer.fillGradient!.angle === direction.angle
+                                  ? " selected"
+                                  : ""
+                              }`}
+                              aria-label={direction.label}
+                              title={direction.label}
+                              onClick={() =>
+                                updateLayer(selectedLayer.id, {
+                                  fillGradient: {
+                                    ...selectedLayer.fillGradient!,
+                                    angle: direction.angle,
+                                  },
+                                })
+                              }
+                            >
+                              {direction.glyph}
+                            </button>
+                          ))}
+                        </div>
                         <ColorControl
                           label="Gradient start"
                           value={selectedLayer.fillGradient.start}
                           onChange={(start) =>
                             updateLayer(selectedLayer.id, {
                               fillGradient: { ...selectedLayer.fillGradient!, start },
+                            })
+                          }
+                        />
+                        <RangeField
+                          label="Start position"
+                          value={selectedLayer.fillGradient.startPosition ?? 0}
+                          onChange={(startPosition) =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: { ...selectedLayer.fillGradient!, startPosition },
                             })
                           }
                         />
@@ -1341,6 +1467,61 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                             })
                           }
                         />
+                        <RangeField
+                          label="End position"
+                          value={selectedLayer.fillGradient.endPosition ?? 100}
+                          onChange={(endPosition) =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: { ...selectedLayer.fillGradient!, endPosition },
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="og-editor-button"
+                          onClick={() =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: {
+                                ...selectedLayer.fillGradient!,
+                                middle: selectedLayer.fillGradient!.middle
+                                  ? null
+                                  : { color: ACCENT_FILL, position: 50 },
+                              },
+                            })
+                          }
+                        >
+                          {selectedLayer.fillGradient.middle
+                            ? "Remove middle stop"
+                            : "Add middle stop"}
+                        </button>
+                        {selectedLayer.fillGradient.middle ? (
+                          <>
+                            <ColorControl
+                              label="Middle color"
+                              value={selectedLayer.fillGradient.middle.color}
+                              onChange={(color) =>
+                                updateLayer(selectedLayer.id, {
+                                  fillGradient: {
+                                    ...selectedLayer.fillGradient!,
+                                    middle: { ...selectedLayer.fillGradient!.middle!, color },
+                                  },
+                                })
+                              }
+                            />
+                            <RangeField
+                              label="Middle position"
+                              value={selectedLayer.fillGradient.middle.position}
+                              onChange={(position) =>
+                                updateLayer(selectedLayer.id, {
+                                  fillGradient: {
+                                    ...selectedLayer.fillGradient!,
+                                    middle: { ...selectedLayer.fillGradient!.middle!, position },
+                                  },
+                                })
+                              }
+                            />
+                          </>
+                        ) : null}
                         <NumberField
                           label="Angle"
                           value={selectedLayer.fillGradient.angle}
