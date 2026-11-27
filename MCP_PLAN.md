@@ -1,6 +1,6 @@
 # Native MCP plan — one gateway tool, progressive disclosure
 
-**Status:** approach comparison documented (gateway chosen), Phase 1 gateway implemented and smoke-tested live, Phase 2 Studio/template bridge implemented with a Go round-trip test. Prompts, stdio transport and optional auth remain. Date: 2026-11-27.
+**Status:** approach comparison documented (gateway chosen), Phase 1 gateway implemented and smoke-tested live, Phase 2 Studio/template bridge implemented with a Go round-trip test, stdio transport implemented and smoke-tested. Prompts, optional auth, notifications and Studio storage migration remain. Date: 2026-11-27.
 
 ### Implemented so far
 
@@ -14,7 +14,8 @@ Live smoke test performed against the headless server: `initialize` → `tools/l
 
 Phase 2 adds a WebView bridge (`mcp:request` / `mcp:response`) so Go can reach Studio boards and global templates: `studio.list_boards`, `studio.get_board`, `studio.put_board`, `templates.list/save/apply/delete`. The bridge is tested in-process in Go; it requires a running Wails window at runtime (the headless HTTP mode has no frontend to answer bridge calls).
 
-Connection snippet: `{"mcpServers":{"assets-toolbox":{"url":"http://127.0.0.1:4380/mcp"}}}`.
+Connection snippet (HTTP): `{"mcpServers":{"assets-toolbox":{"url":"http://127.0.0.1:4380/mcp"}}}`.
+Stdio mode: set `ASSETS_TOOLBOX_MCP_STDIO=1` and speak one JSON-RPC request per stdin line; responses are one JSON line on stdout. Verified with `initialize` and `tools/list`.
 **Goal:** an MCP server inside the Wails app that can create, inspect, and manipulate every asset tool through **one registered tool**, with nested tool discovery on demand. An external agent should be able to take a project from brand mark → Expo assets → Studio boards without native dialogs.
 
 ---

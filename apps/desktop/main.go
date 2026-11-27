@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
 
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/socialinspect"
@@ -37,6 +41,24 @@ func main() {
 	// only supported generation inputs.
 	if addr := os.Getenv("ASSETS_TOOLBOX_MCP_HTTP"); addr != "" {
 		log.Fatal(http.ListenAndServe(addr, newProjectsModuleMiddleware(apiRoutes, http.NotFoundHandler())))
+	}
+
+	if os.Getenv("ASSETS_TOOLBOX_MCP_STDIO") != "" {
+		handler := app.mcpHandler()
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Buffer(make([]byte, 0, 64*1024), 1<<20)
+		for scanner.Scan() {
+			line := bytes.TrimSpace(scanner.Bytes())
+			if len(line) == 0 {
+				continue
+			}
+			request := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(line))
+			request.Header.Set("Content-Type", "application/json")
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+			fmt.Fprintln(os.Stdout, recorder.Body.String())
+		}
+		return
 	}
 
 	err = wails.Run(&options.App{
