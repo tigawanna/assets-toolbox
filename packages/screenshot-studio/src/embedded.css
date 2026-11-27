@@ -175,9 +175,12 @@
 }
 
 .screenshot-studio-root > header {
+  display: flex;
   height: 44px;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
-  padding: 0 8px;
+  padding: 0 12px;
   background: var(--studio-popover);
 }
 
