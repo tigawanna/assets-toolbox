@@ -16,7 +16,7 @@ const TOOL_LABELS: Record<string, string> = {
   brand: "Brand Assets",
   expo: "Expo Assets",
   studio: "Screenshot Studio",
-  compose: "SVG Compose",
+  compose: "Icon Compose",
   sound: "Cabra Sound",
   inspect: "Social Inspect",
   source: "Source artwork",

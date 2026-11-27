@@ -28,7 +28,7 @@ const SECTIONS: Array<{ title: string; shortcuts: Shortcut[] }> = [
     ],
   },
   {
-    title: "SVG Compose",
+    title: "Icon Compose",
     shortcuts: [
       { keys: ["V"], label: "Select tool" },
       { keys: ["R"], label: "Rectangle" },

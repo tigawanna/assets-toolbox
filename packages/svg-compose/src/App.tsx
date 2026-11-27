@@ -516,7 +516,7 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
               </span>
             )}
             <div data-svg-header-title>
-              <strong>SVG Compose</strong>
+              <strong>Icon Compose</strong>
               <span>
                 Untitled · {Math.round(zoom * 100)}% · {SAVE_LABELS[saveState]}
               </span>

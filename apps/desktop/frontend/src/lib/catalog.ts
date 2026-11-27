@@ -28,8 +28,8 @@ export interface ToolPackage {
 const packageSeed = [
   {
     id: "svg-compose",
-    name: "SVG Compose",
-    shortName: "SVG Compose",
+    name: "Icon Compose",
+    shortName: "Icon Compose",
     description: "Build, edit, and export vector artwork with a focused live SVG compositor.",
     category: "Create",
     icon: "shapes",

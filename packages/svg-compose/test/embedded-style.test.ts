@@ -4,7 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 const css = readFileSync(resolve(process.cwd(), "src/embedded.css"), "utf8");
 
-describe("embedded SVG Compose styles", () => {
+describe("embedded Icon Compose styles", () => {
   it("scopes the editor skin to the package root", () => {
     expect(css.trimStart().startsWith("/*")).toBe(true);
     expect(css).toContain(".svg-compose-root");

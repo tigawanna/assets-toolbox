@@ -1,4 +1,4 @@
-/* Embeddable SVG Compose skin. Every selector is scoped so the desktop shell stays authoritative. */
+/* Embeddable Icon Compose skin. Every selector is scoped so the desktop shell stays authoritative. */
 .svg-compose-root {
   --svg-canvas: var(--canvas, #11141a);
   --svg-surface: var(--surface, #161a22);

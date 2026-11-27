@@ -49,6 +49,6 @@ createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? host}`);
   await api(request, response, () => serveStatic(request, response, url));
 }).listen(port, host, () => {
-  console.log(`SVG Compose: http://${host}:${port}`);
+  console.log(`Icon Compose: http://${host}:${port}`);
   console.log(`Node workspace: ${process.env.SVG_COMPOSE_DATA ?? ".svg-compose/workspace.sqlite"}`);
 });
