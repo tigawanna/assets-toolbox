@@ -151,7 +151,40 @@ function ProjectHomeContent({
     <div
       className={`${embedded ? "screenshot-studio-root h-full min-h-0 overflow-y-auto" : "min-h-svh"} bg-background text-foreground`}
     >
-      {embedded ? null : (
+      {embedded ? (
+        <header data-studio-home-header>
+          <div data-studio-home-identity>
+            <ScreenshotStudioIcon className="size-5" />
+            <div>
+              <strong>Screenshot Studio</strong>
+              <span>
+                {projects === null
+                  ? "Boards · local storage"
+                  : `${projects.length} boards · local storage`}
+              </span>
+            </div>
+          </div>
+          <div data-studio-home-actions>
+            {projects === null || empty ? null : (
+              <Button
+                variant="outline"
+                size="xs"
+                disabled={locked}
+                data-testid="export-all-boards"
+                onClick={() => void exportAll()}
+              >
+                <Download />
+                Export all
+              </Button>
+            )}
+            <Button size="xs" disabled={locked} onClick={() => void create()}>
+              <Plus />
+              New board
+            </Button>
+            <SettingsDrawer embedded />
+          </div>
+        </header>
+      ) : (
         <header className="flex h-12 items-center justify-between border-b border-border px-6">
           <strong className="flex items-center gap-2 text-sm tracking-tight">
             <ScreenshotStudioIcon className="size-6" />
@@ -163,33 +196,7 @@ function ProjectHomeContent({
           </div>
         </header>
       )}
-      <main className={`mx-auto w-full max-w-3xl px-6 ${embedded ? "py-10" : "py-16"}`}>
-        <p className="text-xs font-medium tracking-widest text-primary uppercase">Boards</p>
-        <div className="mt-3 flex items-end justify-between gap-6">
-          <h1 className="max-w-xl text-4xl leading-none font-medium tracking-tight text-foreground">
-            One canvas for Play and the App Store.
-          </h1>
-          <div className="flex shrink-0 items-center gap-2">
-            {projects === null || empty ? null : (
-              <>
-                <Button
-                  variant="outline"
-                  disabled={locked}
-                  data-testid="export-all-boards"
-                  onClick={() => void exportAll()}
-                >
-                  <Download />
-                  {busy === "export-all" ? "Exporting" : "Export all"}
-                </Button>
-                <Button disabled={locked} onClick={() => void create()}>
-                  <Plus />
-                  New board
-                </Button>
-              </>
-            )}
-            {embedded ? <SettingsDrawer embedded /> : null}
-          </div>
-        </div>
+      <main className={`mx-auto w-full max-w-3xl px-6 ${embedded ? "py-6" : "py-16"}`}>
         {error === "" ? null : <p className="mt-4 text-sm text-destructive">{error}</p>}
         {projects === null ? (
           <p className="mt-16 text-sm text-muted-foreground">Loading boards…</p>

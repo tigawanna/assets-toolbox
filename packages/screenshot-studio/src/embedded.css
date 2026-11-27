@@ -190,6 +190,47 @@
   font-size: 11px;
 }
 
+.screenshot-studio-root [data-studio-home-identity] {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.screenshot-studio-root [data-studio-home-identity] > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.screenshot-studio-root [data-studio-home-identity] strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screenshot-studio-root [data-studio-home-identity] span {
+  color: var(--studio-muted-foreground);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+}
+
+.screenshot-studio-root [data-studio-home-actions] {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.screenshot-studio-root [data-testid="empty-boards"] {
+  padding: 24px;
+  border-radius: 12px;
+}
+
 .screenshot-studio-root *,
 .screenshot-studio-root *::before,
 .screenshot-studio-root *::after {
