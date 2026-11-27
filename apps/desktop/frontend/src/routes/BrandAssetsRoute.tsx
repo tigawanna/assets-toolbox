@@ -12,6 +12,8 @@ import { defaultIconSizes } from "@assets/brand-assets/types";
 import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
 import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEditor";
+import { PackageIcon } from "../components/PackageIcon";
+import { ToolHeader } from "../components/ToolHeader";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -235,6 +237,31 @@ export function BrandAssetsRoute() {
 
   return (
     <section className="brand-page">
+      <ToolHeader
+        icon={<PackageIcon name="swatchbook" size={17} />}
+        title="Brand Assets"
+        meta={native ? "native generator ready" : "browser preview"}
+        actions={
+          <>
+            {result ? (
+              <button type="button" onClick={() => void saveAll()}>
+                <FileArchive size={13} aria-hidden="true" />
+                Save all
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="tool-header-primary"
+              disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
+              onClick={() => void generate()}
+            >
+              {busy ? <LoaderCircle className="brand-spin" size={13} /> : <Download size={13} />}
+              Generate
+            </button>
+          </>
+        }
+      />
+
       {native ? null : (
         <p className="brand-notice">
           Generation requires the Wails desktop app. You can still inspect the form here.
@@ -426,15 +453,6 @@ export function BrandAssetsRoute() {
             </fieldset>
           </div>
 
-          <button
-            className="brand-generate"
-            type="button"
-            disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
-            onClick={() => void generate()}
-          >
-            {busy ? <LoaderCircle className="brand-spin" size={15} /> : <Download size={15} />}
-            {busy ? "Generating assets…" : "Generate brand set"}
-          </button>
           {error ? (
             <p className="brand-error">
               <TriangleAlert size={14} />

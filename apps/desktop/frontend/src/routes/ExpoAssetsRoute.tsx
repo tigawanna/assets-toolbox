@@ -11,6 +11,8 @@ import { EXPO_ASSET_DEFAULTS } from "@assets/expo-assets/types";
 
 import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
+import { PackageIcon } from "../components/PackageIcon";
+import { ToolHeader } from "../components/ToolHeader";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -199,6 +201,31 @@ export function ExpoAssetsRoute() {
 
   return (
     <section className="expo-page">
+      <ToolHeader
+        icon={<PackageIcon name="device" size={17} />}
+        title="Expo Assets"
+        meta={native ? "native generator ready" : "browser preview"}
+        actions={
+          <>
+            {result ? (
+              <button type="button" onClick={() => void saveAll()}>
+                <FileArchive size={13} aria-hidden="true" />
+                Save all
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="tool-header-primary"
+              disabled={!native || busy || !sources.icon}
+              onClick={() => void generate()}
+            >
+              {busy ? <LoaderCircle className="expo-spin" size={13} /> : <Download size={13} />}
+              Generate
+            </button>
+          </>
+        }
+      />
+
       {native ? null : (
         <p className="expo-notice">
           Generation requires the Wails desktop app. You can still inspect the form here.
@@ -207,7 +234,7 @@ export function ExpoAssetsRoute() {
 
       <div className="expo-layout">
         <div className="expo-column">
-          <div className="expo-card">
+          <div className="expo-panel">
             <h2>Source artwork</h2>
             <div className="expo-sources">
               {SOURCES.map((source) => {
@@ -257,7 +284,7 @@ export function ExpoAssetsRoute() {
             </div>
           </div>
 
-          <div className="expo-card">
+          <div className="expo-panel">
             <h2>Colors</h2>
             <div className="expo-field-grid">
               <ColorField label="Brand color" value={brandColor} onChange={setBrandColor} />
@@ -273,7 +300,7 @@ export function ExpoAssetsRoute() {
             </label>
           </div>
 
-          <div className="expo-card">
+          <div className="expo-panel">
             <h2>Sizing</h2>
             <div className="expo-field-grid">
               <label>
@@ -324,15 +351,27 @@ export function ExpoAssetsRoute() {
             </div>
           </div>
 
-          <button
-            className="expo-generate"
-            type="button"
-            disabled={!native || busy || !sources.icon}
-            onClick={() => void generate()}
-          >
-            {busy ? <LoaderCircle className="expo-spin" size={15} /> : <Download size={15} />}
-            {busy ? "Generating assets…" : "Generate asset set"}
-          </button>
+          <div className="expo-panel">
+            <h2>Output files</h2>
+            <ul className="expo-output-list">
+              {[
+                ["icon.png", "1024×1024"],
+                ["adaptive-icon.png", "1024×1024"],
+                ["android-icon-background.png", "1024×1024"],
+                ...(noMonochrome ? [] : [["android-icon-monochrome.png", "1024×1024"]]),
+                ["splash-icon.png", "1024×1024"],
+                ["favicon.png", "48×48"],
+                ["notification-icon.png", "96×96"],
+                ...(writeConfig ? [["expo-assets.config.json", "config"]] : []),
+              ].map(([name, size]) => (
+                <li key={name}>
+                  <span>{name}</span>
+                  <span>{size}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {error ? (
             <p className="expo-error">
               <TriangleAlert size={14} />
@@ -342,19 +381,15 @@ export function ExpoAssetsRoute() {
         </div>
 
         <div className="expo-column">
-          <div className="expo-card expo-results">
-            <div className="expo-results-head">
-              <h2>Generated assets</h2>
-              {result ? (
+          {result ? (
+            <div className="expo-panel expo-results">
+              <div className="expo-results-head">
+                <h2>Generated assets</h2>
                 <button type="button" onClick={() => void saveAll()}>
                   <FileArchive size={14} />
                   Save all
                 </button>
-              ) : null}
-            </div>
-            {result === null ? (
-              <p className="expo-empty">Choose a logo and generate to see the Expo asset set.</p>
-            ) : (
+              </div>
               <>
                 <div className="expo-score">
                   <strong>{result.artifacts.length}</strong>
@@ -414,8 +449,8 @@ export function ExpoAssetsRoute() {
                   </button>
                 ) : null}
               </>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
       </div>
       <AssetPreviewDialog

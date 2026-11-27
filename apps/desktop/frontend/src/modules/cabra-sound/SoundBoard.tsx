@@ -23,6 +23,8 @@ import {
   wavFilename,
   type SoundName,
 } from "@tigawanna/cabra-sound";
+import { PackageIcon } from "../../components/PackageIcon";
+import { ToolHeader } from "../../components/ToolHeader";
 import { downloadBlob, zipStore } from "../../lib/zip";
 import "./sound-board.css";
 
@@ -401,6 +403,18 @@ export function SoundBoard() {
 
   return (
     <section className="sound-board" aria-label="Cabra Sound library">
+      <ToolHeader
+        icon={<PackageIcon name="waveform" size={17} />}
+        title="Cabra Sound"
+        meta={`${AVAILABLE_NAMES.length} sounds · ${enabled ? "audio on" : "muted"}`}
+        actions={
+          <button type="button" onClick={playRandom}>
+            <Shuffle size={13} aria-hidden="true" />
+            Random
+          </button>
+        }
+      />
+
       <div className="sound-toolbar">
         <label className="sound-search">
           <span className="sound-sr-only">Search sounds</span>
@@ -489,10 +503,6 @@ export function SoundBoard() {
 
       {showHelpers && (
         <div className="sound-helper-grid" role="group" aria-label="Sound helpers">
-          <button type="button" onClick={playRandom}>
-            <Shuffle size={16} aria-hidden="true" />
-            Random
-          </button>
           <button type="button" onClick={() => playHelper("Sweep up", () => sweep(180, true))}>
             <Play size={15} aria-hidden="true" />
             Sweep up

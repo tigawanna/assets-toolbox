@@ -81,14 +81,17 @@
   gap: 14px;
 }
 
-.expo-card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+.expo-panel {
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
 }
 
-.expo-card h2 {
+.expo-panel:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.expo-panel h2 {
   margin: 0 0 14px;
   font-size: 12px;
   font-weight: 650;
@@ -121,6 +124,33 @@
 }
 
 .expo-source-preview,
+.expo-output-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expo-output-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.expo-output-list li span:last-child {
+  color: var(--text-subtle);
+}
+
 .expo-source-placeholder {
   display: grid;
   width: 38px;
@@ -211,7 +241,7 @@
   gap: 10px;
 }
 
-.expo-card label {
+.expo-panel label {
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -220,8 +250,8 @@
   font-size: 10px;
 }
 
-.expo-card input[type="text"],
-.expo-card input:not([type]) {
+.expo-panel input[type="text"],
+.expo-panel input:not([type]) {
   height: 32px;
   min-width: 0;
   padding: 0 9px;
@@ -234,7 +264,7 @@
   font-size: 11px;
 }
 
-.expo-card input[type="number"] {
+.expo-panel input[type="number"] {
   height: 32px;
   width: 100%;
   padding: 0 9px;

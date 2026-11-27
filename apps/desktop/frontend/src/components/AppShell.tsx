@@ -246,38 +246,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <section className="workspace">
-        {editorRoute ? (
-          <button
-            ref={menuButtonRef}
-            type="button"
-            className="icon-button menu-button editor-menu-button"
-            aria-label={navOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={navOpen}
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            <List size={18} aria-hidden="true" />
-          </button>
-        ) : (
-          <header className="topbar">
-            <div className="topbar-left">
-              <button
-                ref={menuButtonRef}
-                type="button"
-                className="icon-button menu-button"
-                aria-label={navOpen ? "Close navigation" : "Open navigation"}
-                aria-expanded={navOpen}
-                onClick={() => setNavOpen((open) => !open)}
-              >
-                <List size={20} aria-hidden="true" />
-              </button>
-              <div className="breadcrumb" aria-label="Breadcrumb">
-                <span>Workspace</span>
-                <span className="breadcrumb-separator">/</span>
-                <strong>{currentLabel}</strong>
-              </div>
-            </div>
-          </header>
-        )}
+        <button
+          ref={menuButtonRef}
+          type="button"
+          className="icon-button menu-button shell-menu-button"
+          aria-label={navOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen((open) => !open)}
+        >
+          <List size={18} aria-hidden="true" />
+        </button>
 
         <main className="main-scroll">
           <div className="page-content">{children}</div>

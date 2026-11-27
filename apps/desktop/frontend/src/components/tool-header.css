@@ -1,0 +1,119 @@
+.tool-header {
+  display: flex;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  margin: -24px -38px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.tool-header-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.tool-header-icon {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  place-items: center;
+  color: var(--accent);
+}
+
+.tool-header-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tool-header-copy strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-header-copy span {
+  overflow: hidden;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-header-actions button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  transition:
+    border-color 150ms var(--ease),
+    background-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.tool-header-actions button:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.tool-header-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tool-header-actions .tool-header-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-ink);
+  font-weight: 600;
+}
+
+.tool-header-actions .tool-header-primary:hover:not(:disabled) {
+  background: var(--ink-hover);
+  color: var(--on-ink);
+}
+
+@media (max-width: 900px) {
+  .tool-header {
+    margin: -30px -22px 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tool-header {
+    margin: -25px -16px 16px;
+  }
+
+  .tool-header-copy span {
+    display: none;
+  }
+}
