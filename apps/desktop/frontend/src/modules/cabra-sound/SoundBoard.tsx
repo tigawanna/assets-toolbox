@@ -189,16 +189,18 @@ export function SoundBoard() {
   }, []);
 
   const normalizedQuery = useMemo(() => query.trim().replace(/\s+/g, " ").toLowerCase(), [query]);
-  const visibleNames = useMemo(
-    () =>
-      AVAILABLE_NAMES.filter((name) => {
-        const matchesQuery =
-          name.toLowerCase().includes(normalizedQuery) ||
-          formatName(name).toLowerCase().includes(normalizedQuery);
-        return matchesQuery;
-      }),
-    [normalizedQuery],
-  );
+  const visibleNames = useMemo(() => {
+    const matches = AVAILABLE_NAMES.filter((name) => {
+      const matchesQuery =
+        name.toLowerCase().includes(normalizedQuery) ||
+        formatName(name).toLowerCase().includes(normalizedQuery);
+      return matchesQuery;
+    });
+    if (favorites.size === 0) return matches;
+    // Starred sounds float to the top. The sort is stable, so the original order
+    // is preserved within the starred and unstarred groups.
+    return matches.sort((a, b) => Number(favorites.has(b)) - Number(favorites.has(a)));
+  }, [favorites, normalizedQuery]);
 
   const playSound = useCallback(
     (name: SoundName) => {
