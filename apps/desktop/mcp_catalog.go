@@ -258,7 +258,34 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 					}
 					request.TintedIcon = input.Handle
 				}
-				return a.GenerateExpoAssets(request)
+				result, err := a.GenerateExpoAssets(request)
+				if err != nil {
+					return nil, err
+				}
+				outputIDs, err := a.commitMCPArtifacts(projectID, result.JobID, result.Artifacts)
+				if err != nil {
+					return nil, err
+				}
+				document := map[string]any{
+					"sourceAssetIds": map[string]any{
+						"icon":       iconID,
+						"darkIcon":   optString(args, "darkIconAssetId"),
+						"tintedIcon": optString(args, "tintedIconAssetId"),
+					},
+					"form": map[string]any{
+						"brandColor": request.BrandColor, "splashBackground": request.SplashBackground,
+						"imageWidth": request.ImageWidth, "foregroundSize": request.ForegroundSize,
+						"splashLogoSize": request.SplashLogoSize, "noMonochrome": request.NoMonochrome,
+						"writeConfig": request.WriteConfig, "outDir": request.OutDir,
+					},
+					"outputAssetIds": outputIDs,
+				}
+				if _, err := a.projectsCall(http.MethodPut,
+					"/api/projects/"+projectID+"/documents/expo",
+					map[string]any{"data": document}); err != nil {
+					return nil, err
+				}
+				return map[string]any{"result": result, "document": document}, nil
 			},
 		},
 		{
@@ -295,7 +322,34 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 					BackgroundColor: optString(args, "backgroundColor"), StartUrl: optString(args, "startUrl"),
 					Display: optString(args, "display"), OutDir: optString(args, "outDir"),
 				}
-				return a.GenerateBrandAssets(request)
+				result, err := a.GenerateBrandAssets(request)
+				if err != nil {
+					return nil, err
+				}
+				outputIDs, err := a.commitMCPArtifacts(projectID, result.JobID, result.Artifacts)
+				if err != nil {
+					return nil, err
+				}
+				document := map[string]any{
+					"sourceAssetId": assetID,
+					"form": map[string]any{
+						"plate": request.Plate, "copySvg": request.CopySvg,
+						"ogEnabled": request.OgEnabled, "ogTitle": request.OgTitle,
+						"ogDescription": request.OgDescription, "ogSiteLabel": request.OgSiteLabel,
+						"ogWidth": request.OgWidth, "ogHeight": request.OgHeight,
+						"manifestEnabled": request.ManifestEnabled, "name": request.Name,
+						"shortName": request.ShortName, "themeColor": request.ThemeColor,
+						"backgroundColor": request.BackgroundColor, "startUrl": request.StartUrl,
+						"display": request.Display, "outDir": request.OutDir,
+					},
+					"outputAssetIds": outputIDs,
+				}
+				if _, err := a.projectsCall(http.MethodPut,
+					"/api/projects/"+projectID+"/documents/brand",
+					map[string]any{"data": document}); err != nil {
+					return nil, err
+				}
+				return map[string]any{"result": result, "document": document}, nil
 			},
 		},
 		{

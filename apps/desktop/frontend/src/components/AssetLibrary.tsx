@@ -4,6 +4,7 @@ import { Copy, ImagePlus, Trash2 } from "lucide-react";
 import { useProjectAssets } from "../lib/projects/assets";
 import { getProjectClient } from "../lib/projects/client";
 import type { AssetId, ProjectId } from "../lib/projects/types";
+import { PreviewGalleryDialog, type PreviewGalleryItem } from "./PreviewGalleryDialog";
 import { ToolHeaderButton } from "./ToolHeader";
 
 export function AssetLibrary() {
@@ -13,6 +14,8 @@ export function AssetLibrary() {
   const [target, setTarget] = useState("");
   const [selected, setSelected] = useState<AssetId[]>([]);
   const [error, setError] = useState("");
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,6 +44,10 @@ export function AssetLibrary() {
       active = false;
     };
   }, [assets, preview]);
+
+  const galleryItems: PreviewGalleryItem[] = assets
+    .filter((asset) => thumbs[asset.id])
+    .map((asset) => ({ title: asset.name, src: thumbs[asset.id] }));
 
   const toggle = (id: AssetId) => {
     setSelected((current) =>
@@ -109,36 +116,65 @@ export function AssetLibrary() {
 
       {error ? <p className="project-assets-error">{error}</p> : null}
 
-      <div className="project-assets-list">
+      <div className="project-assets-grid">
         {assets.length === 0 ? (
           <p className="project-assets-empty">
             No assets yet. Add an image to share it across tools.
           </p>
         ) : (
-          assets.map((asset) => (
-            <article className="project-assets-row" key={asset.id}>
-              <input
-                type="checkbox"
-                aria-label={`Select ${asset.name}`}
-                checked={selected.includes(asset.id)}
-                onChange={() => toggle(asset.id)}
-              />
-              <span className="project-assets-thumb">
-                {thumbs[asset.id] ? <img src={thumbs[asset.id]} alt="" /> : asset.mime.slice(0, 4)}
-              </span>
-              <span className="project-assets-name">{asset.name}</span>
-              <span className="project-assets-meta">{Math.round(asset.bytes / 1024)} KB</span>
-              <ToolHeaderButton
-                variant="icon"
-                aria-label={`Delete ${asset.name}`}
-                onClick={() => void remove(asset.id)}
-              >
-                <Trash2 size={13} />
-              </ToolHeaderButton>
-            </article>
-          ))
+          assets.map((asset) => {
+            const galleryPosition = galleryItems.findIndex((item) => item.title === asset.name);
+            return (
+              <article className="project-assets-card" key={asset.id}>
+                <div className="project-assets-card-top">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${asset.name}`}
+                    checked={selected.includes(asset.id)}
+                    onChange={() => toggle(asset.id)}
+                  />
+                  <ToolHeaderButton
+                    variant="icon"
+                    aria-label={`Delete ${asset.name}`}
+                    onClick={() => void remove(asset.id)}
+                  >
+                    <Trash2 size={13} />
+                  </ToolHeaderButton>
+                </div>
+                <button
+                  type="button"
+                  className="project-assets-preview"
+                  aria-label={`Preview ${asset.name}`}
+                  disabled={galleryPosition < 0}
+                  onClick={() => {
+                    setGalleryIndex(Math.max(0, galleryPosition));
+                    setGalleryOpen(true);
+                  }}
+                >
+                  {thumbs[asset.id] ? (
+                    <img src={thumbs[asset.id]} alt="" />
+                  ) : (
+                    <span>{asset.mime.split("/").at(-1)?.slice(0, 4)}</span>
+                  )}
+                </button>
+                <div className="project-assets-card-meta">
+                  <strong title={asset.name}>{asset.name}</strong>
+                  <span>{Math.round(asset.bytes / 1024)} KB</span>
+                </div>
+              </article>
+            );
+          })
         )}
       </div>
+
+      {galleryOpen ? (
+        <PreviewGalleryDialog
+          items={galleryItems}
+          index={galleryIndex}
+          onIndexChange={setGalleryIndex}
+          onClose={() => setGalleryOpen(false)}
+        />
+      ) : null}
     </section>
   );
 }

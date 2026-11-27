@@ -179,53 +179,77 @@
   font-size: 10px;
 }
 
-.project-assets-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.project-assets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
 }
 
-.project-assets-row {
+.project-assets-card {
   display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 9px;
   background: var(--surface-muted);
 }
 
-.project-assets-thumb {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--canvas);
-  color: var(--text-subtle);
-  font-family: var(--font-mono);
-  font-size: 8px;
+.project-assets-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
 
-.project-assets-thumb img {
+.project-assets-card-top input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.project-assets-preview {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  overflow: hidden;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--canvas);
+  color: var(--text-subtle);
+  cursor: zoom-in;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.project-assets-preview:disabled {
+  cursor: default;
+}
+
+.project-assets-preview img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.project-assets-name {
+.project-assets-card-meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-assets-card-meta strong {
   overflow: hidden;
-  flex: 1;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.project-assets-meta,
+.project-assets-card-meta span,
 .project-assets-empty,
 .project-assets-error {
   color: var(--text-subtle);
@@ -234,6 +258,7 @@
 }
 
 .project-assets-empty {
+  grid-column: 1 / -1;
   margin: 8px 0;
   font-family: var(--font-sans);
   font-size: 11px;

@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
 )
 
 const mcpProtocolVersion = "2024-11-05"
@@ -301,6 +303,43 @@ func (a *App) projectsCall(method, path string, payload any) (any, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func mcpAssetMime(name string) string {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".png":
+		return "image/png"
+	case ".ico":
+		return "image/x-icon"
+	case ".json", ".webmanifest":
+		return "application/json"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+// commitMCPArtifacts stores generated files in the project library so the
+// programmatic result survives after the ephemeral generation job is discarded.
+func (a *App) commitMCPArtifacts(projectID, jobID string, artifacts []assetgen.Artifact) ([]string, error) {
+	ids := make([]string, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		encoded, err := a.GetAssetArtifact(jobID, artifact.Name)
+		if err != nil {
+			return nil, err
+		}
+		stored, err := a.projectsCall(http.MethodPost, "/api/projects/"+projectID+"/assets", map[string]any{
+			"name": artifact.Name, "mime": mcpAssetMime(artifact.Name), "base64": encoded,
+		})
+		if err != nil {
+			return nil, err
+		}
+		payload, _ := stored.(map[string]any)
+		asset, _ := payload["asset"].(map[string]any)
+		if id, ok := asset["id"].(string); ok {
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
 }
 
 func mcpString(args map[string]any, key string) (string, error) {
