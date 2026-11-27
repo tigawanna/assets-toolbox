@@ -14,7 +14,7 @@ import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
-import { useProjectDocument } from "../lib/projects/context";
+import { mergeDocumentDefaults, useProjectDocument } from "../lib/projects/context";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -94,14 +94,16 @@ export function ExpoAssetsRoute() {
   useEffect(() => {
     if (!expoReady || expoHydrated.current) return;
     expoHydrated.current = true;
-    setBrandColor(expoDocument.brandColor);
-    setSplashBackground(expoDocument.splashBackground);
-    setImageWidth(expoDocument.imageWidth);
-    setForegroundSize(expoDocument.foregroundSize);
-    setSplashLogoSize(expoDocument.splashLogoSize);
-    setNoMonochrome(expoDocument.noMonochrome);
-    setWriteConfig(expoDocument.writeConfig);
-    setOutDir(expoDocument.outDir);
+    const nested = (expoDocument as unknown as { form?: Partial<ExpoDocumentData> }).form;
+    const form = mergeDocumentDefaults(EXPO_DOCUMENT_DEFAULTS, nested, expoDocument);
+    setBrandColor(form.brandColor);
+    setSplashBackground(form.splashBackground);
+    setImageWidth(form.imageWidth);
+    setForegroundSize(form.foregroundSize);
+    setSplashLogoSize(form.splashLogoSize);
+    setNoMonochrome(form.noMonochrome);
+    setWriteConfig(form.writeConfig);
+    setOutDir(form.outDir);
   }, [expoDocument, expoReady]);
 
   useEffect(() => {

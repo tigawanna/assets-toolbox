@@ -21,7 +21,7 @@ import {
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
-import { useProject, useProjectDocument } from "../lib/projects/context";
+import { mergeDocumentDefaults, useProject, useProjectDocument } from "../lib/projects/context";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -130,23 +130,25 @@ export function BrandAssetsRoute() {
   useEffect(() => {
     if (!brandReady || brandHydrated.current) return;
     brandHydrated.current = true;
-    setPlate(brandDocument.plate);
-    setCopySvg(brandDocument.copySvg);
-    setOgEnabled(brandDocument.ogEnabled);
-    setOgTitle(brandDocument.ogTitle);
-    setOgDescription(brandDocument.ogDescription);
-    setOgSiteLabel(brandDocument.ogSiteLabel);
-    setOgWidth(brandDocument.ogWidth);
-    setOgHeight(brandDocument.ogHeight);
-    setManifestEnabled(brandDocument.manifestEnabled);
-    setName(brandDocument.name);
-    setShortName(brandDocument.shortName);
-    setThemeColor(brandDocument.themeColor);
-    setBackgroundColor(brandDocument.backgroundColor);
-    setStartUrl(brandDocument.startUrl);
-    setDisplay(brandDocument.display);
-    setOutDir(brandDocument.outDir);
-    if (!brandDocument.initialized && project?.name) {
+    const nested = (brandDocument as unknown as { form?: Partial<BrandDocumentData> }).form;
+    const form = mergeDocumentDefaults(BRAND_DEFAULTS, nested, brandDocument);
+    setPlate(form.plate);
+    setCopySvg(form.copySvg);
+    setOgEnabled(form.ogEnabled);
+    setOgTitle(form.ogTitle);
+    setOgDescription(form.ogDescription);
+    setOgSiteLabel(form.ogSiteLabel);
+    setOgWidth(form.ogWidth);
+    setOgHeight(form.ogHeight);
+    setManifestEnabled(form.manifestEnabled);
+    setName(form.name);
+    setShortName(form.shortName);
+    setThemeColor(form.themeColor);
+    setBackgroundColor(form.backgroundColor);
+    setStartUrl(form.startUrl);
+    setDisplay(form.display);
+    setOutDir(form.outDir);
+    if (!brandDocument.initialized && !nested && project?.name) {
       setOgTitle(project.name);
       setName(project.name);
     }

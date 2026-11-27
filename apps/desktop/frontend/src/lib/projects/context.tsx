@@ -51,6 +51,21 @@ export function useProject(): ProjectScope {
   return scope;
 }
 
+/** Merge saved document state over defaults, ignoring missing/undefined fields. */
+export function mergeDocumentDefaults<T extends object>(
+  defaults: T,
+  ...sources: Array<Partial<T> | undefined>
+): T {
+  const merged: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
+  for (const source of sources) {
+    if (!source) continue;
+    for (const [key, value] of Object.entries(source)) {
+      if (value !== undefined) merged[key] = value;
+    }
+  }
+  return merged as T;
+}
+
 /** Loads and autosaves one tool document inside the active project. */
 export function useProjectDocument<T>(tool: ToolId, fallback: T) {
   const { projectId } = useProject();

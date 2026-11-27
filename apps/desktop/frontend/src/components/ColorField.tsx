@@ -2,8 +2,8 @@ import type { ChangeEvent } from "react";
 
 import "./asset-controls.css";
 
-export function normalizeHexColor(value: string, fallback = "#000000"): string {
-  const trimmed = value.trim();
+export function normalizeHexColor(value: string | undefined, fallback = "#000000"): string {
+  const trimmed = typeof value === "string" ? value.trim() : "";
   if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed.toLowerCase();
   if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
     const [, red, green, blue] = trimmed;
@@ -19,7 +19,7 @@ export function normalizeHexColor(value: string, fallback = "#000000"): string {
 
 interface ColorFieldProps {
   label: string;
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
   fallback?: string;
 }
@@ -41,7 +41,7 @@ export function ColorField({ label, value, onChange, fallback = "#000000" }: Col
         />
         <input
           type="text"
-          value={value}
+          value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           spellCheck={false}
           aria-label={`${label} hex value`}

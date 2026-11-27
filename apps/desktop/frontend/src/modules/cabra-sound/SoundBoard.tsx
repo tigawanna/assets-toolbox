@@ -152,7 +152,7 @@ export function SoundBoard() {
   const favorites = useMemo<Set<SoundName>>(
     () =>
       new Set(
-        soundDocument.favorites.filter((name): name is SoundName =>
+        (soundDocument.favorites ?? []).filter((name): name is SoundName =>
           AVAILABLE_NAMES.includes(name as SoundName),
         ),
       ),
