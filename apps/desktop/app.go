@@ -79,7 +79,7 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	for _, module := range []string{"workspace", "studio"} {
+	for _, module := range []string{"workspace", "studio", "projects"} {
 		module := module
 		a.eventCleanup = append(a.eventCleanup,
 			wailsruntime.EventsOn(ctx, module+":active", func(...interface{}) {

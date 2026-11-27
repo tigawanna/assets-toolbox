@@ -23,10 +23,12 @@ func main() {
 
 	app := NewApp()
 	socialHandler := socialinspect.NewHandler(http.DefaultClient)
+	projectsHandler := newProjectsStore(defaultProjectsRoot()).handler()
 	apiRoutes := map[string]http.Handler{
 		"/api/workspace": app.workspace.handler(),
 		"/api/inspect":   socialHandler,
 		"/api/asset":     socialHandler,
+		"/api/projects":  projectsHandler,
 	}
 	err = wails.Run(&options.App{
 		Title:            appName,
@@ -39,7 +41,7 @@ func main() {
 			Assets:  frontend,
 			Handler: newSPAHandler(frontend),
 			Middleware: func(next http.Handler) http.Handler {
-				return newModuleMiddleware(apiRoutes, next)
+				return newProjectsModuleMiddleware(apiRoutes, next)
 			},
 		},
 		OnStartup:     app.startup,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   Download,
@@ -15,6 +15,7 @@ import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEdito
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
+import { useProjectDocument } from "../lib/projects/context";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -38,6 +39,44 @@ const ICON_SUMMARY = Object.entries({
 })
   .map(([name, size]) => `${name.replace(".png", "")} · ${size}px`)
   .join("  ·  ");
+
+interface BrandDocumentData {
+  plate: string;
+  copySvg: boolean;
+  ogEnabled: boolean;
+  ogTitle: string;
+  ogDescription: string;
+  ogSiteLabel: string;
+  ogWidth: number;
+  ogHeight: number;
+  manifestEnabled: boolean;
+  name: string;
+  shortName: string;
+  themeColor: string;
+  backgroundColor: string;
+  startUrl: string;
+  display: string;
+  outDir: string;
+}
+
+const BRAND_DEFAULTS: BrandDocumentData = {
+  plate: "#0f100f",
+  copySvg: false,
+  ogEnabled: true,
+  ogTitle: "",
+  ogDescription: "",
+  ogSiteLabel: "",
+  ogWidth: 1200,
+  ogHeight: 630,
+  manifestEnabled: true,
+  name: "App",
+  shortName: "",
+  themeColor: "#0f100f",
+  backgroundColor: "#0f100f",
+  startUrl: "/",
+  display: "standalone",
+  outDir: "out",
+};
 
 export function BrandAssetsRoute() {
   const [icon, setIcon] = useState<AssetInput | null>(null);
@@ -66,6 +105,74 @@ export function BrandAssetsRoute() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+
+  const {
+    data: brandDocument,
+    update: updateBrandDocument,
+    ready: brandReady,
+  } = useProjectDocument<BrandDocumentData>("brand", BRAND_DEFAULTS);
+  const brandHydrated = useRef(false);
+
+  useEffect(() => {
+    if (!brandReady || brandHydrated.current) return;
+    brandHydrated.current = true;
+    setPlate(brandDocument.plate);
+    setCopySvg(brandDocument.copySvg);
+    setOgEnabled(brandDocument.ogEnabled);
+    setOgTitle(brandDocument.ogTitle);
+    setOgDescription(brandDocument.ogDescription);
+    setOgSiteLabel(brandDocument.ogSiteLabel);
+    setOgWidth(brandDocument.ogWidth);
+    setOgHeight(brandDocument.ogHeight);
+    setManifestEnabled(brandDocument.manifestEnabled);
+    setName(brandDocument.name);
+    setShortName(brandDocument.shortName);
+    setThemeColor(brandDocument.themeColor);
+    setBackgroundColor(brandDocument.backgroundColor);
+    setStartUrl(brandDocument.startUrl);
+    setDisplay(brandDocument.display);
+    setOutDir(brandDocument.outDir);
+  }, [brandDocument, brandReady]);
+
+  useEffect(() => {
+    if (!brandHydrated.current) return;
+    updateBrandDocument({
+      plate,
+      copySvg,
+      ogEnabled,
+      ogTitle,
+      ogDescription,
+      ogSiteLabel,
+      ogWidth,
+      ogHeight,
+      manifestEnabled,
+      name,
+      shortName,
+      themeColor,
+      backgroundColor,
+      startUrl,
+      display,
+      outDir,
+    });
+  }, [
+    backgroundColor,
+    copySvg,
+    display,
+    manifestEnabled,
+    name,
+    ogDescription,
+    ogEnabled,
+    ogHeight,
+    ogSiteLabel,
+    ogTitle,
+    ogWidth,
+    outDir,
+    plate,
+    shortName,
+    startUrl,
+    themeColor,
+    updateBrandDocument,
+  ]);
 
   const native = hasAssetGeneration();
 

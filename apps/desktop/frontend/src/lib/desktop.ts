@@ -5,7 +5,7 @@ type WailsRuntime = {
   EventsEmit: (eventName: string, ...data: unknown[]) => void;
 };
 
-export type DesktopModule = "workspace" | "studio";
+export type DesktopModule = "workspace" | "studio" | "projects";
 export type DesktopFlush = () => Promise<boolean>;
 
 const desktopRuntime = (): WailsRuntime | undefined =>

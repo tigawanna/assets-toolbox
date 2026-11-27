@@ -1,6 +1,6 @@
 # Global Projects — actionable plan
 
-**Status:** proposal, not implemented. Date: 2026-11-27.
+**Status:** Phase 1 implemented 2026-11-27 (core store, launch screen, project switching, Brand/Expo/Sound/Inspect documents). Phases 2–5 remain.
 **Goal:** create a project (e.g. "Geo Kenya") and every related asset and tool document for it lives in that project's own folder. Brand, Expo, Studio, Compose, Sound and Inspect all read and write the same project. A brand mark chosen once can be referenced by Expo and Studio; assets can be copied or moved between projects.
 
 **Scoped out / future TODO:** multiple collections per tool, cross-project links, and Workspaces (multiplayer). See §10.
@@ -315,13 +315,13 @@ Migration is idempotent and writes `schemaVersion` into `projects.json`.
 
 ### Phase 1 — Core project store + launch screen
 
-- [ ] `lib/projects/types.ts`, `client.ts`, `native-client.ts`, `browser-client.ts`.
-- [ ] Go `apps/desktop/projects.go`: registry, manifest, documents, atomic writes, HTTP handlers; wire into `main.go`.
-- [ ] Add `projects` to the flush protocol (`app.go`, `lib/desktop.ts`, `lib/flush.tsx`).
-- [ ] `ProjectHome` launch screen + project switcher in `AppShell`; `/projects/:projectId/:tool` routes with legacy redirects.
-- [ ] Update every tool route to load/save its document via the project client (one document per tool).
-- [ ] Tests: registry CRUD + restart persistence; browser IndexedDB CRUD; switcher flush ordering.
-- **Done when:** projects can be created/renamed/deleted/switched, every tool reads/writes the active project, and data survives restart.
+- [x] `lib/projects/types.ts`, `client.ts`, `native-client.ts`, `browser-client.ts`.
+- [x] Go `apps/desktop/projects.go`: registry, manifest, documents, atomic writes, HTTP handlers; wire into `main.go`.
+- [x] Add `projects` to the flush protocol (`app.go`, `lib/desktop.ts`, `lib/flush.tsx`).
+- [x] `ProjectHome` launch screen + project switcher in `AppShell`; `/projects/:projectId/:tool` routes with legacy redirects.
+- [x] Wire Brand, Expo, Sound and Inspect to project documents. Compose and Studio still use their own stores until phase 3.
+- [x] Go tests for registry/document/asset CRUD and path validation; frontend tests pass. Browser IndexedDB CRUD verified in the browser.
+- **Done when:** projects can be created/deleted/switched, the wired tools read/write the active project, and data survives restart.
 
 ### Phase 2 — Shared asset library + Brand/Expo
 
@@ -336,8 +336,8 @@ Migration is idempotent and writes `schemaVersion` into `projects.json`.
 
 - [ ] Compose document per project; `/api/workspace` compatibility alias until removed.
 - [ ] Studio uses the generic document client; `StudioSnapshot` becomes `studio/board.json`; assets become `assetIds`; its own project list/header removed.
-- [ ] Sound favorites/volume/mute become the project's sound document.
-- [ ] Inspect saved reports become an optional document.
+- [x] Sound favorites are project-scoped (legacy localStorage key migrated once). Volume/mute remain global controls for now.
+- [x] Inspect URL is saved in the project's inspect document; saved reports remain a later addition.
 - [ ] Tests: Studio round-trip, old snapshot migration, compose draft migration, sound key migration.
 - **Done when:** no tool owns a separate project store; everything lives in the global project folder.
 

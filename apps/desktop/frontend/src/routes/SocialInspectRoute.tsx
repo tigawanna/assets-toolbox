@@ -1,24 +1,41 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { InspectorPage } from "@assets/social-inspect/components/InspectorPage";
 
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
+import { useProjectDocument } from "../lib/projects/context";
 
 export function SocialInspectRoute() {
   const navigate = useNavigate();
-  const { url } = useSearch({ from: "/packages/social-inspect" });
+  const { url } = useSearch({ strict: false }) as { url?: string };
+  const {
+    data: inspectDocument,
+    update: updateInspectDocument,
+    ready,
+  } = useProjectDocument<{ url: string }>("inspect", { url: "" });
+
+  useEffect(() => {
+    if (!ready || url || !inspectDocument.url) return;
+    void navigate({
+      to: ".",
+      search: { url: inspectDocument.url },
+      replace: true,
+    });
+  }, [inspectDocument.url, navigate, ready, url]);
+
   const onUrlChange = useCallback(
     (nextUrl: string) => {
       const trimmed = nextUrl.trim();
+      updateInspectDocument({ url: trimmed });
       void navigate({
-        to: "/packages/social-inspect",
+        to: ".",
         search: trimmed === "" ? {} : { url: trimmed },
         replace: true,
       });
     },
-    [navigate],
+    [navigate, updateInspectDocument],
   );
 
   return (
@@ -40,7 +57,7 @@ export function SocialInspectRoute() {
           </ToolHeaderButton>
         }
       />
-      <InspectorPage embedded initialUrl={url} onUrlChange={onUrlChange} />
+      <InspectorPage embedded initialUrl={url ?? ""} onUrlChange={onUrlChange} />
     </>
   );
 }

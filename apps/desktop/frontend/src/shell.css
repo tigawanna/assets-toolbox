@@ -89,6 +89,56 @@
   font-size: 11px;
 }
 
+.project-switcher {
+  display: flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 8px 0;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.project-switcher > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.project-switcher-label {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.project-switcher select {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.project-switcher-compact {
+  justify-content: center;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.project-switcher-compact .project-switcher-label,
+.project-switcher-compact select {
+  display: none;
+}
+
 .sidebar-nav {
   min-height: 0;
   flex: 1;

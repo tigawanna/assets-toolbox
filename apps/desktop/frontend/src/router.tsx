@@ -4,15 +4,19 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 
 import { AppShell } from "./components/AppShell";
 import { findPackage } from "./lib/catalog";
 import { legacyBoardPath } from "./lib/legacy-route";
+import { getActiveProjectId } from "./lib/projects/client";
 import { ErrorPage } from "./pages/ErrorPage";
-import { LibraryPage } from "./pages/LibraryPage";
 import { PackagePlaceholderPage } from "./pages/PackagePlaceholderPage";
+import { ProjectDashboard } from "./pages/ProjectDashboard";
+import { ProjectHome, projectToolSlug } from "./pages/ProjectHome";
+import { ProjectToolRoutePage } from "./routes/ProjectToolRoute";
 
 function RootError({ error }: ErrorComponentProps) {
   const message = error instanceof Error ? error.message : "This page could not be opened.";
@@ -29,15 +33,39 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFoundPage,
 });
 
+function redirectToProjectTool(tool: string) {
+  return () => {
+    const projectId = getActiveProjectId();
+    if (!projectId) throw redirect({ to: "/" });
+    throw redirect({
+      to: "/projects/$projectId/$tool",
+      params: { projectId, tool },
+    });
+  };
+}
+
 const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: LibraryPage,
+  component: ProjectHome,
+});
+
+const projectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "projects/$projectId",
+  component: ProjectDashboard,
+});
+
+const projectToolRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "projects/$projectId/$tool",
+  component: ProjectToolRoutePage,
 });
 
 const packageRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/$slug",
+  beforeLoad: ({ params }) => redirectToProjectTool(projectToolSlug(params.slug)),
   loader: ({ params }) => ({ tool: findPackage(params.slug) }),
   component: PackageRoutePage,
 });
@@ -76,42 +104,49 @@ const BrandAssetsRoute = lazy(() =>
 const svgComposeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/svg-compose",
+  beforeLoad: redirectToProjectTool("compose"),
   component: SvgComposeRoute,
 });
 
 const screenshotStudioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/screenshot-studio",
+  beforeLoad: redirectToProjectTool("studio"),
   component: ScreenshotStudioHomeRoute,
 });
 
 const screenshotBoardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/screenshot-studio/board/$projectId",
+  beforeLoad: redirectToProjectTool("studio"),
   component: ScreenshotStudioBoardRoute,
 });
 
 const cabraSoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/cabra-sound",
+  beforeLoad: redirectToProjectTool("sound"),
   component: CabraSoundRoute,
 });
 
 const expoAssetsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/expo-assets",
+  beforeLoad: redirectToProjectTool("expo"),
   component: ExpoAssetsRoute,
 });
 
 const brandAssetsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/brand-assets",
+  beforeLoad: redirectToProjectTool("brand"),
   component: BrandAssetsRoute,
 });
 
 const socialInspectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "packages/social-inspect",
+  beforeLoad: redirectToProjectTool("inspect"),
   validateSearch: (search: Record<string, unknown>) => ({
     url: typeof search.url === "string" ? search.url : "",
   }),
@@ -120,6 +155,8 @@ const socialInspectRoute = createRoute({
 
 export const routeTree = rootRoute.addChildren([
   libraryRoute,
+  projectRoute,
+  projectToolRoute,
   svgComposeRoute,
   screenshotStudioRoute,
   screenshotBoardRoute,

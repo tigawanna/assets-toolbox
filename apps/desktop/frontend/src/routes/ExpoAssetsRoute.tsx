@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   Download,
@@ -14,6 +14,7 @@ import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
+import { useProjectDocument } from "../lib/projects/context";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -35,6 +36,28 @@ function sourceActionLabel(selected: boolean, optional: boolean): string {
   if (selected) return "Change";
   return optional ? "Optional" : "Choose";
 }
+
+interface ExpoDocumentData {
+  brandColor: string;
+  splashBackground: string;
+  imageWidth: number;
+  foregroundSize: number;
+  splashLogoSize: number;
+  noMonochrome: boolean;
+  writeConfig: boolean;
+  outDir: string;
+}
+
+const EXPO_DOCUMENT_DEFAULTS: ExpoDocumentData = {
+  brandColor: EXPO_ASSET_DEFAULTS.brandColor,
+  splashBackground: EXPO_ASSET_DEFAULTS.splashBackground,
+  imageWidth: EXPO_ASSET_DEFAULTS.imageWidth,
+  foregroundSize: EXPO_ASSET_DEFAULTS.foregroundSize,
+  splashLogoSize: EXPO_ASSET_DEFAULTS.splashLogoSize,
+  noMonochrome: false,
+  writeConfig: true,
+  outDir: EXPO_ASSET_DEFAULTS.outDir,
+};
 
 export function ExpoAssetsRoute() {
   const [sources, setSources] = useState<Record<SourceRole, AssetInput | null>>({
@@ -60,6 +83,50 @@ export function ExpoAssetsRoute() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+
+  const {
+    data: expoDocument,
+    update: updateExpoDocument,
+    ready: expoReady,
+  } = useProjectDocument<ExpoDocumentData>("expo", EXPO_DOCUMENT_DEFAULTS);
+  const expoHydrated = useRef(false);
+
+  useEffect(() => {
+    if (!expoReady || expoHydrated.current) return;
+    expoHydrated.current = true;
+    setBrandColor(expoDocument.brandColor);
+    setSplashBackground(expoDocument.splashBackground);
+    setImageWidth(expoDocument.imageWidth);
+    setForegroundSize(expoDocument.foregroundSize);
+    setSplashLogoSize(expoDocument.splashLogoSize);
+    setNoMonochrome(expoDocument.noMonochrome);
+    setWriteConfig(expoDocument.writeConfig);
+    setOutDir(expoDocument.outDir);
+  }, [expoDocument, expoReady]);
+
+  useEffect(() => {
+    if (!expoHydrated.current) return;
+    updateExpoDocument({
+      brandColor,
+      splashBackground,
+      imageWidth,
+      foregroundSize,
+      splashLogoSize,
+      noMonochrome,
+      writeConfig,
+      outDir,
+    });
+  }, [
+    brandColor,
+    foregroundSize,
+    imageWidth,
+    noMonochrome,
+    outDir,
+    splashBackground,
+    splashLogoSize,
+    updateExpoDocument,
+    writeConfig,
+  ]);
 
   const native = hasAssetGeneration();
   const galleryItems: PreviewGalleryItem[] = result

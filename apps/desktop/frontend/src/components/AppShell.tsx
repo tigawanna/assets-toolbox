@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
-import { useBlocker, useLocation } from "@tanstack/react-router";
+import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 
 import { findPackage, toolPackages } from "../lib/catalog";
 import { useFlushRegistry } from "../lib/flush";
+import { getActiveProjectId } from "../lib/projects/client";
 import { formatPlatform, getSystemInfo, type NativeSystemInfo } from "../lib/native";
 import { toggleTheme, useTheme } from "../lib/theme";
 import { PackageIcon } from "./PackageIcon";
+import { ProjectSwitcher } from "./ProjectSwitcher";
 import { ShellLink } from "./ShellLink";
+import { projectToolSlug } from "../pages/ProjectHome";
 
 function readSidebarPreference(): boolean {
   try {
@@ -28,12 +31,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { flushAll } = useFlushRegistry();
 
-  const currentSlug = location.pathname.split("/")[2] ?? "";
-  const currentPackage = findPackage(currentSlug);
-  const currentLabel = currentPackage?.name ?? "Library";
+  const pathParts = location.pathname.split("/").filter(Boolean);
+  const currentSlug = pathParts[0] === "projects" ? (pathParts[2] ?? "") : (pathParts[1] ?? "");
+  const toolPackagesBySlug: Record<string, string> = {
+    compose: "svg-compose",
+    studio: "screenshot-studio",
+    sound: "cabra-sound",
+    expo: "expo-assets",
+    brand: "brand-assets",
+    inspect: "social-inspect",
+  };
+  const currentPackage = findPackage(toolPackagesBySlug[currentSlug] ?? currentSlug);
+  const currentLabel =
+    currentPackage?.name ?? (pathParts[0] === "projects" ? "Project" : "Projects");
   const editorRoute =
+    currentSlug === "compose" ||
+    currentSlug === "studio" ||
     location.pathname.startsWith("/packages/svg-compose") ||
     location.pathname.startsWith("/packages/screenshot-studio");
+  const projectId = getActiveProjectId();
   const platform = systemInfo ? formatPlatform(systemInfo) : "Connecting";
   let backendLabel = "Connecting to Go";
   if (systemInfo) backendLabel = systemInfo.desktop ? "Go backend connected" : "Browser preview";
@@ -166,18 +182,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </ShellLink>
 
+        <ProjectSwitcher collapsed={sidebarCollapsed} />
+
         <nav className="sidebar-nav">
           <div className="nav-section">
-            <span className="nav-label">Workspace</span>
+            <span className="nav-label">Projects</span>
             <ShellLink
               to="/"
               className={`nav-link${location.pathname === "/" ? " active" : ""}`}
-              aria-label="Library"
-              title="Library"
+              aria-label="Projects"
+              title="Projects"
               aria-current={location.pathname === "/" ? "page" : undefined}
             >
               <LayoutGrid size={17} strokeWidth={1.8} aria-hidden="true" />
-              <span>Library</span>
+              <span>Projects</span>
               <span className="nav-count">{toolPackages.length}</span>
             </ShellLink>
           </div>
@@ -185,16 +203,27 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="nav-section">
             <span className="nav-label">Tools</span>
             {toolPackages.map((tool) => {
-              const active =
-                location.pathname === tool.route || location.pathname.startsWith(`${tool.route}/`);
-              return (
-                <ShellLink
+              const active = currentSlug === projectToolSlug(tool.id);
+              return projectId ? (
+                <Link
                   key={tool.id}
-                  to={tool.route}
+                  to="/projects/$projectId/$tool"
+                  params={{ projectId, tool: projectToolSlug(tool.id) }}
                   className={`nav-link${active ? " active" : ""}`}
                   aria-label={tool.shortName}
                   title={tool.shortName}
                   aria-current={active ? "page" : undefined}
+                >
+                  <PackageIcon name={tool.icon} size={17} />
+                  <span>{tool.shortName}</span>
+                </Link>
+              ) : (
+                <ShellLink
+                  key={tool.id}
+                  to="/"
+                  className="nav-link"
+                  aria-label={tool.shortName}
+                  title={tool.shortName}
                 >
                   <PackageIcon name={tool.icon} size={17} />
                   <span>{tool.shortName}</span>

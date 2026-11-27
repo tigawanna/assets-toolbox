@@ -1,0 +1,139 @@
+.projects-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.projects-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.projects-row-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.projects-row-main strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-row-main span {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.projects-row-active {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.projects-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.projects-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.projects-new input {
+  height: 32px;
+  min-width: 0;
+  max-width: 320px;
+  flex: 1;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--canvas);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.projects-empty {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.projects-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.projects-tool {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 150ms var(--ease),
+    background-color 150ms var(--ease);
+}
+
+.projects-tool:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+
+.projects-tool svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.projects-tool span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.projects-tool strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.projects-tool small {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}

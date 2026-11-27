@@ -23,6 +23,7 @@ import {
 } from "@tigawanna/cabra-sound";
 import { PackageIcon } from "../../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../../components/ToolHeader";
+import { useProjectDocument } from "../../lib/projects/context";
 import { downloadBlob, zipStore } from "../../lib/zip";
 import "./sound-board.css";
 
@@ -38,7 +39,11 @@ const WAVE_PROFILES = { sine: 1, square: 0.92, triangle: 0.82, sawtooth: 0.72 } 
 const waveformCache = new Map<SoundName, string>();
 const FAVORITES_KEY = "cabra-sound:favorites";
 
-function loadFavorites(): Set<SoundName> {
+interface SoundDocument {
+  favorites: string[];
+}
+
+function loadLegacyFavorites(): Set<SoundName> {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
     const parsed: unknown = raw === null ? [] : JSON.parse(raw);
@@ -139,7 +144,20 @@ export function SoundBoard() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<SoundName | null>(null);
   const [revealed, setRevealed] = useState<SoundName | null>(null);
-  const [favorites, setFavorites] = useState<Set<SoundName>>(loadFavorites);
+  const {
+    data: soundDocument,
+    update: updateSoundDocument,
+    ready: soundReady,
+  } = useProjectDocument<SoundDocument>("sound", { favorites: [] });
+  const favorites = useMemo<Set<SoundName>>(
+    () =>
+      new Set(
+        soundDocument.favorites.filter((name): name is SoundName =>
+          AVAILABLE_NAMES.includes(name as SoundName),
+        ),
+      ),
+    [soundDocument.favorites],
+  );
   const [status, setStatus] = useState("Choose a sound to audition it.");
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
@@ -218,19 +236,34 @@ export function SoundBoard() {
     [enabled],
   );
 
-  const toggleFavorite = useCallback((name: SoundName) => {
-    setFavorites((current) => {
-      const next = new Set(current);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      try {
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
-      } catch {
-        // Favorites still work for this session when storage is unavailable.
-      }
-      return next;
-    });
-  }, []);
+  useEffect(() => {
+    if (!soundReady || soundDocument.favorites.length > 0) return;
+    const legacy = loadLegacyFavorites();
+    if (legacy.size === 0) return;
+    updateSoundDocument({ favorites: [...legacy] });
+    try {
+      localStorage.removeItem(FAVORITES_KEY);
+    } catch {
+      // Ignore storage failures during migration.
+    }
+  }, [soundDocument.favorites.length, soundReady, updateSoundDocument]);
+
+  const toggleFavorite = useCallback(
+    (name: SoundName) => {
+      updateSoundDocument((current) => {
+        const next = new Set(current.favorites);
+        if (next.has(name)) next.delete(name);
+        else next.add(name);
+        try {
+          localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
+        } catch {
+          // Project storage is the source of truth; the key is only a fallback.
+        }
+        return { favorites: [...next] };
+      });
+    },
+    [updateSoundDocument],
+  );
 
   useEffect(() => {
     if (!revealed) return;
