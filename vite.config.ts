@@ -77,6 +77,11 @@ export default defineConfig({
         files: ["apps/desktop/frontend/src/**/*.{ts,tsx}"],
         rules: { "shadcn/no-unknown-classes": "off" },
       },
+      {
+        // Dynamic preview colors are supplied through CSS custom properties.
+        files: ["apps/desktop/frontend/src/routes/ExpoAssetsRoute.tsx"],
+        rules: { "shadcn/no-inline-styles": "off" },
+      },
     ],
   },
 });

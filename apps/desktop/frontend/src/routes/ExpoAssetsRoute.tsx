@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { EXPO_ASSET_DEFAULTS } from "@assets/expo-assets/types";
 
-import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
+import { PreviewGalleryDialog, type PreviewGalleryItem } from "../components/PreviewGalleryDialog";
 import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader } from "../components/ToolHeader";
@@ -54,12 +54,18 @@ export function ExpoAssetsRoute() {
   const [result, setResult] = useState<AssetJobResult | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [sourcePreviews, setSourcePreviews] = useState<Record<string, string>>({});
-  const [expanded, setExpanded] = useState<{ title: string; src: string } | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
 
   const native = hasAssetGeneration();
+  const galleryItems: PreviewGalleryItem[] = result
+    ? result.artifacts
+        .filter((artifact) => previews[artifact.name]?.startsWith("data:"))
+        .map((artifact) => ({ title: artifact.name, src: previews[artifact.name] }))
+    : [];
 
   useEffect(() => {
     return () => {
@@ -243,19 +249,9 @@ export function ExpoAssetsRoute() {
                   <div className="expo-source" key={source.role}>
                     <div className="expo-source-main">
                       {sourcePreviews[source.role] ? (
-                        <button
-                          type="button"
-                          className="expo-source-preview"
-                          aria-label={`Enlarge ${source.label}`}
-                          onClick={() =>
-                            setExpanded({
-                              title: selected?.name ?? source.label,
-                              src: sourcePreviews[source.role],
-                            })
-                          }
-                        >
+                        <span className="expo-source-preview">
                           <img src={sourcePreviews[source.role]} alt="" />
-                        </button>
+                        </span>
                       ) : (
                         <span className="expo-source-placeholder" aria-hidden="true">
                           <FolderOpen size={16} />
@@ -381,6 +377,21 @@ export function ExpoAssetsRoute() {
         </div>
 
         <div className="expo-column">
+          <div className="expo-panel expo-preview-panel">
+            <h2>Preview</h2>
+            <div className="expo-preview-stage" style={{ backgroundColor: brandColor }}>
+              {sourcePreviews.icon ? (
+                <img src={sourcePreviews.icon} alt="Selected source logo" />
+              ) : (
+                <span>Choose a logo to preview your asset set</span>
+              )}
+            </div>
+            <div className="expo-preview-meta">
+              <span>App icon</span>
+              <span>{brandColor}</span>
+            </div>
+          </div>
+
           {result ? (
             <div className="expo-panel expo-results">
               <div className="expo-results-head">
@@ -395,38 +406,48 @@ export function ExpoAssetsRoute() {
                   <strong>{result.artifacts.length}</strong>
                   <span>files · {result.agentPrompt ? "config ready" : "no config"}</span>
                 </div>
-                <div className="expo-artifact-grid">
-                  {result.artifacts.map((artifact) => (
-                    <article className="expo-artifact" key={artifact.name}>
-                      {previews[artifact.name]?.startsWith("data:") ? (
+                <div className="expo-asset-list">
+                  {result.artifacts.map((artifact) => {
+                    const galleryPosition = galleryItems.findIndex(
+                      (item) => item.title === artifact.name,
+                    );
+                    const preview = previews[artifact.name];
+                    return (
+                      <article className="expo-asset-row" key={artifact.name}>
                         <button
                           type="button"
-                          className="expo-artifact-preview"
-                          aria-label={`Enlarge ${artifact.name}`}
-                          onClick={() =>
-                            setExpanded({ title: artifact.name, src: previews[artifact.name] })
-                          }
+                          className="expo-asset-preview"
+                          aria-label={`Preview ${artifact.name}`}
+                          disabled={!preview?.startsWith("data:")}
+                          onClick={() => {
+                            setGalleryIndex(Math.max(0, galleryPosition));
+                            setGalleryOpen(true);
+                          }}
                         >
-                          <img src={previews[artifact.name]} alt="" />
+                          {preview?.startsWith("data:") ? (
+                            <img src={preview} alt="" />
+                          ) : (
+                            <span>{artifact.name.split(".").at(-1)?.toUpperCase()}</span>
+                          )}
                         </button>
-                      ) : (
-                        <div className="expo-artifact-preview">
-                          <span>{artifact.width || "—"}×</span>
+                        <div className="expo-asset-meta">
+                          <strong>{artifact.name}</strong>
+                          <span>
+                            {artifact.width ? `${artifact.width}×${artifact.height} · ` : ""}
+                            {Math.round(artifact.bytes / 1024)} KB
+                          </span>
                         </div>
-                      )}
-                      <div className="expo-artifact-meta">
-                        <strong>{artifact.name}</strong>
-                        <span>
-                          {artifact.width ? `${artifact.width}×${artifact.height} · ` : ""}
-                          {Math.round(artifact.bytes / 1024)} KB
-                        </span>
-                      </div>
-                      <button type="button" onClick={() => void saveOne(artifact.name)}>
-                        <Download size={13} />
-                        Save
-                      </button>
-                    </article>
-                  ))}
+                        <button
+                          className="expo-asset-save"
+                          type="button"
+                          onClick={() => void saveOne(artifact.name)}
+                        >
+                          <Download size={13} />
+                          Save
+                        </button>
+                      </article>
+                    );
+                  })}
                 </div>
                 {result.agentPrompt ? (
                   <div className="expo-agent">
@@ -453,11 +474,14 @@ export function ExpoAssetsRoute() {
           ) : null}
         </div>
       </div>
-      <AssetPreviewDialog
-        title={expanded?.title ?? ""}
-        src={expanded?.src}
-        onClose={() => setExpanded(null)}
-      />
+      {galleryOpen ? (
+        <PreviewGalleryDialog
+          items={galleryItems}
+          index={galleryIndex}
+          onIndexChange={setGalleryIndex}
+          onClose={() => setGalleryOpen(false)}
+        />
+      ) : null}
     </section>
   );
 
