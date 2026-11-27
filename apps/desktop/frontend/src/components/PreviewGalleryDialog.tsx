@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, type JSX } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type JSX } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
 
 import "./preview-gallery.css";
 
@@ -28,7 +28,9 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
   const { items, index, onIndexChange, onClose } = props;
   const headingId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [zoom, setZoom] = useState(1);
   const closeHandlerRef = useRef(onClose);
   const indexHandlerRef = useRef(onIndexChange);
   const indexRef = useRef(0);
@@ -42,6 +44,9 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
   const hasItems = items.length > 0;
   const safeIndex = hasItems ? Math.min(Math.max(index, 0), items.length - 1) : 0;
   const active = items[safeIndex];
+  const imageStyle = {
+    "--preview-zoom": String(zoom),
+  } as CSSProperties & Record<`--${string}`, string>;
   indexRef.current = safeIndex;
 
   function step(delta: number): void {
@@ -51,6 +56,25 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
     indexHandlerRef.current((current + delta + count) % count);
   }
   stepRef.current = step;
+
+  function clampZoom(value: number): number {
+    return Math.min(4, Math.max(0.25, Math.round(value * 100) / 100));
+  }
+
+  useEffect(() => {
+    setZoom(1);
+  }, [index]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      setZoom((current) => clampZoom(current + (event.deltaY < 0 ? 0.15 : -0.15)));
+    };
+    stage.addEventListener("wheel", handleWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", handleWheel);
+  }, []);
 
   useEffect(() => {
     if (!hasItems) return;
@@ -129,6 +153,44 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
             </strong>
           </div>
           <div className="preview-gallery-actions">
+            <div className="preview-gallery-zoom">
+              <button
+                type="button"
+                className="preview-gallery-icon-button"
+                aria-label="Zoom out"
+                title="Zoom out"
+                onClick={() => setZoom((current) => clampZoom(current - 0.25))}
+              >
+                <Minus size={14} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="preview-gallery-zoom-value"
+                aria-label="Reset zoom"
+                title="Reset zoom"
+                onClick={() => setZoom(1)}
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                type="button"
+                className="preview-gallery-icon-button"
+                aria-label="Zoom in"
+                title="Zoom in"
+                onClick={() => setZoom((current) => clampZoom(current + 0.25))}
+              >
+                <Plus size={14} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="preview-gallery-icon-button"
+                aria-label="Fit to view"
+                title="Fit to view"
+                onClick={() => setZoom(1)}
+              >
+                <RotateCcw size={13} aria-hidden="true" />
+              </button>
+            </div>
             {props.actionLabel ? (
               <button
                 type="button"
@@ -172,8 +234,8 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
           </div>
         </header>
 
-        <div className="preview-gallery-stage">
-          <img src={active.src} alt={active.title} />
+        <div className="preview-gallery-stage" ref={stageRef}>
+          <img src={active.src} alt={active.title} style={imageStyle} />
         </div>
 
         <div className="preview-gallery-strip" role="group" aria-label="Gallery images">
