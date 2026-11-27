@@ -27,6 +27,8 @@ import {
   X,
 } from "lucide-react";
 
+import { deleteTemplate, listTemplates, saveTemplate } from "../lib/templates/client";
+import type { TemplateRecord } from "../lib/templates/types";
 import "../modules/brand-assets/og-editor.css";
 
 export interface OgDesignResult {
@@ -1108,6 +1110,9 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     !props.initialDraft || props.initialDraft.layers.length === 0,
   );
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
+  const [savedTemplates, setSavedTemplates] = useState<Array<TemplateRecord<OgEditorDraft>>>([]);
+  const [templateName, setTemplateName] = useState("");
+  const [templateError, setTemplateError] = useState("");
 
   const headingId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -1138,20 +1143,44 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
 
   useEffect(() => {
     let active = true;
+    void listTemplates<OgEditorDraft>("brand")
+      .then((templates) => {
+        if (active) setSavedTemplates(templates);
+      })
+      .catch(() => {
+        // Saved templates are optional; the built-ins still work.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     const input = {
       title: props.title,
       description: props.description,
       siteLabel: props.siteLabel,
       imageUrl: props.imageUrl,
     };
+    const jobs = [
+      ...OG_TEMPLATES.map((template) => ({
+        id: template.id,
+        layers: template.create(input, designWidth, designHeight),
+        width: designWidth,
+        height: designHeight,
+      })),
+      ...savedTemplates.map((template) => ({
+        id: template.id,
+        layers: template.data.layers,
+        width: template.data.width || designWidth,
+        height: template.data.height || designHeight,
+      })),
+    ];
     void Promise.all(
-      OG_TEMPLATES.map(async (template) => {
-        const dataUrl = await renderOgLayers(
-          template.create(input, designWidth, designHeight),
-          designWidth,
-          designHeight,
-        );
-        return [template.id, dataUrl] as const;
+      jobs.map(async (job) => {
+        const dataUrl = await renderOgLayers(job.layers, job.width, job.height);
+        return [job.id, dataUrl] as const;
       }),
     ).then((entries) => {
       if (active) setTemplatePreviews(Object.fromEntries(entries));
@@ -1159,7 +1188,15 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     return () => {
       active = false;
     };
-  }, [designHeight, designWidth, props.description, props.imageUrl, props.siteLabel, props.title]);
+  }, [
+    designHeight,
+    designWidth,
+    props.description,
+    props.imageUrl,
+    props.siteLabel,
+    props.title,
+    savedTemplates,
+  ]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -1533,6 +1570,39 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     ],
   );
 
+  const applyTemplateDraft = useCallback(
+    (draft: OgEditorDraft) => {
+      pushHistory();
+      setLayers(draft.layers);
+      setSelectedId(draft.selectedId ?? null);
+      setShowTemplates(false);
+    },
+    [pushHistory],
+  );
+
+  const saveAsTemplate = useCallback(async () => {
+    const name = templateName.trim();
+    if (!name) return;
+    try {
+      const record = await saveTemplate<OgEditorDraft>({
+        tool: "brand",
+        name,
+        description: `${designWidth} × ${designHeight} · ${layers.length} layers`,
+        data: { layers, selectedId, width: designWidth, height: designHeight },
+      });
+      setSavedTemplates((current) => [record, ...current]);
+      setTemplateName("");
+      setTemplateError("");
+    } catch {
+      setTemplateError("Could not save that template.");
+    }
+  }, [designHeight, designWidth, layers, selectedId, templateName]);
+
+  const removeTemplate = useCallback(async (id: string) => {
+    await deleteTemplate(id);
+    setSavedTemplates((current) => current.filter((template) => template.id !== id));
+  }, []);
+
   const moveSelected = useCallback(
     (offset: number) => {
       if (!selectedId) return;
@@ -1741,14 +1811,34 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                   <strong>Start with a template</strong>
                   <span>Pick a layout, then adjust anything in the editor.</span>
                 </div>
-                <button
-                  type="button"
-                  className="og-editor-button"
-                  onClick={() => setShowTemplates(false)}
-                >
-                  Keep current design
-                </button>
+                <div className="og-editor-template-save">
+                  <input
+                    aria-label="Template name"
+                    value={templateName}
+                    placeholder="Save current design as…"
+                    onChange={(event) => setTemplateName(event.currentTarget.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") void saveAsTemplate();
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="og-editor-button"
+                    disabled={!templateName.trim()}
+                    onClick={() => void saveAsTemplate()}
+                  >
+                    Save template
+                  </button>
+                  <button
+                    type="button"
+                    className="og-editor-button"
+                    onClick={() => setShowTemplates(false)}
+                  >
+                    Keep current design
+                  </button>
+                </div>
               </div>
+              {templateError ? <p className="og-editor-template-error">{templateError}</p> : null}
               <div className="og-editor-template-grid">
                 {OG_TEMPLATES.map((template) => (
                   <button
@@ -1767,6 +1857,38 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                   </button>
                 ))}
               </div>
+              {savedTemplates.length > 0 ? (
+                <section className="og-editor-template-section">
+                  <h3 className="og-editor-panel-title">Your templates</h3>
+                  <div className="og-editor-template-grid">
+                    {savedTemplates.map((template) => (
+                      <div className="og-editor-template-card" key={template.id}>
+                        <button
+                          type="button"
+                          className="og-editor-template-use"
+                          onClick={() => applyTemplateDraft(template.data)}
+                        >
+                          <span className="og-editor-template-preview">
+                            {templatePreviews[template.id] ? (
+                              <img src={templatePreviews[template.id]} alt="" />
+                            ) : null}
+                          </span>
+                          <strong>{template.name}</strong>
+                          <span>{template.description}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="og-editor-template-delete"
+                          aria-label={`Delete template ${template.name}`}
+                          onClick={() => void removeTemplate(template.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
             </div>
           ) : null}
 

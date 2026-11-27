@@ -4,6 +4,7 @@ import { ArrowLeft, FolderOpen } from "lucide-react";
 
 import { AssetLibrary } from "../components/AssetLibrary";
 import { PackageIcon } from "../components/PackageIcon";
+import { StudioTemplates } from "../components/StudioTemplates";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { getProjectClient } from "../lib/projects/client";
 import { ProjectProvider } from "../lib/projects/context";
@@ -80,6 +81,7 @@ export function ProjectDashboard() {
         </div>
 
         <AssetLibrary />
+        <StudioTemplates projectId={projectId} />
       </section>
     </ProjectProvider>
   );

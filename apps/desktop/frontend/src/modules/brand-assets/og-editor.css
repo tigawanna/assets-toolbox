@@ -173,6 +173,69 @@
   font-size: 10px;
 }
 
+.og-editor-template-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.og-editor-template-save input {
+  height: 30px;
+  width: 220px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--canvas);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.og-editor-template-error {
+  margin: 0;
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.og-editor-template-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.og-editor-template-section h3 {
+  margin: 0;
+}
+
+.og-editor-template-use {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.og-editor-template-delete {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--text-subtle);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+}
+
+.og-editor-template-delete:hover {
+  color: var(--accent);
+}
+
 .og-editor-template-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
