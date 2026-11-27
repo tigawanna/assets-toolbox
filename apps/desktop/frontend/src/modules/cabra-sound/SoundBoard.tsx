@@ -18,7 +18,6 @@ import {
   initializeAudio,
   play,
   renderWav,
-  subtleTick,
   sweep,
   wavFilename,
   type SoundName,
@@ -506,14 +505,6 @@ export function SoundBoard() {
           <button type="button" onClick={() => playHelper("Sweep up", () => sweep(180, true))}>
             <Play size={15} aria-hidden="true" />
             Sweep up
-          </button>
-          <button type="button" onClick={() => playHelper("Sweep down", () => sweep(180, false))}>
-            <Play size={15} aria-hidden="true" />
-            Sweep down
-          </button>
-          <button type="button" onClick={() => playHelper("Soft tick", subtleTick)}>
-            <Play size={15} aria-hidden="true" />
-            Soft tick
           </button>
         </div>
       )}

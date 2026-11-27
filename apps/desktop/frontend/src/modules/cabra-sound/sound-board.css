@@ -429,10 +429,11 @@
 
 .sound-now-playing {
   display: flex;
-  min-height: 52px;
+  min-height: 60px;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 12px;
+  margin-bottom: 4px;
+  padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
   border-radius: 9px;
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
