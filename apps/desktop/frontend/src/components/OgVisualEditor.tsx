@@ -175,8 +175,8 @@ function dimension(value: number | undefined, fallback: number): number {
   return Number.isFinite(value) && (value ?? 0) > 0 ? Math.round(value ?? fallback) : fallback;
 }
 
-function createInitialLayers(
-  props: OgVisualEditorProps,
+export function createOgLayers(
+  props: { title?: string; description?: string; siteLabel?: string; imageUrl?: string },
   designWidth: number,
   designHeight: number,
 ): Layer[] {
@@ -495,6 +495,20 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
   }
 }
 
+export async function renderOgLayers(
+  layers: Layer[],
+  width: number,
+  height: number,
+): Promise<string> {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width));
+  canvas.height = Math.max(1, Math.round(height));
+  const context = canvas.getContext("2d");
+  if (!context) return "";
+  for (const layer of layers) await drawLayer(context, layer);
+  return canvas.toDataURL("image/png");
+}
+
 function layerVars(layer: Layer, scale: number): StyleVars {
   const base: StyleVars = {
     "--og-x": `${layer.x * scale}px`,
@@ -644,7 +658,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     ) {
       return draft.layers;
     }
-    return createInitialLayers(props, designWidth, designHeight);
+    return createOgLayers(props, designWidth, designHeight);
   });
   const [selectedId, setSelectedId] = useState<string | null>(
     props.initialDraft?.selectedId ?? null,
@@ -1084,14 +1098,10 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     setBusy(true);
     setError("");
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = designWidth;
-      canvas.height = designHeight;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("Canvas is not available in this browser.");
-      for (const layer of layers) await drawLayer(context, layer);
+      const dataUrl = await renderOgLayers(layers, designWidth, designHeight);
+      if (!dataUrl) throw new Error("Canvas is not available in this browser.");
       onExport({
-        dataUrl: canvas.toDataURL("image/png"),
+        dataUrl,
         width: designWidth,
         height: designHeight,
       });

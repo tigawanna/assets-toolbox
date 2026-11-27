@@ -12,7 +12,9 @@ import { defaultIconSizes } from "@assets/brand-assets/types";
 import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
 import {
+  createOgLayers,
   OgVisualEditor,
+  renderOgLayers,
   type OgDesignResult,
   type OgEditorDraft,
 } from "../components/OgVisualEditor";
@@ -97,6 +99,7 @@ export function BrandAssetsRoute() {
   const [ogSiteLabel, setOgSiteLabel] = useState("");
   const [ogEditorOpen, setOgEditorOpen] = useState(false);
   const [ogDesign, setOgDesign] = useState<OgDesignResult | null>(null);
+  const [ogPreview, setOgPreview] = useState("");
   const [ogWidth, setOgWidth] = useState(1200);
   const [ogHeight, setOgHeight] = useState(630);
   const [manifestEnabled, setManifestEnabled] = useState(true);
@@ -189,6 +192,45 @@ export function BrandAssetsRoute() {
     startUrl,
     themeColor,
     updateBrandDocument,
+  ]);
+
+  useEffect(() => {
+    let active = true;
+    const width = Number(ogWidth);
+    const height = Number(ogHeight);
+    const timer = window.setTimeout(() => {
+      const layers =
+        brandDocument.ogDraft?.layers ??
+        createOgLayers(
+          {
+            title: ogTitle,
+            description: ogDescription,
+            siteLabel: ogSiteLabel,
+            imageUrl: sourcePreview || undefined,
+          },
+          width,
+          height,
+        );
+      void renderOgLayers(layers, width, height)
+        .then((dataUrl) => {
+          if (active) setOgPreview(dataUrl);
+        })
+        .catch(() => {
+          // A preview failure does not prevent editing or generating.
+        });
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    brandDocument.ogDraft,
+    ogDescription,
+    ogHeight,
+    ogSiteLabel,
+    ogTitle,
+    ogWidth,
+    sourcePreview,
   ]);
 
   const native = hasAssetGeneration();
@@ -551,20 +593,21 @@ export function BrandAssetsRoute() {
                     </button>
                   ) : null}
                 </div>
-                {ogDesign ? (
-                  <button
-                    type="button"
-                    className="brand-og-thumb"
-                    onClick={() => setOgEditorOpen(true)}
-                    aria-label="Reopen visual editor"
-                  >
-                    <img src={ogDesign.dataUrl} alt="Custom social card design" />
-                  </button>
-                ) : (
-                  <p className="brand-hint">
-                    Place text, shapes, and images on a card, then export the whole box as a PNG.
-                  </p>
-                )}
+                <button
+                  type="button"
+                  className="brand-og-preview"
+                  onClick={() => setOgEditorOpen(true)}
+                  aria-label="Customize social card"
+                >
+                  {ogPreview ? (
+                    <img src={ogPreview} alt="Social card preview" />
+                  ) : (
+                    <span className="brand-og-preview-placeholder">
+                      Preparing social card preview…
+                    </span>
+                  )}
+                  <span className="brand-og-preview-label">Click to customize</span>
+                </button>
               </div>
             </fieldset>
           </div>
