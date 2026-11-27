@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/socialinspect"
 	"github.com/wailsapp/wails/v2"
@@ -23,13 +24,21 @@ func main() {
 
 	app := NewApp()
 	socialHandler := socialinspect.NewHandler(http.DefaultClient)
-	projectsHandler := newProjectsStore(defaultProjectsRoot()).handler()
 	apiRoutes := map[string]http.Handler{
+		"/mcp":           app.mcpHandler(),
 		"/api/workspace": app.workspace.handler(),
 		"/api/inspect":   socialHandler,
 		"/api/asset":     socialHandler,
-		"/api/projects":  projectsHandler,
+		"/api/projects":  app.projects.handler(),
 	}
+
+	// Headless mode is for MCP contract tests and agents that cannot open a
+	// WebKit window. Native dialogs are unavailable; project assets are the
+	// only supported generation inputs.
+	if addr := os.Getenv("ASSETS_TOOLBOX_MCP_HTTP"); addr != "" {
+		log.Fatal(http.ListenAndServe(addr, newProjectsModuleMiddleware(apiRoutes, http.NotFoundHandler())))
+	}
+
 	err = wails.Run(&options.App{
 		Title:            appName,
 		Width:            1180,

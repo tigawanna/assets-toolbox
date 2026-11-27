@@ -1,6 +1,18 @@
 # Native MCP plan — one gateway tool, progressive disclosure
 
-**Status:** proposal, not implemented. Date: 2026-11-27.
+**Status:** approach comparison documented (gateway chosen), Phase 1 gateway implemented and smoke-tested live. Studio bridge, templates, prompts and stdio transport remain. Date: 2026-11-27.
+
+### Implemented so far
+
+- Go JSON-RPC 2.0 handler at `/mcp` in the Wails asset server (`apps/desktop/mcp.go`), with batch requests, notifications, `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`, `resources/read`.
+- One registered tool `assets_toolbox` with `op: list | describe | call | status`; 18 nested tools in `apps/desktop/mcp_catalog.go` covering projects, documents, assets, Expo/Brand generation, jobs, and sound favorites.
+- `stageAssetInput` lets generation consume project asset IDs with no native dialog.
+- Headless HTTP mode: set `ASSETS_TOOLBOX_MCP_HTTP=127.0.0.1:4380` to serve the same API without a WebKit window (for agents and contract tests).
+- Worker path now honors `ASSETS_TOOLBOX_WORKER` and searches cwd parents.
+
+Live smoke test performed against the headless server: `initialize` → `tools/list` → `projects.create` → `assets.add` → `expo.generate` → `jobs.artifact` returned `icon.png` (148 KB base64). Go tests in `mcp_test.go` cover the same flow in-process.
+
+Connection snippet: `{"mcpServers":{"assets-toolbox":{"url":"http://127.0.0.1:4380/mcp"}}}`.
 **Goal:** an MCP server inside the Wails app that can create, inspect, and manipulate every asset tool through **one registered tool**, with nested tool discovery on demand. An external agent should be able to take a project from brand mark → Expo assets → Studio boards without native dialogs.
 
 ---

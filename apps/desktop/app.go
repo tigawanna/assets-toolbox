@@ -40,6 +40,7 @@ type SystemInfo struct {
 type App struct {
 	ctx           context.Context
 	workspace     *workspaceStore
+	projects      *projectsStore
 	closeMu       sync.Mutex
 	activeModules map[string]bool
 	closing       bool
@@ -66,6 +67,7 @@ type flushRequest struct {
 func NewApp() *App {
 	return &App{
 		workspace:     newWorkspaceStore(defaultWorkspacePath()),
+		projects:      newProjectsStore(defaultProjectsRoot()),
 		activeModules: make(map[string]bool),
 		flushRequests: make(map[string]flushRequest),
 		quit:          wailsruntime.Quit,

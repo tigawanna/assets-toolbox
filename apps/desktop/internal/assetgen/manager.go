@@ -349,6 +349,19 @@ func (m *Manager) JobRoot(jobID string) (string, error) {
 	return job.root, nil
 }
 
+// ActiveCount reports how many jobs are still being processed.
+func (m *Manager) ActiveCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	count := 0
+	for _, job := range m.jobs {
+		if !job.done {
+			count++
+		}
+	}
+	return count
+}
+
 // Discard removes a job from the manager and deletes its staging directory.
 // Discarding an unknown job is a no-op.
 func (m *Manager) Discard(jobID string) {

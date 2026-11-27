@@ -179,6 +179,16 @@ func newProjectsHandler(store *projectsStore) http.Handler {
 	return store
 }
 
+func (s *projectsStore) activeProjectID() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	index, err := s.loadIndexLocked()
+	if err != nil {
+		return ""
+	}
+	return index.ActiveProjectID
+}
+
 func (s *projectsStore) handler() http.Handler {
 	return newProjectsHandler(s)
 }

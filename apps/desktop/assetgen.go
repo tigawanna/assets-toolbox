@@ -70,10 +70,21 @@ func newAssetManager() *assetgen.Manager {
 }
 
 func resolveAssetWorkerPath() string {
+	if override := os.Getenv("ASSETS_TOOLBOX_WORKER"); override != "" {
+		return override
+	}
 	if cwd, err := os.Getwd(); err == nil {
-		candidate := filepath.Join(cwd, "sidecar", "src", "worker.mjs")
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate
+		directory := cwd
+		for range 6 {
+			candidate := filepath.Join(directory, "sidecar", "src", "worker.mjs")
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+			parent := filepath.Dir(directory)
+			if parent == directory {
+				break
+			}
+			directory = parent
 		}
 	}
 	if executable, err := os.Executable(); err == nil {
