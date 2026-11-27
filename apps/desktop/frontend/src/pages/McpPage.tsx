@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { Check, Copy } from "lucide-react";
+
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import "./mcp.css";
 
@@ -30,6 +32,17 @@ export function McpPage() {
   const [calls, setCalls] = useState<McpCall[]>([]);
   const [tools, setTools] = useState<NestedTool[]>([]);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState("");
+
+  async function copyConfig(text: string, key: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      window.setTimeout(() => setCopied(""), 1600);
+    } catch {
+      setError("Clipboard access was blocked.");
+    }
+  }
 
   const refresh = useCallback(async () => {
     try {
@@ -78,16 +91,12 @@ export function McpPage() {
     });
   }, []);
 
-  const httpConfig = snippet({
-    mcpServers: {
-      "assets-toolbox": { url: `${window.location.origin}/mcp` },
-    },
-  });
-  const stdioConfig = snippet({
-    mcpServers: {
-      "assets-toolbox": { command: "assets-toolbox", env: { ASSETS_TOOLBOX_MCP_STDIO: "1" } },
-    },
-  });
+  const httpServer = { url: `${window.location.origin}/mcp` };
+  const stdioServer = { command: "assets-toolbox", env: { ASSETS_TOOLBOX_MCP_STDIO: "1" } };
+  const httpConfig = snippet({ mcpServers: { "assets-toolbox": httpServer } });
+  const stdioConfig = snippet({ mcpServers: { "assets-toolbox": stdioServer } });
+  const httpServerOnly = snippet(httpServer);
+  const stdioServerOnly = snippet(stdioServer);
 
   return (
     <section className="mcp-page">
@@ -104,12 +113,47 @@ export function McpPage() {
         <h2>Configuration</h2>
         <div className="mcp-config-grid">
           <div>
-            <h3>HTTP (Wails app)</h3>
+            <div className="mcp-config-head">
+              <h3>HTTP (Wails app)</h3>
+              <div className="mcp-copy-actions">
+                <button type="button" onClick={() => void copyConfig(httpConfig, "http")}>
+                  {copied === "http" ? <Check size={12} /> : <Copy size={12} />}
+                  {copied === "http" ? "Copied" : "Copy config"}
+                </button>
+                <button type="button" onClick={() => void copyConfig(httpServerOnly, "httpServer")}>
+                  {copied === "httpServer" ? <Check size={12} /> : <Copy size={12} />}
+                  {copied === "httpServer" ? "Copied" : "Server only"}
+                </button>
+              </div>
+            </div>
             <pre>{httpConfig}</pre>
+            <details>
+              <summary>Server entry only (no mcpServers wrapper)</summary>
+              <pre>{httpServerOnly}</pre>
+            </details>
           </div>
           <div>
-            <h3>Stdio (headless)</h3>
+            <div className="mcp-config-head">
+              <h3>Stdio (headless)</h3>
+              <div className="mcp-copy-actions">
+                <button type="button" onClick={() => void copyConfig(stdioConfig, "stdio")}>
+                  {copied === "stdio" ? <Check size={12} /> : <Copy size={12} />}
+                  {copied === "stdio" ? "Copied" : "Copy config"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void copyConfig(stdioServerOnly, "stdioServer")}
+                >
+                  {copied === "stdioServer" ? <Check size={12} /> : <Copy size={12} />}
+                  {copied === "stdioServer" ? "Copied" : "Server only"}
+                </button>
+              </div>
+            </div>
             <pre>{stdioConfig}</pre>
+            <details>
+              <summary>Server entry only (no mcpServers wrapper)</summary>
+              <pre>{stdioServerOnly}</pre>
+            </details>
           </div>
         </div>
         <div className="mcp-env">

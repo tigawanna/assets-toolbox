@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Braces, LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
+import { Braces, CircleHelp, LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
 import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 
 import { findPackage, toolPackages } from "../lib/catalog";
@@ -290,6 +290,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Braces size={17} strokeWidth={1.8} aria-hidden="true" />
               <span>MCP</span>
+            </ShellLink>
+            <ShellLink
+              to="/help"
+              className="nav-link"
+              aria-label="Help"
+              title="Help"
+              aria-current={location.pathname === "/help" ? "page" : undefined}
+            >
+              <CircleHelp size={17} strokeWidth={1.8} aria-hidden="true" />
+              <span>Help</span>
             </ShellLink>
           </div>
         </nav>

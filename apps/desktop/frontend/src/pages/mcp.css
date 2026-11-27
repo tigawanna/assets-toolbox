@@ -46,6 +46,57 @@
   gap: 12px;
 }
 
+.mcp-config-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.mcp-config-head h3 {
+  margin: 0;
+}
+
+.mcp-copy-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mcp-copy-actions button {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+}
+
+.mcp-copy-actions button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.mcp-config-grid details {
+  margin-top: 8px;
+}
+
+.mcp-config-grid summary {
+  color: var(--text-subtle);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.mcp-config-grid details pre {
+  margin-top: 6px;
+}
+
 .mcp-config-grid pre {
   overflow-x: auto;
   margin: 0;
