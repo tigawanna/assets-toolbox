@@ -89,16 +89,14 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   }
 
+  /* Four sections pair up in two columns — an odd column count would leave a
+     lone section with empty cells beside it. */
   .brand-layout-form-only > .brand-column {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @container brand (min-width: 1120px) {
-  .brand-layout-form-only > .brand-column {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-
   .brand-card h2 {
     color: var(--text-muted);
     font-size: 11px;
