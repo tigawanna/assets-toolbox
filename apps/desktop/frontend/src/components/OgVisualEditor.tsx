@@ -1570,6 +1570,12 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     ],
   );
 
+  const clearDesign = useCallback(() => {
+    pushHistory();
+    setLayers([]);
+    setSelectedId(null);
+  }, [pushHistory]);
+
   const applyTemplateDraft = useCallback(
     (draft: OgEditorDraft) => {
       pushHistory();
@@ -1772,6 +1778,15 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
               aria-label="Set background image"
             >
               <ImagePlus size={13} aria-hidden="true" /> BG image
+            </button>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={clearDesign}
+              aria-label="Clear design"
+              title="Clear every layer and start over"
+            >
+              <Trash2 size={13} aria-hidden="true" /> Clear
             </button>
             <button
               type="button"
