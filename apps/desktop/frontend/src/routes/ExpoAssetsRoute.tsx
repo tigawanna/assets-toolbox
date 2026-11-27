@@ -14,7 +14,9 @@ import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
-import { mergeDocumentDefaults, useProjectDocument } from "../lib/projects/context";
+import { getProjectClient } from "../lib/projects/client";
+import { mergeDocumentDefaults, useProject, useProjectDocument } from "../lib/projects/context";
+import type { AssetId } from "../lib/projects/types";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -46,6 +48,7 @@ interface ExpoDocumentData {
   noMonochrome: boolean;
   writeConfig: boolean;
   outDir: string;
+  sourceAssetIds: Record<string, string>;
 }
 
 const EXPO_DOCUMENT_DEFAULTS: ExpoDocumentData = {
@@ -57,6 +60,7 @@ const EXPO_DOCUMENT_DEFAULTS: ExpoDocumentData = {
   noMonochrome: false,
   writeConfig: true,
   outDir: EXPO_ASSET_DEFAULTS.outDir,
+  sourceAssetIds: {},
 };
 
 export function ExpoAssetsRoute() {
@@ -78,6 +82,8 @@ export function ExpoAssetsRoute() {
   const [result, setResult] = useState<AssetJobResult | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [sourcePreviews, setSourcePreviews] = useState<Record<string, string>>({});
+  const [sourceAssetIds, setSourceAssetIds] = useState<Partial<Record<SourceRole, AssetId>>>({});
+  const { projectId } = useProject();
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -104,7 +110,43 @@ export function ExpoAssetsRoute() {
     setNoMonochrome(form.noMonochrome);
     setWriteConfig(form.writeConfig);
     setOutDir(form.outDir);
-  }, [expoDocument, expoReady]);
+
+    const saved = { ...expoDocument.sourceAssetIds, ...form.sourceAssetIds };
+    const restored: Partial<Record<SourceRole, AssetId>> = {};
+    for (const role of ["icon", "darkIcon", "tintedIcon"] as const) {
+      if (saved[role]) restored[role] = saved[role] as AssetId;
+    }
+    setSourceAssetIds(restored);
+    void getProjectClient()
+      .listAssets(projectId)
+      .then(async (list) => {
+        const nextSources: Record<SourceRole, AssetInput | null> = {
+          icon: null,
+          darkIcon: null,
+          tintedIcon: null,
+        };
+        const nextPreviews: Record<string, string> = {};
+        for (const role of ["icon", "darkIcon", "tintedIcon"] as const) {
+          const id = restored[role];
+          if (!id) continue;
+          const asset = list.find((item) => item.id === id);
+          if (!asset) continue;
+          const base64 = await getProjectClient().getAssetBlob(projectId, asset.id);
+          nextSources[role] = {
+            handle: `project:${asset.id}`,
+            name: asset.name,
+            size: asset.bytes,
+            mimeType: asset.mime,
+          };
+          nextPreviews[role] = `data:${asset.mime};base64,${base64}`;
+        }
+        setSources(nextSources);
+        setSourcePreviews(nextPreviews);
+      })
+      .catch(() => {
+        // Missing source assets leave the pickers empty.
+      });
+  }, [expoDocument, expoReady, projectId]);
 
   useEffect(() => {
     if (!expoHydrated.current) return;
@@ -117,6 +159,7 @@ export function ExpoAssetsRoute() {
       noMonochrome,
       writeConfig,
       outDir,
+      sourceAssetIds: sourceAssetIds as Record<string, string>,
     });
   }, [
     brandColor,
@@ -128,6 +171,7 @@ export function ExpoAssetsRoute() {
     splashLogoSize,
     updateExpoDocument,
     writeConfig,
+    sourceAssetIds,
   ]);
 
   const native = hasAssetGeneration();
@@ -183,32 +227,47 @@ export function ExpoAssetsRoute() {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
-  const chooseSource = useCallback(async (role: SourceRole) => {
-    setError("");
-    const app = getAssetApp();
-    if (!app) {
-      try {
-        const selection = await selectWebImage();
-        if (!selection) return;
-        setSources((current) => ({ ...current, [role]: selection.input }));
-        setSourcePreviews((current) => ({ ...current, [role]: selection.preview }));
-      } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Could not preview that image.");
+  const chooseSource = useCallback(
+    async (role: SourceRole) => {
+      setError("");
+      const app = getAssetApp();
+      if (!app) {
+        try {
+          const selection = await selectWebImage();
+          if (!selection) return;
+          setSources((current) => ({ ...current, [role]: selection.input }));
+          setSourcePreviews((current) => ({ ...current, [role]: selection.preview }));
+          const asset = await getProjectClient().addAsset(projectId, {
+            name: selection.input.name,
+            mime: selection.input.mimeType,
+            base64: selection.preview.split(",").at(-1) ?? "",
+          });
+          setSourceAssetIds((current) => ({ ...current, [role]: asset.id as AssetId }));
+        } catch (cause) {
+          setError(cause instanceof Error ? cause.message : "Could not preview that image.");
+        }
+        return;
       }
-      return;
-    }
-    try {
-      const selected = await app.SelectAssetImage(role);
-      setSources((current) => ({ ...current, [role]: selected }));
-      const encoded = await app.GetAssetInputPreview(selected.handle);
-      setSourcePreviews((current) => ({
-        ...current,
-        [role]: `data:${selected.mimeType || "image/png"};base64,${encoded}`,
-      }));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not select an image.");
-    }
-  }, []);
+      try {
+        const selected = await app.SelectAssetImage(role);
+        setSources((current) => ({ ...current, [role]: selected }));
+        const encoded = await app.GetAssetInputPreview(selected.handle);
+        setSourcePreviews((current) => ({
+          ...current,
+          [role]: `data:${selected.mimeType || "image/png"};base64,${encoded}`,
+        }));
+        const asset = await getProjectClient().addAsset(projectId, {
+          name: selected.name,
+          mime: selected.mimeType || "image/png",
+          base64: encoded,
+        });
+        setSourceAssetIds((current) => ({ ...current, [role]: asset.id as AssetId }));
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not select an image.");
+      }
+    },
+    [projectId],
+  );
 
   const generate = useCallback(async () => {
     const app = getAssetApp();
@@ -219,10 +278,24 @@ export function ExpoAssetsRoute() {
     setResult(null);
     setCopied("");
 
+    const handles: Partial<Record<SourceRole, string>> = {};
+    if (app.StageProjectAsset) {
+      try {
+        for (const role of ["icon", "darkIcon", "tintedIcon"] as const) {
+          const id = sourceAssetIds[role];
+          if (id) handles[role] = (await app.StageProjectAsset(projectId, id, role)).handle;
+        }
+      } catch {
+        setError("Could not restore the selected source assets.");
+        setBusy(false);
+        return;
+      }
+    }
+
     const request: ExpoGenerateRequest = {
-      icon: sources.icon.handle,
-      darkIcon: sources.darkIcon?.handle,
-      tintedIcon: sources.tintedIcon?.handle,
+      icon: handles.icon ?? sources.icon.handle,
+      darkIcon: handles.darkIcon ?? sources.darkIcon?.handle,
+      tintedIcon: handles.tintedIcon ?? sources.tintedIcon?.handle,
       brandColor,
       splashBackground,
       imageWidth: Number(imageWidth),
@@ -251,6 +324,8 @@ export function ExpoAssetsRoute() {
     splashBackground,
     splashLogoSize,
     writeConfig,
+    sourceAssetIds,
+    projectId,
   ]);
 
   const saveOne = useCallback(

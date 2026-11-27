@@ -69,6 +69,7 @@ interface AssetApp {
   CopyAssetText(jobID: string, name: string): Promise<void>;
   CancelAssetGeneration(jobID: string): Promise<boolean>;
   DiscardAssetJob(jobID: string): Promise<void>;
+  StageProjectAsset?(projectID: string, assetID: string, role: string): Promise<AssetInput>;
 }
 
 interface AssetWindow extends Window {

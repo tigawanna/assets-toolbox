@@ -305,6 +305,12 @@ func (a *App) projectsCall(method, path string, payload any) (any, error) {
 	return result, nil
 }
 
+// StageProjectAsset turns a stored project asset into a native generation
+// input. It is bound to Wails so the UI can restore a source after restart.
+func (a *App) StageProjectAsset(projectID, assetID, role string) (AssetInput, error) {
+	return a.stageMCPAsset(projectID, assetID, role)
+}
+
 func mcpAssetMime(name string) string {
 	switch strings.ToLower(filepath.Ext(name)) {
 	case ".png":

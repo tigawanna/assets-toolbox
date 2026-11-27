@@ -21,7 +21,9 @@ import {
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
+import { getProjectClient } from "../lib/projects/client";
 import { mergeDocumentDefaults, useProject, useProjectDocument } from "../lib/projects/context";
+import type { AssetId } from "../lib/projects/types";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -64,6 +66,7 @@ interface BrandDocumentData {
   display: string;
   outDir: string;
   ogDraft: OgEditorDraft | null;
+  sourceAssetId: string;
   initialized: boolean;
 }
 
@@ -85,12 +88,14 @@ const BRAND_DEFAULTS: BrandDocumentData = {
   display: "standalone",
   outDir: "out",
   ogDraft: null,
+  sourceAssetId: "",
   initialized: false,
 };
 
 export function BrandAssetsRoute() {
-  const { project } = useProject();
+  const { project, projectId } = useProject();
   const [icon, setIcon] = useState<AssetInput | null>(null);
+  const [sourceAssetId, setSourceAssetId] = useState<AssetId | null>(null);
   const [plate, setPlate] = useState("#0f100f");
   const [copySvg, setCopySvg] = useState(false);
   const [ogEnabled, setOgEnabled] = useState(true);
@@ -148,11 +153,33 @@ export function BrandAssetsRoute() {
     setStartUrl(form.startUrl);
     setDisplay(form.display);
     setOutDir(form.outDir);
+
+    const savedSource = form.sourceAssetId || brandDocument.sourceAssetId;
+    setSourceAssetId(savedSource ? (savedSource as AssetId) : null);
+    if (savedSource) {
+      void getProjectClient()
+        .listAssets(projectId)
+        .then(async (list) => {
+          const asset = list.find((item) => item.id === savedSource);
+          if (!asset) return;
+          const base64 = await getProjectClient().getAssetBlob(projectId, asset.id);
+          setSourcePreview(`data:${asset.mime};base64,${base64}`);
+          setIcon({
+            handle: `project:${asset.id}`,
+            name: asset.name,
+            size: asset.bytes,
+            mimeType: asset.mime,
+          });
+        })
+        .catch(() => {
+          // A deleted source simply leaves the picker empty.
+        });
+    }
     if (!brandDocument.initialized && !nested && project?.name) {
       setOgTitle(project.name);
       setName(project.name);
     }
-  }, [brandDocument, brandReady, project?.name]);
+  }, [brandDocument, brandReady, project?.name, projectId]);
 
   useEffect(() => {
     if (!brandHydrated.current) return;
@@ -174,6 +201,7 @@ export function BrandAssetsRoute() {
       display,
       outDir,
       ogDraft: ogDraftRef.current,
+      sourceAssetId: sourceAssetId ?? "",
       initialized: true,
     });
   }, [
@@ -194,6 +222,7 @@ export function BrandAssetsRoute() {
     startUrl,
     themeColor,
     updateBrandDocument,
+    sourceAssetId,
   ]);
 
   useEffect(() => {
@@ -293,6 +322,12 @@ export function BrandAssetsRoute() {
         if (!selection) return;
         setIcon(selection.input);
         setSourcePreview(selection.preview);
+        const asset = await getProjectClient().addAsset(projectId, {
+          name: selection.input.name,
+          mime: selection.input.mimeType,
+          base64: selection.preview.split(",").at(-1) ?? "",
+        });
+        setSourceAssetId(asset.id);
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Could not preview that image.");
       }
@@ -303,10 +338,16 @@ export function BrandAssetsRoute() {
       setIcon(selected);
       const encoded = await app.GetAssetInputPreview(selected.handle);
       setSourcePreview(`data:${selected.mimeType || "image/png"};base64,${encoded}`);
+      const asset = await getProjectClient().addAsset(projectId, {
+        name: selected.name,
+        mime: selected.mimeType || "image/png",
+        base64: encoded,
+      });
+      setSourceAssetId(asset.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not select an icon.");
     }
-  }, []);
+  }, [projectId]);
 
   const generate = useCallback(async () => {
     const app = getAssetApp();
@@ -317,8 +358,20 @@ export function BrandAssetsRoute() {
     setResult(null);
     setCopied("");
 
+    let iconHandle = icon.handle;
+    if (sourceAssetId && app.StageProjectAsset) {
+      try {
+        const staged = await app.StageProjectAsset(projectId, sourceAssetId, "icon");
+        iconHandle = staged.handle;
+      } catch {
+        setError("Could not restore the selected source asset.");
+        setBusy(false);
+        return;
+      }
+    }
+
     const request: BrandGenerateRequest = {
-      icon: icon.handle,
+      icon: iconHandle,
       plate,
       copySvg,
       ogEnabled,
@@ -370,6 +423,8 @@ export function BrandAssetsRoute() {
     shortName,
     startUrl,
     themeColor,
+    sourceAssetId,
+    projectId,
   ]);
 
   const saveOne = useCallback(
