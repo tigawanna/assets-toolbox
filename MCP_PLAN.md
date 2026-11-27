@@ -12,6 +12,8 @@
 
 Live smoke test performed against the headless server: `initialize` → `tools/list` → `projects.create` → `assets.add` → `expo.generate` → `jobs.artifact` returned `icon.png` (148 KB base64). Go tests in `mcp_test.go` cover the same flow in-process.
 
+A full "Aurora" wallpaper-app build was also driven entirely through MCP: project creation, four source images added as assets, `brand.generate` and `expo.generate`, and every generated artifact read back and stored in the project library (19 assets total, including `site.webmanifest`). The source artwork itself was authored locally with PIL — MCP has no image-painting tool, so it acts as the designer-provided input. A live failure exposed two missing forwarded flags in `brand.generate` (`ogEnabled`, `manifestEnabled`); both are now fixed and covered by the schema test.
+
 Phase 2 adds a WebView bridge (`mcp:request` / `mcp:response`) so Go can reach Studio boards and global templates: `studio.list_boards`, `studio.get_board`, `studio.put_board`, `templates.list/save/apply/delete`. The bridge is tested in-process in Go; it requires a running Wails window at runtime (the headless HTTP mode has no frontend to answer bridge calls).
 
 Connection snippet (HTTP): `{"mcpServers":{"assets-toolbox":{"url":"http://127.0.0.1:4380/mcp"}}}`.

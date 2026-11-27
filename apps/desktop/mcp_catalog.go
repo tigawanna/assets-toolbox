@@ -265,8 +265,8 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 			ID: "brand.generate", Summary: "Generate a brand asset set from a project asset.", Mutating: true,
 			InputSchema: objectSchema(map[string]any{
 				"projectId": strProp(), "assetId": strProp(), "plate": strProp(),
-				"ogTitle": strProp(), "ogDescription": strProp(), "ogSiteLabel": strProp(),
-				"name": strProp(), "shortName": strProp(), "themeColor": strProp(),
+				"ogEnabled": boolProp(), "ogTitle": strProp(), "ogDescription": strProp(), "ogSiteLabel": strProp(),
+				"manifestEnabled": boolProp(), "name": strProp(), "shortName": strProp(), "themeColor": strProp(),
 				"backgroundColor": strProp(), "startUrl": strProp(), "display": strProp(), "outDir": strProp(),
 			}, "projectId", "assetId"),
 			Run: func(args map[string]any) (any, error) {
@@ -282,11 +282,16 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 				if err != nil {
 					return nil, err
 				}
+				ogEnabled := optBool(args, "ogEnabled")
+				if _, provided := args["ogEnabled"]; !provided && optString(args, "ogTitle") != "" {
+					ogEnabled = true
+				}
 				request := BrandGenerateRequest{
-					Icon: icon.Handle, Plate: optString(args, "plate"),
+					Icon: icon.Handle, Plate: optString(args, "plate"), OgEnabled: ogEnabled,
 					OgTitle: optString(args, "ogTitle"), OgDescription: optString(args, "ogDescription"),
 					OgSiteLabel: optString(args, "ogSiteLabel"), Name: optString(args, "name"),
 					ShortName: optString(args, "shortName"), ThemeColor: optString(args, "themeColor"),
+					ManifestEnabled: optBool(args, "manifestEnabled"),
 					BackgroundColor: optString(args, "backgroundColor"), StartUrl: optString(args, "startUrl"),
 					Display: optString(args, "display"), OutDir: optString(args, "outDir"),
 				}

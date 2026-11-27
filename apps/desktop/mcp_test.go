@@ -107,6 +107,15 @@ func TestMCPGatewayProjectAndAssetFlow(t *testing.T) {
 		t.Fatalf("unexpected describe result: %v", described)
 	}
 
+	brandSchema := call("describe", "brand.generate", nil, false)
+	schema, _ := brandSchema["inputSchema"].(map[string]any)
+	properties, _ := schema["properties"].(map[string]any)
+	for _, key := range []string{"ogEnabled", "ogTitle", "manifestEnabled"} {
+		if _, ok := properties[key]; !ok {
+			t.Fatalf("brand.generate schema is missing %s", key)
+		}
+	}
+
 	blocked := call("call", "projects.create", map[string]any{"name": "Geo Kenya"}, false)
 	if blocked["error"] == nil {
 		t.Fatal("mutating tool should require confirm=true")
