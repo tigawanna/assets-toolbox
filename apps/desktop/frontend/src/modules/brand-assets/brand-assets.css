@@ -1,4 +1,6 @@
 .brand-page {
+  container-type: inline-size;
+  container-name: brand;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -69,8 +71,38 @@
 
 .brand-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: 16px;
+}
+
+/* With no result to show, the form owns the whole surface. */
+.brand-layout-form-only > .brand-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 14px 16px;
+}
+
+@container brand (min-width: 760px) {
+  .brand-layout:not(.brand-layout-form-only) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  }
+
+  .brand-layout-form-only > .brand-column {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+@container brand (min-width: 1120px) {
+  .brand-layout-form-only > .brand-column {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .brand-card h2 {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
 }
 
 .brand-column {
@@ -80,11 +112,18 @@
   gap: 14px;
 }
 
+/* Sections are separated by rules, not nested cards. */
 .brand-card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  container-type: inline-size;
+  container-name: brand-panel;
+  min-width: 0;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .brand-card h2 {
@@ -227,8 +266,20 @@
 
 .brand-field-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+}
+
+@container brand-panel (min-width: 300px) {
+  .brand-field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container brand-panel (min-width: 620px) {
+  .brand-field-row {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
 
 .brand-card input:not([type="checkbox"]),
@@ -372,42 +423,46 @@
   font-size: 10px;
 }
 
-.brand-artifact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
+.brand-artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .brand-artifact {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-muted);
 }
 
-button.brand-artifact-preview {
-  border: 0;
-  cursor: pointer;
-}
-
 .brand-artifact-preview {
   display: grid;
-  width: 100%;
-  height: 72px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   place-items: center;
+  overflow: hidden;
+  padding: 3px;
+  border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--canvas);
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
+}
+
+button.brand-artifact-preview {
+  min-height: 0;
+  cursor: pointer;
 }
 
 .brand-artifact-preview img {
-  width: 56px;
-  height: 56px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -431,7 +486,7 @@ button.brand-artifact-preview {
   font-size: 9px;
 }
 
-.brand-artifact button {
+.brand-artifact-save {
   min-height: 26px;
   padding: 4px 8px;
   font-size: 10px;
@@ -478,12 +533,6 @@ button.brand-artifact-preview {
 .brand-copy-config {
   width: 100%;
   margin-top: 10px;
-}
-
-@media (max-width: 900px) {
-  .brand-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

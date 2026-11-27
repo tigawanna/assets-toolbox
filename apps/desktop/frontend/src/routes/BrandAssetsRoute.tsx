@@ -267,7 +267,7 @@ export function BrandAssetsRoute() {
         </p>
       )}
 
-      <div className="brand-layout">
+      <div className={result ? "brand-layout" : "brand-layout brand-layout-form-only"}>
         <div className="brand-column">
           <div className="brand-card">
             <h2>Source mark</h2>
@@ -460,84 +460,82 @@ export function BrandAssetsRoute() {
           ) : null}
         </div>
 
-        <div className="brand-column">
-          <div className="brand-card brand-results">
-            <div className="brand-results-head">
-              <h2>Generated assets</h2>
-              {result ? (
+        {result ? (
+          <div className="brand-column">
+            <div className="brand-card brand-results">
+              <div className="brand-results-head">
+                <h2>Generated assets</h2>
                 <button type="button" onClick={() => void saveAll()}>
                   <FileArchive size={14} />
                   Save all
                 </button>
+              </div>
+              <div className="brand-score">
+                <strong>{result.artifacts.length}</strong>
+                <span>files generated</span>
+              </div>
+              <div className="brand-artifact-list">
+                {result.artifacts.map((artifact) => (
+                  <article className="brand-artifact" key={artifact.name}>
+                    {previews[artifact.name]?.startsWith("data:") ? (
+                      <button
+                        type="button"
+                        className="brand-artifact-preview"
+                        aria-label={`Enlarge ${artifact.name}`}
+                        onClick={() =>
+                          setExpanded({ title: artifact.name, src: previews[artifact.name] })
+                        }
+                      >
+                        <img src={previews[artifact.name]} alt="" />
+                      </button>
+                    ) : (
+                      <div className="brand-artifact-preview">
+                        <span>{artifact.name.split(".").at(-1)?.toUpperCase()}</span>
+                      </div>
+                    )}
+                    <div className="brand-artifact-meta">
+                      <strong>{artifact.name}</strong>
+                      <span>{Math.round(artifact.bytes / 1024)} KB</span>
+                    </div>
+                    <button
+                      className="brand-artifact-save"
+                      type="button"
+                      onClick={() => void saveOne(artifact.name)}
+                    >
+                      <Download size={13} />
+                      Save
+                    </button>
+                  </article>
+                ))}
+              </div>
+              {result.configPath ? (
+                <pre className="brand-config">
+                  {previews[result.configPath.split("/").at(-1) ?? ""] ?? ""}
+                </pre>
+              ) : null}
+              {result.agentPrompt ? (
+                <div className="brand-agent">
+                  <div>
+                    <h3>Agent handoff</h3>
+                    <button type="button" onClick={() => void copyPrompt()}>
+                      {copied === "prompt" ? "Copied" : "Copy prompt"}
+                    </button>
+                  </div>
+                  <p>{result.agentPrompt}</p>
+                </div>
+              ) : null}
+              {result.configPath ? (
+                <button
+                  className="brand-copy-config"
+                  type="button"
+                  onClick={() => void copyConfig()}
+                >
+                  {copied === "config" ? "Manifest copied" : "Copy web manifest"}
+                </button>
               ) : null}
             </div>
-            {result === null ? (
-              <p className="brand-empty">Choose a mark and generate to see the brand asset set.</p>
-            ) : (
-              <>
-                <div className="brand-score">
-                  <strong>{result.artifacts.length}</strong>
-                  <span>files generated</span>
-                </div>
-                <div className="brand-artifact-grid">
-                  {result.artifacts.map((artifact) => (
-                    <article className="brand-artifact" key={artifact.name}>
-                      {previews[artifact.name]?.startsWith("data:") ? (
-                        <button
-                          type="button"
-                          className="brand-artifact-preview"
-                          aria-label={`Enlarge ${artifact.name}`}
-                          onClick={() =>
-                            setExpanded({ title: artifact.name, src: previews[artifact.name] })
-                          }
-                        >
-                          <img src={previews[artifact.name]} alt="" />
-                        </button>
-                      ) : (
-                        <div className="brand-artifact-preview">
-                          <span>{artifact.name.split(".").at(-1)?.toUpperCase()}</span>
-                        </div>
-                      )}
-                      <div className="brand-artifact-meta">
-                        <strong>{artifact.name}</strong>
-                        <span>{Math.round(artifact.bytes / 1024)} KB</span>
-                      </div>
-                      <button type="button" onClick={() => void saveOne(artifact.name)}>
-                        <Download size={13} />
-                        Save
-                      </button>
-                    </article>
-                  ))}
-                </div>
-                {result.configPath ? (
-                  <pre className="brand-config">
-                    {previews[result.configPath.split("/").at(-1) ?? ""] ?? ""}
-                  </pre>
-                ) : null}
-                {result.agentPrompt ? (
-                  <div className="brand-agent">
-                    <div>
-                      <h3>Agent handoff</h3>
-                      <button type="button" onClick={() => void copyPrompt()}>
-                        {copied === "prompt" ? "Copied" : "Copy prompt"}
-                      </button>
-                    </div>
-                    <p>{result.agentPrompt}</p>
-                  </div>
-                ) : null}
-                {result.configPath ? (
-                  <button
-                    className="brand-copy-config"
-                    type="button"
-                    onClick={() => void copyConfig()}
-                  >
-                    {copied === "config" ? "Manifest copied" : "Copy web manifest"}
-                  </button>
-                ) : null}
-              </>
-            )}
           </div>
-        </div>
+        ) : null}
       </div>
       {ogEditorOpen ? (
         <OgVisualEditor
