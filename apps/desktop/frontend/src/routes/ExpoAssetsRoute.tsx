@@ -237,7 +237,11 @@ export function ExpoAssetsRoute() {
         </p>
       )}
 
-      <div className="expo-layout">
+      <div
+        className={
+          sourcePreviews.icon || result ? "expo-layout" : "expo-layout expo-layout-form-only"
+        }
+      >
         <div className="expo-column">
           <div className="expo-panel">
             <h2>Source artwork</h2>

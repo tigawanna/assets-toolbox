@@ -1,4 +1,6 @@
 .expo-page {
+  container-type: inline-size;
+  container-name: expo;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -70,8 +72,39 @@
 
 .expo-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: 16px;
+}
+
+/* With no preview to show, the form is the only content — let its panels
+   flow across the whole surface instead of leaving an empty column. */
+.expo-layout-form-only > .expo-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 14px 16px;
+}
+
+@container expo (min-width: 760px) {
+  .expo-layout:not(.expo-layout-form-only) {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .expo-layout-form-only > .expo-column {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+@container expo (min-width: 1120px) {
+  .expo-layout-form-only > .expo-column {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .expo-panel h2 {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
 }
 
 .expo-column {
@@ -82,6 +115,8 @@
 }
 
 .expo-panel {
+  container-type: inline-size;
+  container-name: expo-panel;
   padding: 0 0 16px;
   border-bottom: 1px solid var(--line);
 }
@@ -99,9 +134,15 @@
 }
 
 .expo-sources {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+}
+
+@container expo-panel (min-width: 460px) {
+  .expo-sources {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
 }
 
 .expo-source {
@@ -237,8 +278,20 @@
 
 .expo-field-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+}
+
+@container expo-panel (min-width: 300px) {
+  .expo-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container expo-panel (min-width: 620px) {
+  .expo-field-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
 
 .expo-panel label {
@@ -320,8 +373,14 @@
 
 .expo-preview-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+
+@container expo-panel (min-width: 380px) {
+  .expo-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .expo-preview-card {
@@ -345,12 +404,12 @@
 
 .expo-icon-preview {
   display: grid;
-  width: 128px;
-  height: 128px;
+  width: clamp(112px, 34cqw, 280px);
+  height: clamp(112px, 34cqw, 280px);
   place-items: center;
   overflow: hidden;
-  padding: 20px;
-  border-radius: 28px;
+  padding: clamp(14px, 5cqw, 38px);
+  border-radius: clamp(20px, 7cqw, 56px);
   box-shadow: 0 12px 30px rgb(0 0 0 / 24%);
 }
 
@@ -363,13 +422,13 @@
 .expo-phone-preview {
   position: relative;
   display: grid;
-  width: 148px;
-  height: 300px;
+  width: clamp(140px, 36cqw, 300px);
+  height: clamp(280px, 72cqw, 580px);
   place-items: center;
   overflow: hidden;
-  padding: 18px 12px;
-  border: 5px solid var(--surface);
-  border-radius: 26px;
+  padding: clamp(14px, 4cqw, 28px) 12px;
+  border: clamp(4px, 1cqw, 6px) solid var(--surface);
+  border-radius: clamp(22px, 7cqw, 48px);
   box-shadow:
     0 0 0 1px var(--line-strong),
     0 12px 30px rgb(0 0 0 / 24%);
@@ -377,9 +436,9 @@
 
 .expo-phone-notch {
   position: absolute;
-  top: 8px;
+  top: clamp(6px, 2cqw, 10px);
   left: 50%;
-  width: 44px;
+  width: clamp(36px, 11cqw, 56px);
   height: 6px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text) 24%, transparent);
@@ -397,12 +456,6 @@
   font-family: var(--font-mono);
   font-size: 9px;
   text-align: center;
-}
-
-@media (max-width: 640px) {
-  .expo-preview-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 .expo-asset-list {
