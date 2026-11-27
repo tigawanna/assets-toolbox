@@ -327,176 +327,212 @@
   font-size: 9px;
 }
 
-/* Launch screen — no app shell, just project selection and creation. */
+/* Launch screen — compact welcome panel, no hero text or competing inputs. */
 .launch-page {
   display: flex;
   min-height: 100%;
   flex-direction: column;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .launch-top {
   display: flex;
+  min-height: 56px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 38px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--line);
 }
 
 .launch-brand {
   display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+.launch-brand .brand-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
 }
 
 .launch-brand-copy {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .launch-brand-copy strong {
-  font-size: 13px;
+  overflow: hidden;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .launch-brand-copy small {
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: 10px;
 }
 
-.launch-theme {
-  display: inline-flex;
-  min-height: 32px;
+.launch-top-actions {
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: 7px;
-  padding: 5px 10px;
+  gap: 6px;
+}
+
+.launch-search {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-subtle);
+}
+
+.launch-search input {
+  width: 160px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.launch-action,
+.launch-icon-action {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface);
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: 11px;
 }
 
-.launch-theme:hover {
+.launch-icon-action {
+  width: 30px;
+  padding: 0;
+}
+
+.launch-action:hover,
+.launch-icon-action:hover {
   border-color: var(--line-strong);
   color: var(--text);
 }
 
-.launch-body {
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 64px 38px 48px;
-}
-
-.launch-intro {
-  max-width: 60ch;
-  margin-bottom: 34px;
-}
-
-.launch-eyebrow {
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.launch-intro h1 {
-  margin: 10px 0 12px;
-  font-size: clamp(26px, 4cqw, 40px);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-}
-
-.launch-intro p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.launch-create {
-  display: flex;
-  gap: 8px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--line);
-}
-
-.launch-create input {
-  height: 38px;
-  min-width: 0;
-  flex: 1;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-}
-
-.launch-create-button {
-  display: inline-flex;
-  min-height: 38px;
-  align-items: center;
-  gap: 7px;
-  padding: 0 16px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
+.launch-action-primary {
+  border-color: var(--accent);
   background: var(--accent);
   color: var(--on-ink);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
   font-weight: 600;
 }
 
-.launch-create-button:disabled {
+.launch-action-primary:hover:not(:disabled) {
+  background: var(--ink-hover);
+  color: var(--on-ink);
+}
+
+.launch-action:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.launch-error {
-  margin: 12px 0 0;
-  color: var(--accent);
-  font-size: 11px;
+.launch-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.launch-projects {
-  margin-top: 28px;
+.launch-body {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 26px 24px 48px;
 }
 
-.launch-projects h2 {
-  margin: 0 0 12px;
+.launch-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px 10px;
+  border-bottom: 1px solid var(--line);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.launch-list-head span:last-child {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .launch-project-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
+  padding-top: 6px;
 }
 
 .launch-project-row {
   display: flex;
+  width: 100%;
   min-width: 0;
   align-items: center;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
+  gap: 12px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.launch-project-row:hover,
+.launch-project-row:focus-visible {
+  background: var(--surface-hover);
+}
+
+.launch-project-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface-muted);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .launch-project-copy {
@@ -504,21 +540,24 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .launch-project-copy strong {
   overflow: hidden;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .launch-project-copy span {
+  overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
   font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .launch-project-active {
@@ -527,48 +566,101 @@
   font-size: 9px;
 }
 
-.launch-open,
-.launch-delete {
+.launch-project-delete {
   display: inline-flex;
-  min-height: 30px;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
   align-items: center;
   justify-content: center;
-  padding: 5px 10px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface);
-  color: var(--text-muted);
+  border-radius: 6px;
+  color: var(--text-subtle);
   cursor: pointer;
-  font: inherit;
-  font-size: 10px;
 }
 
-.launch-open:hover,
-.launch-delete:hover {
-  border-color: var(--line-strong);
+.launch-project-delete:hover,
+.launch-project-delete:focus-visible {
+  background: var(--surface);
   color: var(--text);
 }
 
-.launch-delete {
-  padding: 5px 7px;
-}
-
-.launch-empty {
-  margin: 0;
+.launch-empty,
+.launch-error {
+  margin: 10px 4px 0;
   color: var(--text-subtle);
   font-size: 11px;
 }
 
+.launch-error {
+  color: var(--accent);
+}
+
+.launch-dialog-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(8 9 8 / 70%);
+}
+
+.launch-dialog {
+  display: flex;
+  width: min(360px, 100%);
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 40%);
+}
+
+.launch-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.launch-dialog-head strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.launch-dialog input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--canvas);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.launch-dialog input:focus {
+  border-color: var(--accent);
+}
+
+.launch-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 @media (max-width: 640px) {
   .launch-top {
-    padding: 18px 16px;
+    padding: 10px 12px;
+  }
+
+  .launch-search input {
+    width: 90px;
   }
 
   .launch-body {
-    padding: 40px 16px 48px;
-  }
-
-  .launch-create {
-    flex-direction: column;
+    padding: 20px 12px 40px;
   }
 }
