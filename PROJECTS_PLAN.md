@@ -1,6 +1,6 @@
 # Global Projects — actionable plan
 
-**Status:** Phase 1 implemented 2026-11-27 (core store, launch screen, project switching, Brand/Expo/Sound/Inspect documents). Phases 2–5 remain.
+**Status:** Phase 1 implemented 2026-11-27 (core store, launch screen, project switching, Brand/Expo/Sound/Inspect documents). Phase 2 in progress: project asset library with upload, blob previews, copy/move is done; tool generation wiring remains.
 **Goal:** create a project (e.g. "Geo Kenya") and every related asset and tool document for it lives in that project's own folder. Brand, Expo, Studio, Compose, Sound and Inspect all read and write the same project. A brand mark chosen once can be referenced by Expo and Studio; assets can be copied or moved between projects.
 
 **Scoped out / future TODO:** multiple collections per tool, cross-project links, and Workspaces (multiplayer). See §10.
@@ -325,11 +325,11 @@ Migration is idempotent and writes `schemaVersion` into `projects.json`.
 
 ### Phase 2 — Shared asset library + Brand/Expo
 
-- [ ] Asset records, blob store by SHA-256, blob GET, `ImportFileAsAsset`.
+- [x] Asset records, blob store by SHA-256, blob GET, and native asset endpoints. Project dashboard has an asset library with upload, thumbnail previews, and copy/move between projects.
 - [ ] Replace `AssetInput.handle` refs with `AssetId`; keep handles only inside generation requests (resolve asset → staged temp file).
-- [ ] "Use project brand mark" in Expo; autosave Brand/Expo documents.
+- [ ] "Use project brand mark" in Expo. Brand/Expo documents already autosave.
 - [ ] Commit generated outputs as assets before `DiscardAssetJob`; flat asset list in both tools.
-- [ ] Tests: dedupe by hash, output commit, cross-tool reference resolves, generation still native-only.
+- [ ] Tests: output commit, cross-tool reference resolves, generation still native-only.
 - **Done when:** one mark drives Brand and Expo, and both reopen with form + outputs intact.
 
 ### Phase 3 — Compose, Studio, Sound, Inspect
