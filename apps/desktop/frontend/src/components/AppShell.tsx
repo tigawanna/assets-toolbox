@@ -152,6 +152,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeydown);
   }, [toggleSidebar]);
 
+  if (location.pathname === "/") {
+    return (
+      <div className="launch-shell">
+        <main className="launch-main">
+          <div className="page-content">{children}</div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`app-shell${sidebarCollapsed ? " collapsed" : ""}${editorRoute ? " editor-route" : ""}`}
@@ -190,7 +200,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="nav-label">Projects</span>
             <ShellLink
               to="/"
-              className={`nav-link${location.pathname === "/" ? " active" : ""}`}
+              className="nav-link"
               aria-label="Projects"
               title="Projects"
               aria-current={location.pathname === "/" ? "page" : undefined}
@@ -211,7 +221,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     key={tool.id}
                     to="/projects/$projectId/$tool"
                     params={{ projectId, tool: projectToolSlug(tool.id) }}
-                    className={`nav-link${active ? " active" : ""}`}
+                    className="nav-link"
                     aria-label={tool.shortName}
                     title={tool.shortName}
                     aria-current={active ? "page" : undefined}

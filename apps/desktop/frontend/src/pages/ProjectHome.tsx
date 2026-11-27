@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FolderOpen, Plus, Trash2 } from "lucide-react";
+import { Moon, Plus, Sun, Trash2 } from "lucide-react";
 
-import { PackageIcon } from "../components/PackageIcon";
-import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { getActiveProjectId, getProjectClient, setActiveProjectId } from "../lib/projects/client";
-import { toolPackages } from "../lib/catalog";
-import type { ProjectId, ProjectSummary } from "../lib/projects/types";
+import { toggleTheme, useTheme } from "../lib/theme";
+import type { ProjectSummary } from "../lib/projects/types";
 import "./projects.css";
 
 export function ProjectHome() {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -85,62 +84,101 @@ export function ProjectHome() {
   );
 
   return (
-    <section className="projects-page">
-      <ToolHeader
-        icon={<FolderOpen size={17} />}
-        title="Projects"
-        description="local folders · everything for a project in one place"
-        actions={
-          <button type="button" onClick={() => void load()} disabled={loading}>
-            Refresh
+    <div className="launch-page">
+      <header className="launch-top">
+        <div className="launch-brand">
+          <span className="brand-mark" aria-hidden="true" />
+          <span className="launch-brand-copy">
+            <strong>Assets Toolbox</strong>
+            <small>Local project workspace</small>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="launch-theme"
+          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          title={theme === "dark" ? "Light mode" : "Dark mode"}
+          onClick={toggleTheme}
+        >
+          {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+          <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+        </button>
+      </header>
+
+      <main className="launch-body">
+        <div className="launch-intro">
+          <span className="launch-eyebrow">Projects</span>
+          <h1>Where should we work?</h1>
+          <p>
+            Each project keeps its own tools and assets in one place. Pick one to open the tool
+            library, or start a new one.
+          </p>
+        </div>
+
+        <div className="launch-create">
+          <input
+            aria-label="New project name"
+            value={name}
+            placeholder="Project name, e.g. Geo Kenya"
+            onChange={(event) => setName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void create();
+            }}
+          />
+          <button
+            type="button"
+            className="launch-create-button"
+            disabled={!name.trim()}
+            onClick={() => void create()}
+          >
+            <Plus size={14} />
+            Create project
           </button>
-        }
-      />
+        </div>
 
-      {error ? <p className="projects-empty">{error}</p> : null}
+        {error ? <p className="launch-error">{error}</p> : null}
 
-      <div className="projects-list">
+        <section className="launch-projects">
+          <h2>Your projects</h2>
+          {renderProjects()}
+        </section>
+      </main>
+    </div>
+  );
+
+  function renderProjects() {
+    if (loading) return <p className="launch-empty">Loading projects…</p>;
+    if (projects.length === 0) {
+      return <p className="launch-empty">No projects yet. Create one above to get started.</p>;
+    }
+    return (
+      <div className="launch-project-list">
         {projects.map((project) => (
-          <article className="projects-row" key={project.id}>
-            <div className="projects-row-main">
+          <article className="launch-project-row" key={project.id}>
+            <div className="launch-project-copy">
               <strong>{project.name}</strong>
               <span>
                 {project.counts.assets} assets · {project.counts.tools} tools ·{" "}
                 {new Date(project.updatedAt).toLocaleDateString()}
               </span>
             </div>
-            {activeId === project.id ? <span className="projects-row-active">ACTIVE</span> : null}
-            <div className="projects-actions">
-              <ToolHeaderButton onClick={() => open(project)}>Open</ToolHeaderButton>
-              <ToolHeaderButton
-                variant="icon"
-                aria-label={`Delete ${project.name}`}
-                onClick={() => void remove(project)}
-              >
-                <Trash2 size={13} />
-              </ToolHeaderButton>
-            </div>
+            {activeId === project.id ? <span className="launch-project-active">ACTIVE</span> : null}
+            <button type="button" className="launch-open" onClick={() => open(project)}>
+              Open
+            </button>
+            <button
+              type="button"
+              className="launch-delete"
+              aria-label={`Delete ${project.name}`}
+              onClick={() => void remove(project)}
+            >
+              <Trash2 size={13} />
+            </button>
           </article>
         ))}
       </div>
-
-      <div className="projects-new">
-        <input
-          aria-label="New project name"
-          value={name}
-          placeholder="New project name, e.g. Geo Kenya"
-          onChange={(event) => setName(event.currentTarget.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") void create();
-          }}
-        />
-        <ToolHeaderButton variant="primary" onClick={() => void create()} disabled={!name.trim()}>
-          <Plus size={13} />
-          Create project
-        </ToolHeaderButton>
-      </div>
-    </section>
-  );
+    );
+  }
 }
 
 const PROJECT_TOOL_ROUTE: Record<string, string> = {
@@ -155,9 +193,3 @@ const PROJECT_TOOL_ROUTE: Record<string, string> = {
 export function projectToolSlug(toolId: string): string {
   return PROJECT_TOOL_ROUTE[toolId] ?? toolId;
 }
-
-export function toolIcon(name: (typeof toolPackages)[number]["icon"]) {
-  return <PackageIcon name={name} size={17} />;
-}
-
-export type { ProjectId };
