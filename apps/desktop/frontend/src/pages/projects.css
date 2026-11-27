@@ -303,7 +303,7 @@
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
-  padding: 64px 38px;
+  padding: 64px 38px 48px;
 }
 
 .launch-intro {
@@ -477,7 +477,7 @@
   }
 
   .launch-body {
-    padding: 40px 16px;
+    padding: 40px 16px 48px;
   }
 
   .launch-create {

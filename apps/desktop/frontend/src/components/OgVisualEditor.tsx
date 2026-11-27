@@ -122,6 +122,10 @@ interface DragState {
   startY: number;
   originX: number;
   originY: number;
+  originWidth: number;
+  originHeight: number;
+  mode: "move" | "resize";
+  corner?: "nw" | "ne" | "sw" | "se";
 }
 
 type StyleVars = CSSProperties & Record<`--${string}`, string>;
@@ -791,6 +795,9 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
         startY: event.clientY,
         originX: layer.x,
         originY: layer.y,
+        originWidth: layer.width,
+        originHeight: layer.height,
+        mode: "move",
       };
       event.currentTarget.setPointerCapture(event.pointerId);
     },
@@ -800,7 +807,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const handleLayerPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (!drag || drag.pointerId !== event.pointerId || drag.mode !== "move") return;
       const ratio = Number.isFinite(scale) && scale > 0 ? scale : 1;
       updateLayer(
         drag.id,
@@ -817,7 +824,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const handleLayerPointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (!drag || drag.pointerId !== event.pointerId || drag.mode !== "move") return;
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
@@ -828,6 +835,97 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
       const changed = layers.some((layer, index) => {
         const before = snapshot[index];
         return !before || before.x !== layer.x || before.y !== layer.y;
+      });
+      if (changed) {
+        setHistory((current) => [...current.slice(-49), snapshot]);
+        setFuture([]);
+      }
+    },
+    [layers],
+  );
+
+  const handleResizePointerDown = useCallback(
+    (
+      event: ReactPointerEvent<HTMLButtonElement>,
+      layer: Layer,
+      corner: NonNullable<DragState["corner"]>,
+    ) => {
+      if (event.button !== 0) return;
+      event.stopPropagation();
+      setSelectedId(layer.id);
+      dragSnapshotRef.current = layers;
+      dragRef.current = {
+        id: layer.id,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: layer.x,
+        originY: layer.y,
+        originWidth: layer.width,
+        originHeight: layer.height,
+        mode: "resize",
+        corner,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [layers],
+  );
+
+  const handleResizePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId || drag.mode !== "resize" || !drag.corner) {
+        return;
+      }
+      const ratio = Number.isFinite(scale) && scale > 0 ? scale : 1;
+      const deltaX = (event.clientX - drag.startX) / ratio;
+      const deltaY = (event.clientY - drag.startY) / ratio;
+      let width =
+        drag.corner === "nw" || drag.corner === "sw"
+          ? drag.originWidth - deltaX
+          : drag.originWidth + deltaX;
+      let height =
+        drag.corner === "nw" || drag.corner === "ne"
+          ? drag.originHeight - deltaY
+          : drag.originHeight + deltaY;
+      width = Math.max(20, Math.round(width));
+      height = Math.max(20, Math.round(height));
+      if (event.shiftKey && drag.originHeight > 0) {
+        height = Math.max(20, Math.round((width / drag.originWidth) * drag.originHeight));
+      }
+      const x =
+        drag.corner === "nw" || drag.corner === "sw"
+          ? drag.originX + (drag.originWidth - width)
+          : drag.originX;
+      const y =
+        drag.corner === "nw" || drag.corner === "ne"
+          ? drag.originY + (drag.originHeight - height)
+          : drag.originY;
+      updateLayer(drag.id, { x: Math.round(x), y: Math.round(y), width, height }, false);
+    },
+    [scale, updateLayer],
+  );
+
+  const handleResizePointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId || drag.mode !== "resize") return;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      const snapshot = dragSnapshotRef.current;
+      dragSnapshotRef.current = null;
+      dragRef.current = null;
+      if (!snapshot) return;
+      const changed = layers.some((layer, index) => {
+        const before = snapshot[index];
+        return (
+          !before ||
+          before.x !== layer.x ||
+          before.y !== layer.y ||
+          before.width !== layer.width ||
+          before.height !== layer.height
+        );
       });
       if (changed) {
         setHistory((current) => [...current.slice(-49), snapshot]);
@@ -1051,7 +1149,9 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             >
               <Redo2 size={13} aria-hidden="true" /> Redo
             </button>
-            <span className="og-editor-toolbar-hint">Ctrl+Z to undo · drag layers to move</span>
+            <span className="og-editor-toolbar-hint">
+              Ctrl+Z to undo · drag layers to move · drag corners to resize
+            </span>
           </div>
 
           <div
@@ -1094,6 +1194,20 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                 >
                   {layer.kind === "text" ? layer.text : null}
                   {layer.kind === "image" ? <img src={layer.src} alt="" draggable={false} /> : null}
+                  {selectedId === layer.id && layer.kind !== "text"
+                    ? (["nw", "ne", "sw", "se"] as const).map((corner) => (
+                        <button
+                          key={corner}
+                          type="button"
+                          className={`og-editor-handle og-editor-handle--${corner}`}
+                          aria-label={`Resize ${layer.name} from ${corner}`}
+                          onPointerDown={(event) => handleResizePointerDown(event, layer, corner)}
+                          onPointerMove={handleResizePointerMove}
+                          onPointerUp={handleResizePointerUp}
+                          onPointerCancel={handleResizePointerUp}
+                        />
+                      ))
+                    : null}
                 </div>
               ))}
             </div>
@@ -1370,7 +1484,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                 {error}
               </span>
             ) : (
-              "Delete removes the selected layer · Drag or use arrow keys to move"
+              "Delete removes the selected layer · Drag to move · Drag corners to resize · Shift keeps ratio"
             )}
           </span>
           <span>{layers.length} layers</span>
