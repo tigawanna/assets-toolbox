@@ -18,7 +18,6 @@ import {
   initializeAudio,
   play,
   renderWav,
-  sweep,
   wavFilename,
   type SoundName,
 } from "@tigawanna/cabra-sound";
@@ -34,16 +33,6 @@ interface ExportProgress {
   completed: number;
   total: number;
 }
-
-const FAMILIES: ReadonlyArray<{ id: Family; label: string }> = [
-  { id: "all", label: "All" },
-  { id: "favorites", label: "Favorites" },
-  { id: "mech", label: "Mechanical" },
-  { id: "bubble", label: "Bubble" },
-  { id: "press", label: "Press" },
-  { id: "card", label: "Cards" },
-  { id: "other", label: "Other" },
-];
 
 const WAVEFORM_BUCKETS = 32;
 const WAVE_PROFILES = { sine: 1, square: 0.92, triangle: 0.82, sawtooth: 0.72 } as const;
@@ -202,7 +191,6 @@ export function SoundBoard() {
   }, []);
 
   const normalizedQuery = useMemo(() => query.trim().replace(/\s+/g, " ").toLowerCase(), [query]);
-  const showHelpers = family === "all" && normalizedQuery.length === 0;
   const visibleNames = useMemo(
     () =>
       AVAILABLE_NAMES.filter((name) => {
@@ -259,21 +247,6 @@ export function SoundBoard() {
     setRevealed(name);
     playSound(name);
   }, [playSound, visibleNames]);
-
-  const playHelper = useCallback(
-    (label: string, work: () => boolean) => {
-      if (!enabled) {
-        setStatus("Sound is muted. Turn it on to audition.");
-        return;
-      }
-      if (!work()) {
-        setStatus(`Could not play ${label}. Audio is unavailable or suppressed.`);
-        return;
-      }
-      setStatus(`Playing ${label}`);
-    },
-    [enabled],
-  );
 
   const beginExport = useCallback((total: number): number | null => {
     if (exportingRef.current) return null;
@@ -407,10 +380,66 @@ export function SoundBoard() {
         title="Cabra Sound"
         meta={`${AVAILABLE_NAMES.length} sounds · ${enabled ? "audio on" : "muted"}`}
         actions={
-          <button type="button" onClick={playRandom}>
-            <Shuffle size={13} aria-hidden="true" />
-            Random
-          </button>
+          <>
+            <button
+              type="button"
+              aria-label={family === "favorites" ? "Show all sounds" : "Show favorites"}
+              aria-pressed={family === "favorites"}
+              onClick={() => setFamily(family === "favorites" ? "all" : "favorites")}
+            >
+              <Star
+                size={13}
+                fill={family === "favorites" ? "currentColor" : "none"}
+                aria-hidden="true"
+              />
+              Favorites
+            </button>
+            <button
+              type="button"
+              aria-label={enabled ? "Mute sounds" : "Enable sounds"}
+              aria-pressed={enabled}
+              onClick={() => controls.toggle()}
+            >
+              {enabled ? (
+                <Volume2 size={13} aria-hidden="true" />
+              ) : (
+                <VolumeX size={13} aria-hidden="true" />
+              )}
+              Sound
+            </button>
+            <label className="tool-header-volume">
+              <span className="sound-sr-only">Volume</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(event) => controls.setVolume(Number(event.currentTarget.value))}
+              />
+              <span>{Math.round(volume * 100)}%</span>
+            </label>
+            <button
+              type="button"
+              disabled={visibleNames.length === 0 || exporting}
+              onClick={() => void exportMix()}
+            >
+              <Download size={13} aria-hidden="true" />
+              Mix
+            </button>
+            <button
+              type="button"
+              disabled={visibleNames.length === 0 || exporting}
+              onClick={() => void exportEach()}
+            >
+              <FileArchive size={13} aria-hidden="true" />
+              WAVs
+            </button>
+            <button type="button" onClick={playRandom}>
+              <Shuffle size={13} aria-hidden="true" />
+              Random
+            </button>
+          </>
         }
       />
 
@@ -428,86 +457,7 @@ export function SoundBoard() {
           />
           <kbd>/</kbd>
         </label>
-
-        <div className="sound-audio-controls">
-          <button
-            className={`sound-audio-toggle${enabled ? " sound-is-active" : ""}`}
-            type="button"
-            aria-label={enabled ? "Mute sounds" : "Enable sounds"}
-            aria-pressed={enabled}
-            onClick={() => controls.toggle()}
-          >
-            {enabled ? (
-              <Volume2 size={17} aria-hidden="true" />
-            ) : (
-              <VolumeX size={17} aria-hidden="true" />
-            )}
-            <span>{enabled ? "Sound on" : "Muted"}</span>
-          </button>
-
-          <label className="sound-volume-control">
-            <span className="sound-sr-only">Volume</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={(event) => controls.setVolume(Number(event.currentTarget.value))}
-            />
-            <span>{Math.round(volume * 100)}%</span>
-          </label>
-        </div>
       </div>
-
-      <div className="sound-filter-row">
-        <div className="sound-family-filters" role="group" aria-label="Filter sounds by family">
-          {FAMILIES.map((item) => (
-            <button
-              className={family === item.id ? "sound-is-active" : undefined}
-              type="button"
-              aria-pressed={family === item.id}
-              key={item.id}
-              onClick={() => {
-                setFamily(item.id);
-                setQuery("");
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="sound-export-actions">
-          <button
-            className="sound-export-button"
-            type="button"
-            disabled={visibleNames.length === 0 || exporting}
-            onClick={() => void exportMix()}
-          >
-            <Download size={14} aria-hidden="true" />
-            Export mix
-          </button>
-          <button
-            className="sound-export-button"
-            type="button"
-            disabled={visibleNames.length === 0 || exporting}
-            onClick={() => void exportEach()}
-          >
-            <FileArchive size={14} aria-hidden="true" />
-            Each as WAV
-          </button>
-        </div>
-      </div>
-
-      {showHelpers && (
-        <div className="sound-helper-grid" role="group" aria-label="Sound helpers">
-          <button type="button" onClick={() => playHelper("Sweep up", () => sweep(180, true))}>
-            <Play size={15} aria-hidden="true" />
-            Sweep up
-          </button>
-        </div>
-      )}
 
       {selected ? (
         <div className="sound-now-playing" aria-label="Last played sound">
@@ -552,10 +502,6 @@ export function SoundBoard() {
       ) : null}
 
       <div className="sound-status">
-        <span
-          className={`sound-status-dot${enabled ? "" : " sound-is-muted"}`}
-          aria-hidden="true"
-        />
         <span className="sound-status-message" aria-live="polite" aria-atomic="true">
           {status}
         </span>
