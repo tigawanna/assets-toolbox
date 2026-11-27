@@ -48,9 +48,16 @@ export function HelpPage() {
         title="Help"
         description="tools · workflows · tips"
         actions={
-          <ToolHeaderButton onClick={() => void navigate({ to: "/mcp" })}>
-            MCP settings
-          </ToolHeaderButton>
+          <>
+            <ToolHeaderButton
+              onClick={() => window.dispatchEvent(new Event("assets-toolbox:replay-tour"))}
+            >
+              Replay tour
+            </ToolHeaderButton>
+            <ToolHeaderButton onClick={() => void navigate({ to: "/mcp" })}>
+              MCP settings
+            </ToolHeaderButton>
+          </>
         }
       />
 

@@ -5,12 +5,14 @@ import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 import { findPackage, toolPackages } from "../lib/catalog";
 import { useDesktopFlush, useFlushRegistry } from "../lib/flush";
 import { getActiveProjectId } from "../lib/projects/client";
+import { hasSeenTour } from "../lib/tour";
 import { registerMcpBridge } from "../lib/mcp";
 import { setDesktopModuleActive } from "../lib/desktop";
 import { formatPlatform, getSystemInfo, type NativeSystemInfo } from "../lib/native";
 import { toggleTheme, useTheme } from "../lib/theme";
 import { PackageIcon } from "./PackageIcon";
 import { ShortcutsDialog } from "./ShortcutsDialog";
+import { IntroTour } from "./IntroTour";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { ShellLink } from "./ShellLink";
 import { projectToolSlug } from "../pages/ProjectHome";
@@ -30,6 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarPreference);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(() => !hasSeenTour());
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 900px)").matches);
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -156,6 +159,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const replay = () => setTourOpen(true);
+    window.addEventListener("assets-toolbox:replay-tour", replay);
+    return () => window.removeEventListener("assets-toolbox:replay-tour", replay);
+  }, []);
+
+  useEffect(() => {
     function handleShortcutKey(event: KeyboardEvent) {
       if (event.key === "?" && !event.ctrlKey && !event.metaKey && !event.altKey) {
         const target = event.target;
@@ -192,6 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="page-content">{children}</div>
         </main>
         {shortcutsOpen ? <ShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
+        {tourOpen ? <IntroTour onClose={() => setTourOpen(false)} /> : null}
       </div>
     );
   }
@@ -362,6 +372,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </section>
       {shortcutsOpen ? <ShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
+      {tourOpen ? <IntroTour onClose={() => setTourOpen(false)} /> : null}
     </div>
   );
 }

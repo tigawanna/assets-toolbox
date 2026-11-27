@@ -1,0 +1,186 @@
+.intro-backdrop {
+  position: fixed;
+  z-index: 150;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(8 9 8 / 82%);
+  backdrop-filter: blur(4px);
+}
+
+.intro-dialog {
+  display: flex;
+  width: min(540px, 100%);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 50%);
+  color: var(--text);
+}
+
+.intro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.intro-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.intro-brand .brand-mark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 7px;
+}
+
+.intro-header > button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.intro-header > button:hover {
+  color: var(--text);
+}
+
+.intro-slide {
+  display: flex;
+  min-height: 280px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 24px 24px;
+}
+
+.intro-eyebrow {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.intro-slide h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.intro-slide p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.intro-slide ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro-slide li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.intro-slide li svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.intro-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.intro-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.intro-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.intro-dots span.active {
+  background: var(--accent);
+}
+
+.intro-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intro-actions button {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+
+.intro-actions button:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.intro-actions .intro-next {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-ink);
+  font-weight: 600;
+}
+
+.intro-actions .intro-next:hover {
+  background: var(--ink-hover);
+  color: var(--on-ink);
+}
+
+.intro-actions .intro-skip {
+  border-color: transparent;
+  background: transparent;
+}
