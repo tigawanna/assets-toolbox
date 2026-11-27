@@ -14,6 +14,7 @@ import { ColorField } from "../components/ColorField";
 import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEditor";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
+import { selectWebImage } from "../lib/asset-input";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -118,7 +119,17 @@ export function BrandAssetsRoute() {
   const chooseIcon = useCallback(async () => {
     setError("");
     const app = getAssetApp();
-    if (!app) return;
+    if (!app) {
+      try {
+        const selection = await selectWebImage();
+        if (!selection) return;
+        setIcon(selection.input);
+        setSourcePreview(selection.preview);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not preview that image.");
+      }
+      return;
+    }
     try {
       const selected = await app.SelectAssetImage("icon");
       setIcon(selected);
@@ -263,7 +274,7 @@ export function BrandAssetsRoute() {
 
       {native ? null : (
         <p className="brand-notice">
-          Generation requires the Wails desktop app. You can still inspect the form here.
+          Choose a mark to preview it here. Generating the asset set requires the Wails desktop app.
         </p>
       )}
 
@@ -295,7 +306,7 @@ export function BrandAssetsRoute() {
                     : "Transparent SVG or PNG"}
                 </span>
               </div>
-              <button type="button" disabled={!native} onClick={() => void chooseIcon()}>
+              <button type="button" onClick={() => void chooseIcon()}>
                 {icon ? <Check size={14} /> : <FolderOpen size={14} />}
                 {icon ? "Change" : "Choose"}
               </button>

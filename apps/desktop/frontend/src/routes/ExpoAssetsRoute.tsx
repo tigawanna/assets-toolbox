@@ -13,6 +13,7 @@ import { PreviewGalleryDialog, type PreviewGalleryItem } from "../components/Pre
 import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
+import { selectWebImage } from "../lib/asset-input";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -116,7 +117,17 @@ export function ExpoAssetsRoute() {
   const chooseSource = useCallback(async (role: SourceRole) => {
     setError("");
     const app = getAssetApp();
-    if (!app) return;
+    if (!app) {
+      try {
+        const selection = await selectWebImage();
+        if (!selection) return;
+        setSources((current) => ({ ...current, [role]: selection.input }));
+        setSourcePreviews((current) => ({ ...current, [role]: selection.preview }));
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not preview that image.");
+      }
+      return;
+    }
     try {
       const selected = await app.SelectAssetImage(role);
       setSources((current) => ({ ...current, [role]: selected }));
@@ -233,7 +244,8 @@ export function ExpoAssetsRoute() {
 
       {native ? null : (
         <p className="expo-notice">
-          Generation requires the Wails desktop app. You can still inspect the form here.
+          Choose images to preview them here. Generating the asset set requires the Wails desktop
+          app.
         </p>
       )}
 
@@ -269,11 +281,7 @@ export function ExpoAssetsRoute() {
                         </span>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void chooseSource(source.role)}
-                      disabled={!native}
-                    >
+                    <button type="button" onClick={() => void chooseSource(source.role)}>
                       {selected ? <Check size={14} /> : <FolderOpen size={14} />}
                       {sourceActionLabel(Boolean(selected), source.optional)}
                     </button>
