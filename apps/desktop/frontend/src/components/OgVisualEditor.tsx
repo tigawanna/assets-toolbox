@@ -34,6 +34,13 @@ export interface OgDesignResult {
   height: number;
 }
 
+export interface OgEditorDraft {
+  layers: Layer[];
+  selectedId: string | null;
+  width: number;
+  height: number;
+}
+
 export interface OgVisualEditorProps {
   title?: string;
   description?: string;
@@ -41,6 +48,8 @@ export interface OgVisualEditorProps {
   imageUrl?: string;
   width?: number;
   height?: number;
+  initialDraft?: OgEditorDraft | null;
+  onDraftChange?: (draft: OgEditorDraft) => void;
   onExport: (result: OgDesignResult) => void;
   onClose: () => void;
 }
@@ -514,10 +523,20 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const designWidth = dimension(props.width, 1200);
   const designHeight = dimension(props.height, 630);
 
-  const [layers, setLayers] = useState<Layer[]>(() =>
-    createInitialLayers(props, designWidth, designHeight),
+  const [layers, setLayers] = useState<Layer[]>(() => {
+    const draft = props.initialDraft;
+    if (
+      draft &&
+      Array.isArray(draft.layers) &&
+      draft.layers.every((layer) => layer && typeof layer.id === "string")
+    ) {
+      return draft.layers;
+    }
+    return createInitialLayers(props, designWidth, designHeight);
+  });
+  const [selectedId, setSelectedId] = useState<string | null>(
+    props.initialDraft?.selectedId ?? null,
   );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [history, setHistory] = useState<Layer[][]>([]);
   const [future, setFuture] = useState<Layer[][]>([]);
   const [scale, setScale] = useState(1);
@@ -541,6 +560,15 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     closeRef.current?.focus();
     return () => previous?.focus();
   }, []);
+
+  useEffect(() => {
+    props.onDraftChange?.({
+      layers,
+      selectedId,
+      width: designWidth,
+      height: designHeight,
+    });
+  }, [designHeight, designWidth, layers, selectedId, props.onDraftChange]);
 
   useEffect(() => {
     const element = previewRef.current;

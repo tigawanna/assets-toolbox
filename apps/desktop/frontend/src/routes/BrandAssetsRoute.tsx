@@ -11,11 +11,15 @@ import { defaultIconSizes } from "@assets/brand-assets/types";
 
 import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
-import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEditor";
+import {
+  OgVisualEditor,
+  type OgDesignResult,
+  type OgEditorDraft,
+} from "../components/OgVisualEditor";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { selectWebImage } from "../lib/asset-input";
-import { useProjectDocument } from "../lib/projects/context";
+import { useProject, useProjectDocument } from "../lib/projects/context";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -57,6 +61,8 @@ interface BrandDocumentData {
   startUrl: string;
   display: string;
   outDir: string;
+  ogDraft: OgEditorDraft | null;
+  initialized: boolean;
 }
 
 const BRAND_DEFAULTS: BrandDocumentData = {
@@ -76,9 +82,12 @@ const BRAND_DEFAULTS: BrandDocumentData = {
   startUrl: "/",
   display: "standalone",
   outDir: "out",
+  ogDraft: null,
+  initialized: false,
 };
 
 export function BrandAssetsRoute() {
+  const { project } = useProject();
   const [icon, setIcon] = useState<AssetInput | null>(null);
   const [plate, setPlate] = useState("#0f100f");
   const [copySvg, setCopySvg] = useState(false);
@@ -112,6 +121,8 @@ export function BrandAssetsRoute() {
     ready: brandReady,
   } = useProjectDocument<BrandDocumentData>("brand", BRAND_DEFAULTS);
   const brandHydrated = useRef(false);
+  const ogDraftRef = useRef(brandDocument.ogDraft);
+  ogDraftRef.current = brandDocument.ogDraft;
 
   useEffect(() => {
     if (!brandReady || brandHydrated.current) return;
@@ -132,7 +143,11 @@ export function BrandAssetsRoute() {
     setStartUrl(brandDocument.startUrl);
     setDisplay(brandDocument.display);
     setOutDir(brandDocument.outDir);
-  }, [brandDocument, brandReady]);
+    if (!brandDocument.initialized && project?.name) {
+      setOgTitle(project.name);
+      setName(project.name);
+    }
+  }, [brandDocument, brandReady, project?.name]);
 
   useEffect(() => {
     if (!brandHydrated.current) return;
@@ -153,6 +168,8 @@ export function BrandAssetsRoute() {
       startUrl,
       display,
       outDir,
+      ogDraft: ogDraftRef.current,
+      initialized: true,
     });
   }, [
     backgroundColor,
@@ -343,6 +360,13 @@ export function BrandAssetsRoute() {
     }
   }, [result]);
 
+  const saveOgDraft = useCallback(
+    (draft: OgEditorDraft) => {
+      updateBrandDocument((current) => ({ ...current, ogDraft: draft }));
+    },
+    [updateBrandDocument],
+  );
+
   const downloadOgDesign = useCallback(() => {
     if (!ogDesign) return;
     const link = document.createElement("a");
@@ -516,7 +540,13 @@ export function BrandAssetsRoute() {
                     </button>
                   ) : null}
                   {ogDesign ? (
-                    <button type="button" onClick={() => setOgDesign(null)}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOgDesign(null);
+                        updateBrandDocument((current) => ({ ...current, ogDraft: null }));
+                      }}
+                    >
                       Clear
                     </button>
                   ) : null}
@@ -681,6 +711,8 @@ export function BrandAssetsRoute() {
           imageUrl={sourcePreview || undefined}
           width={Number(ogWidth)}
           height={Number(ogHeight)}
+          initialDraft={brandDocument.ogDraft}
+          onDraftChange={saveOgDraft}
           onExport={(design) => {
             setOgDesign(design);
             setOgEditorOpen(false);
