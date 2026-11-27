@@ -5,6 +5,7 @@ import { buildAgentBrief } from "@inspect/suggestions";
 import type { InspectReport } from "@inspect/types";
 
 import { inspectorApiPath, inspectorAssetUrl, isEditableElement } from "../inspector-utils";
+import { AssetPreviewGallery, type AssetPreviewItem } from "./AssetPreviewGallery";
 import { PreviewCards } from "./PreviewCards";
 
 export interface InspectorPageProps {
@@ -192,6 +193,29 @@ export function InspectorPage({
   }, []);
 
   const proxy = useCallback((url: string) => inspectorAssetUrl(apiBase, url), [apiBase]);
+
+  const assetItems: AssetPreviewItem[] = report
+    ? [
+        ...(report.og.image
+          ? [
+              {
+                src: proxy(report.og.image),
+                label: "og:image",
+                sub: report.ogImageInfo?.width
+                  ? `${report.ogImageInfo.width}×${report.ogImageInfo.height} · ${report.ogImageInfo.bytes ?? 0}b`
+                  : "Open Graph image",
+                meta: "image",
+              },
+            ]
+          : []),
+        ...report.favicons.map((icon, index) => ({
+          src: proxy(icon.url),
+          label: icon.sizes || icon.rel,
+          sub: `icon ${String(index + 1).padStart(2, "0")}`,
+          meta: icon.type ?? "icon",
+        })),
+      ]
+    : [];
 
   const copyAll = async () => {
     if (!report) return;
@@ -425,51 +449,7 @@ export function InspectorPage({
               {tab === "assets" ? (
                 <section className="inspect-panel inspect-panel-pad">
                   <h2 className="inspect-panel-label">Share assets</h2>
-                  <div className="inspect-asset-grid">
-                    {report.og.image ? (
-                      <a
-                        className="inspect-asset"
-                        href={proxy(report.og.image)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <span className="inspect-asset-preview inspect-og">
-                          <img src={proxy(report.og.image)} alt="Open Graph image" />
-                        </span>
-                        <span className="inspect-asset-label">og:image</span>
-                        <span className="inspect-asset-sub">
-                          {report.ogImageInfo?.width
-                            ? `${report.ogImageInfo.width}×${report.ogImageInfo.height} · `
-                            : ""}
-                          {report.ogImageInfo?.bytes
-                            ? `${(report.ogImageInfo.bytes / 1024).toFixed(0)}kb`
-                            : "image"}
-                        </span>
-                      </a>
-                    ) : null}
-                    {report.favicons.map((icon, index) => (
-                      <a
-                        className="inspect-asset"
-                        key={icon.url}
-                        href={proxy(icon.url)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <span className="inspect-asset-preview">
-                          <img src={proxy(icon.url)} alt="Favicon" />
-                        </span>
-                        <span className="inspect-asset-label">{icon.sizes || icon.rel}</span>
-                        <span className="inspect-asset-sub">
-                          icon {String(index + 1).padStart(2, "0")}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                  {!report.og.image && report.favicons.length === 0 ? (
-                    <p className="inspect-empty-copy" style={{ margin: 0 }}>
-                      No share assets were declared by this page.
-                    </p>
-                  ) : null}
+                  <AssetPreviewGallery items={assetItems} />
                 </section>
               ) : null}
 
