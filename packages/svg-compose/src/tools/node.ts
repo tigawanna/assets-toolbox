@@ -26,10 +26,11 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const create = (tag: string) => document.createElementNS(SVG_NS, tag);
 
 type Drag = {
-  kind: "node" | "in" | "out";
+  kind: "node" | "in" | "out" | "endpoint";
   index: number;
   start: StagePoint;
   origin: PathModel;
+  lineOrigin?: { x1: number; y1: number; x2: number; y2: number };
   moved?: boolean;
 };
 
@@ -40,6 +41,7 @@ export class NodeTool implements Tool {
 
   private stage: Stage | null = null;
   private path: SVGPathElement | null = null;
+  private line: SVGLineElement | null = null;
   private model: PathModel | null = null;
   private world: Matrix = IDENTITY;
   private focus = -1;
@@ -62,9 +64,20 @@ export class NodeTool implements Tool {
     const element =
       selected.length === 1 ? stage.docGroup.querySelector(`[id="${selected[0]}"]`) : null;
     const path = element?.tagName.toLowerCase() === "path" ? (element as SVGPathElement) : null;
+    const line = element?.tagName.toLowerCase() === "line" ? (element as SVGLineElement) : null;
     this.path = path;
+    this.line = line;
     this.model = path ? pathToModel(path.getAttribute("d")) : null;
     this.world = IDENTITY;
+    if (line) {
+      let matrix = parseTransform(line.getAttribute("transform"));
+      let parent = line.parentElement;
+      while (parent && parent.tagName.toLowerCase() !== "svg") {
+        matrix = multiply(parseTransform(parent.getAttribute("transform")), matrix);
+        parent = parent.parentElement;
+      }
+      this.world = matrix;
+    }
     if (path) {
       let matrix = parseTransform(path.getAttribute("transform"));
       let parent = path.parentElement;
@@ -92,6 +105,32 @@ export class NodeTool implements Tool {
     const overlay = this.stage?.toolOverlay;
     if (!overlay) return;
     overlay.replaceChildren();
+
+    if (this.line) {
+      const line = this.line;
+      const endpoints = [
+        { x: Number(line.getAttribute("x1")), y: Number(line.getAttribute("y1")) },
+        { x: Number(line.getAttribute("x2")), y: Number(line.getAttribute("y2")) },
+      ];
+      for (const [index, endpoint] of endpoints.entries()) {
+        if (![endpoint.x, endpoint.y].every(Number.isFinite)) continue;
+        const at = applyMatrix(this.world, endpoint.x, endpoint.y);
+        const handle = create("rect");
+        handle.setAttribute("class", "node-point");
+        handle.setAttribute("x", String(at.x - 5));
+        handle.setAttribute("y", String(at.y - 5));
+        handle.setAttribute("width", "10");
+        handle.setAttribute("height", "10");
+        handle.setAttribute("data-manipulator", this.id);
+        handle.setAttribute("data-endpoint", String(index));
+        const title = create("title");
+        title.textContent = "Drag to move this endpoint";
+        handle.append(title);
+        overlay.append(handle);
+      }
+      return;
+    }
+
     if (!this.model) return;
 
     const screen = (x: number, y: number) => applyMatrix(this.world, x, y);
@@ -240,6 +279,27 @@ export class NodeTool implements Tool {
   }
 
   onPointerDown({ stage, event }: ToolContext) {
+    if (this.line) {
+      const target = event.target as Element | null;
+      const endpoint = target?.getAttribute("data-endpoint");
+      if (endpoint === null || endpoint === undefined) return;
+      const index = Number(endpoint);
+      if (index !== 0 && index !== 1) return;
+      stage.checkpoint();
+      this.drag = {
+        kind: "endpoint",
+        index,
+        start: this.localPoint(stage, event),
+        origin: {} as PathModel,
+        lineOrigin: {
+          x1: Number(this.line.getAttribute("x1")),
+          y1: Number(this.line.getAttribute("y1")),
+          x2: Number(this.line.getAttribute("x2")),
+          y2: Number(this.line.getAttribute("y2")),
+        },
+      };
+      return;
+    }
     if (!this.model || !this.path) return;
     const target = event.target as Element | null;
     if (target?.getAttribute("data-node-action") === "add") {
@@ -262,12 +322,27 @@ export class NodeTool implements Tool {
   }
 
   onPointerMove({ stage, event }: ToolContext) {
+    if (this.drag?.kind === "endpoint" && this.line && this.drag.lineOrigin) {
+      const point = stage.screenToScope(event.clientX, event.clientY);
+      if (this.drag.index === 0) {
+        this.line.setAttribute("x1", String(point.x));
+        this.line.setAttribute("y1", String(point.y));
+      } else {
+        this.line.setAttribute("x2", String(point.x));
+        this.line.setAttribute("y2", String(point.y));
+      }
+      this.render();
+      stage.notifyChange();
+      return;
+    }
     if (!this.drag || !this.model) return;
+    if (this.drag.kind === "endpoint") return;
+    const kind = this.drag.kind;
     const point = this.localPoint(stage, event);
     const target = this.model.nodes[this.drag.index]!;
     const origin = this.drag.origin.nodes[this.drag.index]!;
 
-    if (this.drag.kind === "node") {
+    if (kind === "node") {
       const dx = point.x - this.drag.start.x;
       const dy = point.y - this.drag.start.y;
       target.x = origin.x + dx;
@@ -276,10 +351,10 @@ export class NodeTool implements Tool {
       target.out = origin.out ? { ...origin.out } : null;
     } else {
       const handle = { x: point.x - target.x, y: point.y - target.y };
-      target[this.drag.kind] = handle;
+      target[kind] = handle;
       // Keep the opposite handle collinear when the node is smooth.
       if (target.in && target.out) {
-        const opposite = this.drag.kind === "in" ? "out" : "in";
+        const opposite = kind === "in" ? "out" : "in";
         target[opposite] = { x: -handle.x, y: -handle.y };
       }
     }

@@ -105,6 +105,22 @@ const isInput = (target: EventTarget | null) => {
   );
 };
 
+function distanceToSegment(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): number {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) return Math.hypot(px - x1, py - y1);
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSquared));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
 export class Stage {
   readonly svg: SVGSVGElement;
   readonly docGroup: SVGGElement;
@@ -183,6 +199,11 @@ export class Stage {
   subscribe(callback: () => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
+  }
+
+  /** Notify subscribers after a tool mutates the document directly. */
+  notifyChange(): void {
+    this.emit();
   }
 
   private emit() {
@@ -1015,7 +1036,32 @@ export class Stage {
       }
       return null;
     }
-    return this.selectableFrom(event.target, event.ctrlKey || event.metaKey);
+    const direct = this.selectableFrom(event.target, event.ctrlKey || event.metaKey);
+    if (direct) return direct;
+
+    // Thin lines are hard to grab by their stroke. Fall back to a proximity
+    // test so any line near the pointer can be selected and dragged.
+    if (event.altKey) return null;
+    const threshold = 10 / Math.max(0.05, this.zoom);
+    let closest: SVGLineElement | null = null;
+    let closestDistance = threshold;
+    for (const line of this.scopeRoot().querySelectorAll("line")) {
+      if (!line.id || !this.isSelectable(line)) continue;
+      const matrix = line.getScreenCTM();
+      if (!matrix || typeof DOMPoint === "undefined") continue;
+      const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+      const x1 = Number(line.getAttribute("x1"));
+      const y1 = Number(line.getAttribute("y1"));
+      const x2 = Number(line.getAttribute("x2"));
+      const y2 = Number(line.getAttribute("y2"));
+      if (![x1, y1, x2, y2].every(Number.isFinite)) continue;
+      const distance = distanceToSegment(point.x, point.y, x1, y1, x2, y2);
+      if (distance < closestDistance) {
+        closest = line;
+        closestDistance = distance;
+      }
+    }
+    return closest;
   }
 
   private beginTransform(event: PointerEvent): boolean {

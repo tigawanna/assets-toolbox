@@ -78,6 +78,31 @@ describe("object to path + node tool", () => {
     expect(stage.docGroup.querySelector("path")).toBeNull();
   });
 
+  it("drags line endpoints with the node tool", () => {
+    const stage = makeStage();
+    stage.importSvg(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><line x1="4" y1="8" x2="40" y2="16"/></svg>`,
+      "line",
+    );
+    const line = stage.docGroup.querySelector("line")!;
+    stage.select(line.id);
+    stage.setTool(new NodeTool());
+
+    const handles = stage.toolOverlay.querySelectorAll('[data-endpoint="1"]');
+    expect(handles).toHaveLength(1);
+    (handles[0] as SVGRectElement).dispatchEvent(
+      new MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 40, clientY: 16 }),
+    );
+    window.dispatchEvent(
+      new MouseEvent("pointermove", { bubbles: true, button: 0, clientX: 52, clientY: 28 }),
+    );
+    window.dispatchEvent(new MouseEvent("pointerup", { bubbles: true }));
+
+    expect(Number(line.getAttribute("x2"))).toBeGreaterThan(40);
+    expect(Number(line.getAttribute("y2"))).toBeGreaterThan(16);
+    expect(line.getAttribute("stroke-width")).toBeNull();
+  });
+
   it("adds a new node from a segment dot", () => {
     const stage = makeStage();
     stage.importSvg(

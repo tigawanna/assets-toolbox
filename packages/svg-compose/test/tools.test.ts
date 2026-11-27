@@ -63,6 +63,7 @@ describe("drawing tools", () => {
     const line = stage.docGroup.querySelector("line")!;
     expect(line.getAttribute("x2")).toBe("40");
     expect(line.getAttribute("y2")).toBe("30");
+    expect(line.getAttribute("stroke-width")).toBe("30");
   });
 
   it("pen tool finishes on Enter", () => {

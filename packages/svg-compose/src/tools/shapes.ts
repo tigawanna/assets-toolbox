@@ -147,7 +147,7 @@ export class LineTool extends DragTool {
     shape.setAttribute("y2", position(end.y));
     if (!shape.classList.contains("tool-preview")) {
       shape.setAttribute("stroke", "#312e81");
-      shape.setAttribute("stroke-width", "3");
+      shape.setAttribute("stroke-width", "30");
       shape.setAttribute("stroke-linecap", "round");
     }
   }
