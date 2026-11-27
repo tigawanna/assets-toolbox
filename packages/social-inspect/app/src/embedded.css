@@ -176,7 +176,11 @@
 }
 
 .social-inspect-root.inspect-embedded .inspect-command-wrap {
-  padding-top: 0;
+  position: sticky;
+  z-index: 15;
+  top: 44px;
+  padding: 8px 0;
+  background: var(--inspect-canvas, var(--canvas, #0b0c0d));
 }
 
 .social-inspect-root .inspect-command-label {

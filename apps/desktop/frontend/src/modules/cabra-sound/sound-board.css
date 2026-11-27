@@ -34,11 +34,16 @@
 }
 
 .sound-toolbar {
+  position: sticky;
+  z-index: 15;
+  top: 44px;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding: 8px 0;
+  background: var(--canvas);
 }
 
 .sound-search {

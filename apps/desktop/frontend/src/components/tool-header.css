@@ -1,4 +1,7 @@
 .tool-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
   display: flex;
   height: 44px;
   flex: 0 0 44px;
