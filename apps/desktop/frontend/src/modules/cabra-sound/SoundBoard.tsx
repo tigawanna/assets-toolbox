@@ -1,4 +1,14 @@
-import { Download, FileArchive, Play, Search, Shuffle, Volume2, VolumeX, X } from "lucide-react";
+import {
+  Download,
+  FileArchive,
+  Play,
+  Search,
+  Shuffle,
+  Star,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   AVAILABLE_NAMES,
@@ -16,7 +26,7 @@ import {
 import { downloadBlob, zipStore } from "../../lib/zip";
 import "./sound-board.css";
 
-type Family = "all" | "mech" | "bubble" | "press" | "card" | "other";
+type Family = "all" | "favorites" | "mech" | "bubble" | "press" | "card" | "other";
 type SoundFamily = Exclude<Family, "all">;
 
 interface ExportProgress {
@@ -26,6 +36,7 @@ interface ExportProgress {
 
 const FAMILIES: ReadonlyArray<{ id: Family; label: string }> = [
   { id: "all", label: "All" },
+  { id: "favorites", label: "Favorites" },
   { id: "mech", label: "Mechanical" },
   { id: "bubble", label: "Bubble" },
   { id: "press", label: "Press" },
@@ -36,6 +47,20 @@ const FAMILIES: ReadonlyArray<{ id: Family; label: string }> = [
 const WAVEFORM_BUCKETS = 32;
 const WAVE_PROFILES = { sine: 1, square: 0.92, triangle: 0.82, sawtooth: 0.72 } as const;
 const waveformCache = new Map<SoundName, string>();
+const FAVORITES_KEY = "cabra-sound:favorites";
+
+function loadFavorites(): Set<SoundName> {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const parsed: unknown = raw === null ? [] : JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(
+      parsed.filter((item): item is SoundName => AVAILABLE_NAMES.includes(item as SoundName)),
+    );
+  } catch {
+    return new Set();
+  }
+}
 
 function familyOf(name: SoundName): SoundFamily {
   for (const prefix of ["mech", "bubble", "press", "card"] as const) {
@@ -125,10 +150,13 @@ export function SoundBoard() {
   const [query, setQuery] = useState("");
   const [family, setFamily] = useState<Family>("all");
   const [selected, setSelected] = useState<SoundName | null>(null);
+  const [revealed, setRevealed] = useState<SoundName | null>(null);
+  const [favorites, setFavorites] = useState<Set<SoundName>>(loadFavorites);
   const [status, setStatus] = useState("Choose a sound to audition it.");
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const tileRefs = useRef(new Map<SoundName, HTMLElement>());
   const mountedRef = useRef(false);
   const exportGenerationRef = useRef(0);
   const exportCancelledRef = useRef(false);
@@ -177,13 +205,15 @@ export function SoundBoard() {
   const visibleNames = useMemo(
     () =>
       AVAILABLE_NAMES.filter((name) => {
-        const matchesFamily = family === "all" || familyOf(name) === family;
+        const matchesFamily =
+          family === "all" ||
+          (family === "favorites" ? favorites.has(name) : familyOf(name) === family);
         const matchesQuery =
           name.toLowerCase().includes(normalizedQuery) ||
           formatName(name).toLowerCase().includes(normalizedQuery);
         return matchesFamily && matchesQuery;
       }),
-    [family, normalizedQuery],
+    [family, favorites, normalizedQuery],
   );
 
   const playSound = useCallback(
@@ -202,10 +232,32 @@ export function SoundBoard() {
     [enabled],
   );
 
+  const toggleFavorite = useCallback((name: SoundName) => {
+    setFavorites((current) => {
+      const next = new Set(current);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      try {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
+      } catch {
+        // Favorites still work for this session when storage is unavailable.
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!revealed) return;
+    tileRefs.current.get(revealed)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [revealed]);
+
   const playRandom = useCallback(() => {
-    const name = AVAILABLE_NAMES[Math.floor(Math.random() * AVAILABLE_NAMES.length)];
-    if (name) playSound(name);
-  }, [playSound]);
+    const pool = visibleNames.length > 0 ? visibleNames : AVAILABLE_NAMES;
+    const name = pool[Math.floor(Math.random() * pool.length)];
+    if (!name) return;
+    setRevealed(name);
+    playSound(name);
+  }, [playSound, visibleNames]);
 
   const playHelper = useCallback(
     (label: string, work: () => boolean) => {
@@ -456,6 +508,48 @@ export function SoundBoard() {
         </div>
       )}
 
+      {selected ? (
+        <div className="sound-now-playing" aria-label="Last played sound">
+          <button
+            className="sound-now-play"
+            type="button"
+            aria-label={`Replay ${formatName(selected)}`}
+            onClick={() => playSound(selected)}
+          >
+            <Play size={15} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+          </button>
+          <div className="sound-now-copy">
+            <strong>{formatName(selected)}</strong>
+            <span>
+              {SOUND_META[selected].ms} ms · {familyOf(selected)}
+            </span>
+          </div>
+          <SoundWaveform name={selected} />
+          <button
+            className={`sound-favorite${favorites.has(selected) ? " sound-is-favorite" : ""}`}
+            type="button"
+            aria-label={favorites.has(selected) ? "Remove favorite" : "Add favorite"}
+            aria-pressed={favorites.has(selected)}
+            onClick={() => toggleFavorite(selected)}
+          >
+            <Star
+              size={15}
+              fill={favorites.has(selected) ? "currentColor" : "none"}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            className="sound-export-button"
+            type="button"
+            disabled={exporting}
+            onClick={() => void exportSound(selected)}
+          >
+            <Download size={14} aria-hidden="true" />
+            Download
+          </button>
+        </div>
+      ) : null}
+
       <div className="sound-status">
         <span
           className={`sound-status-dot${enabled ? "" : " sound-is-muted"}`}
@@ -487,7 +581,14 @@ export function SoundBoard() {
             const label = formatName(name);
             const isSelected = selected === name;
             return (
-              <article className={`sound-tile${isSelected ? " sound-is-selected" : ""}`} key={name}>
+              <article
+                className={`sound-tile${isSelected ? " sound-is-selected" : ""}`}
+                key={name}
+                ref={(node) => {
+                  if (node) tileRefs.current.set(name, node);
+                  else tileRefs.current.delete(name);
+                }}
+              >
                 <button
                   className="sound-play"
                   type="button"
@@ -503,16 +604,31 @@ export function SoundBoard() {
                   </span>
                   <SoundWaveform name={name} />
                 </button>
-                <button
-                  className="sound-download"
-                  type="button"
-                  aria-label={`Download ${label} as WAV`}
-                  title={`Download ${label} as WAV`}
-                  disabled={exporting}
-                  onClick={() => void exportSound(name)}
-                >
-                  <Download size={15} aria-hidden="true" />
-                </button>
+                <div className="sound-tile-actions">
+                  <button
+                    className={`sound-favorite${favorites.has(name) ? " sound-is-favorite" : ""}`}
+                    type="button"
+                    aria-label={favorites.has(name) ? `Unfavorite ${label}` : `Favorite ${label}`}
+                    aria-pressed={favorites.has(name)}
+                    onClick={() => toggleFavorite(name)}
+                  >
+                    <Star
+                      size={14}
+                      fill={favorites.has(name) ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    className="sound-download"
+                    type="button"
+                    aria-label={`Download ${label} as WAV`}
+                    title={`Download ${label} as WAV`}
+                    disabled={exporting}
+                    onClick={() => void exportSound(name)}
+                  >
+                    <Download size={15} aria-hidden="true" />
+                  </button>
+                </div>
               </article>
             );
           })}

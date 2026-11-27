@@ -199,20 +199,6 @@ export function ExpoAssetsRoute() {
 
   return (
     <section className="expo-page">
-      <header className="expo-heading">
-        <div>
-          <p className="expo-eyebrow">Prepare</p>
-          <h1>Expo Assets</h1>
-          <p className="expo-lede">
-            Generate the complete icon and splash set from one transparent mark using the canonical
-            Sharp pipeline.
-          </p>
-        </div>
-        <span className="expo-runtime">
-          {native ? "Native generator ready" : "Browser preview"}
-        </span>
-      </header>
-
       {native ? null : (
         <p className="expo-notice">
           Generation requires the Wails desktop app. You can still inspect the form here.

@@ -235,20 +235,6 @@ export function BrandAssetsRoute() {
 
   return (
     <section className="brand-page">
-      <header className="brand-heading">
-        <div>
-          <p className="brand-eyebrow">Prepare</p>
-          <h1>Brand Assets</h1>
-          <p className="brand-lede">
-            Build a favicon set, social card, and web manifest from one mark with the canonical
-            Sharp and Takumi generators.
-          </p>
-        </div>
-        <span className="brand-runtime">
-          {native ? "Native generator ready" : "Browser preview"}
-        </span>
-      </header>
-
       {native ? null : (
         <p className="brand-notice">
           Generation requires the Wails desktop app. You can still inspect the form here.
