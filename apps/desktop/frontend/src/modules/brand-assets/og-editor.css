@@ -284,6 +284,21 @@
   font-size: 10px;
 }
 
+.og-editor-gradient-toggle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.og-editor-gradient-toggle input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .og-editor-grid {
   display: grid;
   min-width: 0;

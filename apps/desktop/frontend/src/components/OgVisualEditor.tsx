@@ -75,10 +75,17 @@ interface TextLayer extends LayerBase {
   align: TextAlign;
 }
 
+interface ShapeGradient {
+  start: string;
+  end: string;
+  angle: number;
+}
+
 interface ShapeLayer extends LayerBase {
   kind: "rect" | "ellipse";
   fill: string;
   fillImage?: string;
+  fillGradient?: ShapeGradient;
   radius: number;
 }
 
@@ -103,6 +110,7 @@ interface LayerPatch {
   align?: TextAlign;
   fill?: string;
   fillImage?: string;
+  fillGradient?: ShapeGradient | null;
   radius?: number;
   src?: string;
 }
@@ -363,6 +371,28 @@ function drawCover(
   );
 }
 
+function applyShapeFill(context: CanvasRenderingContext2D, layer: ShapeLayer): void {
+  const gradient = layer.fillGradient;
+  if (!gradient) {
+    context.fillStyle = layer.fill;
+    return;
+  }
+  const angle = (gradient.angle * Math.PI) / 180;
+  const centerX = layer.x + layer.width / 2;
+  const centerY = layer.y + layer.height / 2;
+  const deltaX = Math.sin(angle) * (layer.width / 2);
+  const deltaY = -Math.cos(angle) * (layer.height / 2);
+  const fill = context.createLinearGradient(
+    centerX - deltaX,
+    centerY - deltaY,
+    centerX + deltaX,
+    centerY + deltaY,
+  );
+  fill.addColorStop(0, gradient.start);
+  fill.addColorStop(1, gradient.end);
+  context.fillStyle = fill;
+}
+
 async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promise<void> {
   const width = Math.max(0, layer.width);
   const height = Math.max(0, layer.height);
@@ -381,8 +411,7 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
         context.clip();
         drawCover(context, shapeImage, layer.x, layer.y, width, height);
       } else {
-        context.fillStyle = "#000000";
-        context.fillStyle = layer.fill;
+        applyShapeFill(context, layer);
         context.fill();
       }
     } else if (layer.kind === "ellipse") {
@@ -400,8 +429,7 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
         context.clip();
         drawCover(context, shapeImage, layer.x, layer.y, width, height);
       } else {
-        context.fillStyle = "#000000";
-        context.fillStyle = layer.fill;
+        applyShapeFill(context, layer);
         context.fill();
       }
     } else if (layer.kind === "image" && image) {
@@ -444,10 +472,13 @@ function layerVars(layer: Layer, scale: number): StyleVars {
     };
   }
   if (layer.kind === "image") return base;
+  const gradient = layer.fillGradient
+    ? `linear-gradient(${layer.fillGradient.angle}deg, ${layer.fillGradient.start}, ${layer.fillGradient.end})`
+    : "none";
   return {
     ...base,
     "--og-fill": layer.fill,
-    "--og-fill-image": layer.fillImage ? `url("${layer.fillImage}")` : "none",
+    "--og-fill-image": layer.fillImage ? `url("${layer.fillImage}")` : gradient,
     "--og-radius": `${layer.radius * scale}px`,
   };
 }
@@ -485,11 +516,19 @@ interface NumberFieldProps {
   label: string;
   value: number;
   min?: number;
+  max?: number;
   step?: number;
   onChange: (value: number) => void;
 }
 
-function NumberField({ label, value, min, step = 1, onChange }: NumberFieldProps): JSX.Element {
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+}: NumberFieldProps): JSX.Element {
   return (
     <label className="og-editor-field-stack">
       <span>{label}</span>
@@ -497,6 +536,7 @@ function NumberField({ label, value, min, step = 1, onChange }: NumberFieldProps
         type="number"
         value={Number.isFinite(value) ? value : 0}
         min={min}
+        max={max}
         step={step}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-label={label}
@@ -1150,6 +1190,53 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                       value={selectedLayer.fill}
                       onChange={(fill) => updateLayer(selectedLayer.id, { fill })}
                     />
+                    <label className="og-editor-gradient-toggle">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selectedLayer.fillGradient)}
+                        onChange={(event) =>
+                          updateLayer(selectedLayer.id, {
+                            fillGradient: event.currentTarget.checked
+                              ? { start: selectedLayer.fill, end: "#ffffff", angle: 135 }
+                              : null,
+                          })
+                        }
+                      />
+                      <span>Use gradient</span>
+                    </label>
+                    {selectedLayer.fillGradient ? (
+                      <>
+                        <ColorControl
+                          label="Gradient start"
+                          value={selectedLayer.fillGradient.start}
+                          onChange={(start) =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: { ...selectedLayer.fillGradient!, start },
+                            })
+                          }
+                        />
+                        <ColorControl
+                          label="Gradient end"
+                          value={selectedLayer.fillGradient.end}
+                          onChange={(end) =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: { ...selectedLayer.fillGradient!, end },
+                            })
+                          }
+                        />
+                        <NumberField
+                          label="Angle"
+                          value={selectedLayer.fillGradient.angle}
+                          min={0}
+                          max={360}
+                          onChange={(angle) =>
+                            updateLayer(selectedLayer.id, {
+                              fillGradient: { ...selectedLayer.fillGradient!, angle },
+                            })
+                          }
+                        />
+                      </>
+                    ) : null}
                     <div className="og-editor-actions">
                       <button
                         type="button"
