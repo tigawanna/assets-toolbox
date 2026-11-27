@@ -26,6 +26,7 @@ export function AssetLibrary() {
   const navigate = useNavigate();
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<Partial<Record<AssetId, ToolId>>>({});
+  const [sources, setSources] = useState<Partial<Record<AssetId, AssetId>>>({});
   const [targets, setTargets] = useState<Array<{ id: ProjectId; name: string }>>([]);
   const [target, setTarget] = useState("");
   const [selected, setSelected] = useState<AssetId[]>([]);
@@ -50,19 +51,36 @@ export function AssetLibrary() {
           const document = await client.getDocument<{
             outputAssetIds?: string[];
             assetIds?: string[];
+            sourceAssetId?: string;
+            sourceAssetIds?: Record<string, string>;
           }>(projectId, tool);
-          return { tool, ids: document?.data?.outputAssetIds ?? document?.data?.assetIds ?? [] };
+          const data = document?.data;
+          const sourcesForTool =
+            data?.sourceAssetId ??
+            data?.sourceAssetIds?.icon ??
+            Object.values(data?.sourceAssetIds ?? {})[0] ??
+            "";
+          return {
+            tool,
+            ids: data?.outputAssetIds ?? data?.assetIds ?? [],
+            source: sourcesForTool,
+          };
         } catch {
-          return { tool, ids: [] as string[] };
+          return { tool, ids: [] as string[], source: "" };
         }
       }),
     ).then((documents) => {
       if (!active) return;
-      const map: Partial<Record<AssetId, ToolId>> = {};
-      for (const { tool, ids } of documents) {
-        for (const id of ids) map[id as AssetId] = tool;
+      const ownerMap: Partial<Record<AssetId, ToolId>> = {};
+      const sourceMap: Partial<Record<AssetId, AssetId>> = {};
+      for (const { tool, ids, source } of documents) {
+        for (const id of ids) {
+          ownerMap[id as AssetId] = tool;
+          if (source) sourceMap[id as AssetId] = source as AssetId;
+        }
       }
-      setOwners(map);
+      setOwners(ownerMap);
+      setSources(sourceMap);
     });
     return () => {
       active = false;
@@ -88,6 +106,8 @@ export function AssetLibrary() {
       active = false;
     };
   }, [assets, preview]);
+
+  const assetById = useMemo(() => new Map(assets.map((asset) => [asset.id, asset])), [assets]);
 
   const groups = useMemo(() => {
     const result = new Map<string, AssetRecord[]>();
@@ -194,6 +214,8 @@ export function AssetLibrary() {
               {groupAssets.map((asset) => {
                 const previewable = groupAssets.filter((item) => thumbs[item.id]);
                 const position = previewable.findIndex((item) => item.id === asset.id);
+                const sourceId = asset.origin?.derivedFrom ?? sources[asset.id];
+                const source = sourceId ? assetById.get(sourceId as AssetId) : undefined;
                 return (
                   <article className="project-assets-card" key={asset.id}>
                     <div className="project-assets-card-top">
@@ -230,6 +252,16 @@ export function AssetLibrary() {
                     <div className="project-assets-card-meta">
                       <strong title={asset.name}>{asset.name}</strong>
                       <span>{Math.round(asset.bytes / 1024)} KB</span>
+                      {sourceId ? (
+                        <span
+                          className={
+                            source ? "project-assets-source" : "project-assets-source-missing"
+                          }
+                          title={source ? source.name : "Starting asset was deleted"}
+                        >
+                          {source ? `from ${source.name}` : "Source deleted"}
+                        </span>
+                      ) : null}
                     </div>
                   </article>
                 );

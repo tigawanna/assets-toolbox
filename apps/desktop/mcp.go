@@ -320,7 +320,10 @@ func mcpAssetMime(name string) string {
 
 // commitMCPArtifacts stores generated files in the project library so the
 // programmatic result survives after the ephemeral generation job is discarded.
-func (a *App) commitMCPArtifacts(projectID, jobID string, artifacts []assetgen.Artifact) ([]string, error) {
+func (a *App) commitMCPArtifacts(
+	projectID, jobID, tool, sourceAssetID string,
+	artifacts []assetgen.Artifact,
+) ([]string, error) {
 	ids := make([]string, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		encoded, err := a.GetAssetArtifact(jobID, artifact.Name)
@@ -329,6 +332,8 @@ func (a *App) commitMCPArtifacts(projectID, jobID string, artifacts []assetgen.A
 		}
 		stored, err := a.projectsCall(http.MethodPost, "/api/projects/"+projectID+"/assets", map[string]any{
 			"name": artifact.Name, "mime": mcpAssetMime(artifact.Name), "base64": encoded,
+			"kind":   "generated",
+			"origin": map[string]any{"tool": tool, "derivedFrom": sourceAssetID},
 		})
 		if err != nil {
 			return nil, err

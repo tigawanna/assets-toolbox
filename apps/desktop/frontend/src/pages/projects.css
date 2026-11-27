@@ -278,6 +278,18 @@
   white-space: nowrap;
 }
 
+.project-assets-source,
+.project-assets-source-missing {
+  overflow: hidden;
+  font-size: 8px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-assets-source-missing {
+  color: var(--accent) !important;
+}
+
 .project-assets-card-meta span,
 .project-assets-empty,
 .project-assets-error {
