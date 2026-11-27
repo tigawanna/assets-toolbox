@@ -50,6 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     location.pathname.startsWith("/packages/svg-compose") ||
     location.pathname.startsWith("/packages/screenshot-studio");
   const projectId = getActiveProjectId();
+  const inProject = pathParts[0] === "projects" && Boolean(pathParts[1]);
   const platform = systemInfo ? formatPlatform(systemInfo) : "Connecting";
   let backendLabel = "Connecting to Go";
   if (systemInfo) backendLabel = systemInfo.desktop ? "Go backend connected" : "Browser preview";
@@ -200,37 +201,39 @@ export function AppShell({ children }: { children: ReactNode }) {
             </ShellLink>
           </div>
 
-          <div className="nav-section">
-            <span className="nav-label">Tools</span>
-            {toolPackages.map((tool) => {
-              const active = currentSlug === projectToolSlug(tool.id);
-              return projectId ? (
-                <Link
-                  key={tool.id}
-                  to="/projects/$projectId/$tool"
-                  params={{ projectId, tool: projectToolSlug(tool.id) }}
-                  className={`nav-link${active ? " active" : ""}`}
-                  aria-label={tool.shortName}
-                  title={tool.shortName}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <PackageIcon name={tool.icon} size={17} />
-                  <span>{tool.shortName}</span>
-                </Link>
-              ) : (
-                <ShellLink
-                  key={tool.id}
-                  to="/"
-                  className="nav-link"
-                  aria-label={tool.shortName}
-                  title={tool.shortName}
-                >
-                  <PackageIcon name={tool.icon} size={17} />
-                  <span>{tool.shortName}</span>
-                </ShellLink>
-              );
-            })}
-          </div>
+          {inProject ? (
+            <div className="nav-section">
+              <span className="nav-label">Tools</span>
+              {toolPackages.map((tool) => {
+                const active = currentSlug === projectToolSlug(tool.id);
+                return projectId ? (
+                  <Link
+                    key={tool.id}
+                    to="/projects/$projectId/$tool"
+                    params={{ projectId, tool: projectToolSlug(tool.id) }}
+                    className={`nav-link${active ? " active" : ""}`}
+                    aria-label={tool.shortName}
+                    title={tool.shortName}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <PackageIcon name={tool.icon} size={17} />
+                    <span>{tool.shortName}</span>
+                  </Link>
+                ) : (
+                  <ShellLink
+                    key={tool.id}
+                    to="/"
+                    className="nav-link"
+                    aria-label={tool.shortName}
+                    title={tool.shortName}
+                  >
+                    <PackageIcon name={tool.icon} size={17} />
+                    <span>{tool.shortName}</span>
+                  </ShellLink>
+                );
+              })}
+            </div>
+          ) : null}
         </nav>
 
         <div className="sidebar-footer">
