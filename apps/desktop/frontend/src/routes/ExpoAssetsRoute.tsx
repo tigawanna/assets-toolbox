@@ -5,6 +5,7 @@ import {
   FileArchive,
   FolderOpen,
   LoaderCircle,
+  RotateCcw,
   TriangleAlert,
 } from "lucide-react";
 import { EXPO_ASSET_DEFAULTS } from "@assets/expo-assets/types";
@@ -361,6 +362,24 @@ export function ExpoAssetsRoute() {
     }
   }, [result]);
 
+  const resetDefaults = useCallback(() => {
+    setBrandColor(EXPO_DOCUMENT_DEFAULTS.brandColor);
+    setSplashBackground(EXPO_DOCUMENT_DEFAULTS.splashBackground);
+    setImageWidth(EXPO_DOCUMENT_DEFAULTS.imageWidth);
+    setForegroundSize(EXPO_DOCUMENT_DEFAULTS.foregroundSize);
+    setSplashLogoSize(EXPO_DOCUMENT_DEFAULTS.splashLogoSize);
+    setNoMonochrome(EXPO_DOCUMENT_DEFAULTS.noMonochrome);
+    setWriteConfig(EXPO_DOCUMENT_DEFAULTS.writeConfig);
+    setOutDir(EXPO_DOCUMENT_DEFAULTS.outDir);
+    setSources({ icon: null, darkIcon: null, tintedIcon: null });
+    setSourcePreviews({});
+    setSourceAssetIds({});
+    setResult(null);
+    setPreviews({});
+    setError("");
+    updateExpoDocument({ ...EXPO_DOCUMENT_DEFAULTS, sourceAssetIds: {} });
+  }, [updateExpoDocument]);
+
   return (
     <section className="expo-page">
       <ToolHeader
@@ -375,6 +394,10 @@ export function ExpoAssetsRoute() {
                 Save all
               </ToolHeaderButton>
             ) : null}
+            <ToolHeaderButton onClick={resetDefaults} title="Reset all fields to defaults">
+              <RotateCcw size={13} aria-hidden="true" />
+              Reset
+            </ToolHeaderButton>
             <ToolHeaderButton
               variant="primary"
               disabled={!native || busy || !sources.icon}

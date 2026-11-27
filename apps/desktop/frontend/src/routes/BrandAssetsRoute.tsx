@@ -5,6 +5,7 @@ import {
   FileArchive,
   FolderOpen,
   LoaderCircle,
+  RotateCcw,
   TriangleAlert,
 } from "lucide-react";
 import { defaultIconSizes } from "@assets/brand-assets/types";
@@ -478,6 +479,38 @@ export function BrandAssetsRoute() {
     link.remove();
   }, [ogDesign]);
 
+  const resetDefaults = useCallback(() => {
+    setPlate(BRAND_DEFAULTS.plate);
+    setCopySvg(BRAND_DEFAULTS.copySvg);
+    setOgEnabled(BRAND_DEFAULTS.ogEnabled);
+    setOgTitle(BRAND_DEFAULTS.ogTitle);
+    setOgDescription(BRAND_DEFAULTS.ogDescription);
+    setOgSiteLabel(BRAND_DEFAULTS.ogSiteLabel);
+    setOgWidth(BRAND_DEFAULTS.ogWidth);
+    setOgHeight(BRAND_DEFAULTS.ogHeight);
+    setManifestEnabled(BRAND_DEFAULTS.manifestEnabled);
+    setName(BRAND_DEFAULTS.name);
+    setShortName(BRAND_DEFAULTS.shortName);
+    setThemeColor(BRAND_DEFAULTS.themeColor);
+    setBackgroundColor(BRAND_DEFAULTS.backgroundColor);
+    setStartUrl(BRAND_DEFAULTS.startUrl);
+    setDisplay(BRAND_DEFAULTS.display);
+    setOutDir(BRAND_DEFAULTS.outDir);
+    setIcon(null);
+    setSourceAssetId(null);
+    setSourcePreview("");
+    setOgDesign(null);
+    setResult(null);
+    setPreviews({});
+    setError("");
+    updateBrandDocument({
+      ...BRAND_DEFAULTS,
+      ogDraft: null,
+      sourceAssetId: "",
+      initialized: true,
+    });
+  }, [updateBrandDocument]);
+
   return (
     <section className="brand-page">
       <ToolHeader
@@ -492,6 +525,10 @@ export function BrandAssetsRoute() {
                 Save all
               </ToolHeaderButton>
             ) : null}
+            <ToolHeaderButton onClick={resetDefaults} title="Reset all fields to defaults">
+              <RotateCcw size={13} aria-hidden="true" />
+              Reset
+            </ToolHeaderButton>
             <ToolHeaderButton
               variant="primary"
               disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
