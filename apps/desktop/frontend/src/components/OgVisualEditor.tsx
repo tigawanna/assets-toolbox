@@ -408,6 +408,9 @@ async function drawLayer(context: CanvasRenderingContext2D, layer: Layer): Promi
       ? await loadImage(layer.fillImage).catch(() => null)
       : null;
   context.save();
+  // Canvas path state is not restored by save()/restore(), so each layer needs
+  // a fresh path or later shapes would refill earlier ones.
+  context.beginPath();
   try {
     if (layer.kind === "rect") {
       traceRoundRect(context, layer.x, layer.y, width, height, layer.radius);
