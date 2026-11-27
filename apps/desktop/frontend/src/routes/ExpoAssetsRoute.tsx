@@ -377,20 +377,18 @@ export function ExpoAssetsRoute() {
         </div>
 
         <div className="expo-column">
-          <div className="expo-panel expo-preview-panel">
-            <h2>Preview</h2>
-            <div className="expo-preview-stage" style={{ backgroundColor: brandColor }}>
-              {sourcePreviews.icon ? (
+          {sourcePreviews.icon ? (
+            <div className="expo-panel expo-preview-panel">
+              <h2>Preview</h2>
+              <div className="expo-preview-stage" style={{ backgroundColor: brandColor }}>
                 <img src={sourcePreviews.icon} alt="Selected source logo" />
-              ) : (
-                <span>Choose a logo to preview your asset set</span>
-              )}
+              </div>
+              <div className="expo-preview-meta">
+                <span>App icon</span>
+                <span>{brandColor}</span>
+              </div>
             </div>
-            <div className="expo-preview-meta">
-              <span>App icon</span>
-              <span>{brandColor}</span>
-            </div>
-          </div>
+          ) : null}
 
           {result ? (
             <div className="expo-panel expo-results">
