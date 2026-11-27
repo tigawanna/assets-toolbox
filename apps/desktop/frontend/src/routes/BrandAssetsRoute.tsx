@@ -418,6 +418,24 @@ export function BrandAssetsRoute() {
                 {icon ? "Change" : "Choose"}
               </button>
             </div>
+            {sourcePreview ? (
+              <div className="brand-mark-preview">
+                <span className="brand-preview-label">Selected mark</span>
+                <button
+                  type="button"
+                  className="brand-mark-preview-box"
+                  aria-label={`Enlarge ${icon?.name ?? "source image"}`}
+                  onClick={() =>
+                    setExpanded({ title: icon?.name ?? "Source image", src: sourcePreview })
+                  }
+                >
+                  <img src={sourcePreview} alt="Selected source mark" />
+                </button>
+                <span className="brand-preview-meta">
+                  {icon?.name ?? "Source image"} · click to enlarge
+                </span>
+              </div>
+            ) : null}
             <p className="brand-summary">{ICON_SUMMARY}</p>
           </div>
 
