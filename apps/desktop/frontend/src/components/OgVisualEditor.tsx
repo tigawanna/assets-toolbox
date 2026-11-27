@@ -18,9 +18,11 @@ import {
   Circle,
   Download,
   ImagePlus,
+  Redo2,
   Square,
   Trash2,
   Type,
+  Undo2,
   X,
 } from "lucide-react";
 
@@ -516,6 +518,8 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     createInitialLayers(props, designWidth, designHeight),
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [history, setHistory] = useState<Layer[][]>([]);
+  const [future, setFuture] = useState<Layer[][]>([]);
   const [scale, setScale] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -526,6 +530,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const fileRef = useRef<HTMLInputElement>(null);
   const fileTargetRef = useRef<string | null>(null);
   const dragRef = useRef<DragState | null>(null);
+  const dragSnapshotRef = useRef<Layer[] | null>(null);
 
   const selectedLayer = layers.find((layer) => layer.id === selectedId) ?? null;
   const backgroundLayerId = layers.find((layer) => layer.name === "Background")?.id ?? null;
@@ -536,29 +541,6 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     closeRef.current?.focus();
     return () => previous?.focus();
   }, []);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if ((event.key !== "Delete" && event.key !== "Backspace") || !selectedId) return;
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        target.closest("input, textarea, select, [contenteditable='true']")
-      ) {
-        return;
-      }
-      event.preventDefault();
-      setLayers((current) => current.filter((layer) => layer.id !== selectedId));
-      setSelectedId(null);
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, selectedId]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -573,16 +555,47 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     return () => observer.disconnect();
   }, [designWidth]);
 
-  const updateLayer = useCallback((id: string, patch: LayerPatch) => {
-    setLayers((current) =>
-      current.map((layer) => (layer.id === id ? ({ ...layer, ...patch } as Layer) : layer)),
-    );
-  }, []);
+  const pushHistory = useCallback(() => {
+    setHistory((current) => [...current.slice(-49), layers]);
+    setFuture([]);
+  }, [layers]);
 
-  const addLayer = useCallback((layer: Layer) => {
-    setLayers((current) => [...current, layer]);
-    setSelectedId(layer.id);
-  }, []);
+  const updateLayer = useCallback(
+    (id: string, patch: LayerPatch, recordHistory = true) => {
+      if (recordHistory) pushHistory();
+      setLayers((current) =>
+        current.map((layer) => (layer.id === id ? ({ ...layer, ...patch } as Layer) : layer)),
+      );
+    },
+    [pushHistory],
+  );
+
+  const addLayer = useCallback(
+    (layer: Layer) => {
+      pushHistory();
+      setLayers((current) => [...current, layer]);
+      setSelectedId(layer.id);
+    },
+    [pushHistory],
+  );
+
+  const undo = useCallback(() => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setFuture((current) => [layers, ...current].slice(0, 50));
+    setLayers(previous);
+    setHistory((current) => current.slice(0, -1));
+    if (!previous.some((layer) => layer.id === selectedId)) setSelectedId(null);
+  }, [history, layers, selectedId]);
+
+  const redo = useCallback(() => {
+    if (future.length === 0) return;
+    const next = future[0];
+    setHistory((current) => [...current, layers].slice(-50));
+    setLayers(next);
+    setFuture((current) => current.slice(1));
+    if (!next.some((layer) => layer.id === selectedId)) setSelectedId(null);
+  }, [future, layers, selectedId]);
 
   const addTextLayer = useCallback(
     (variant: "title" | "subtext") => {
@@ -626,6 +639,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   );
 
   const applyFormText = useCallback(() => {
+    pushHistory();
     setLayers((current) =>
       current.map((layer) => {
         if (layer.kind !== "text") return layer;
@@ -641,7 +655,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
         return layer;
       }),
     );
-  }, [props.description, props.siteLabel, props.title]);
+  }, [props.description, props.siteLabel, props.title, pushHistory]);
 
   const openFilePicker = useCallback((targetId: string | null) => {
     fileTargetRef.current = targetId;
@@ -701,6 +715,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
       if (event.button !== 0) return;
       event.stopPropagation();
       setSelectedId(layer.id);
+      dragSnapshotRef.current = layers;
       dragRef.current = {
         id: layer.id,
         pointerId: event.pointerId,
@@ -711,7 +726,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
       };
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [],
+    [layers],
   );
 
   const handleLayerPointerMove = useCallback(
@@ -719,22 +734,40 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
       const ratio = Number.isFinite(scale) && scale > 0 ? scale : 1;
-      updateLayer(drag.id, {
-        x: Math.round(drag.originX + (event.clientX - drag.startX) / ratio),
-        y: Math.round(drag.originY + (event.clientY - drag.startY) / ratio),
-      });
+      updateLayer(
+        drag.id,
+        {
+          x: Math.round(drag.originX + (event.clientX - drag.startX) / ratio),
+          y: Math.round(drag.originY + (event.clientY - drag.startY) / ratio),
+        },
+        false,
+      );
     },
     [scale, updateLayer],
   );
 
-  const handleLayerPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    dragRef.current = null;
-  }, []);
+  const handleLayerPointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      const snapshot = dragSnapshotRef.current;
+      dragSnapshotRef.current = null;
+      dragRef.current = null;
+      if (!snapshot) return;
+      const changed = layers.some((layer, index) => {
+        const before = snapshot[index];
+        return !before || before.x !== layer.x || before.y !== layer.y;
+      });
+      if (changed) {
+        setHistory((current) => [...current.slice(-49), snapshot]);
+        setFuture([]);
+      }
+    },
+    [layers],
+  );
 
   const handleLayerKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>, layer: Layer) => {
@@ -761,6 +794,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const moveSelected = useCallback(
     (offset: number) => {
       if (!selectedId) return;
+      pushHistory();
       setLayers((current) => {
         const from = current.findIndex((layer) => layer.id === selectedId);
         const to = from + offset;
@@ -770,14 +804,47 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
         return reordered;
       });
     },
-    [selectedId],
+    [pushHistory, selectedId],
   );
 
   const deleteSelected = useCallback(() => {
     if (!selectedId) return;
+    pushHistory();
     setLayers((current) => current.filter((layer) => layer.id !== selectedId));
     setSelectedId(null);
-  }, [selectedId]);
+  }, [pushHistory, selectedId]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target;
+      const typing =
+        target instanceof HTMLElement &&
+        target.closest("input, textarea, select, [contenteditable='true']") !== null;
+      const modifier = event.ctrlKey || event.metaKey;
+
+      if (modifier && event.key.toLowerCase() === "z" && !typing) {
+        event.preventDefault();
+        if (event.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (modifier && event.key.toLowerCase() === "y" && !typing) {
+        event.preventDefault();
+        redo();
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if ((event.key !== "Delete" && event.key !== "Backspace") || !selectedId || typing) return;
+      event.preventDefault();
+      deleteSelected();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deleteSelected, onClose, redo, selectedId, undo]);
 
   const exportPng = useCallback(async () => {
     setBusy(true);
@@ -898,7 +965,25 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             >
               <ImagePlus size={13} aria-hidden="true" /> BG image
             </button>
-            <span className="og-editor-toolbar-hint">Drag layers to move them</span>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={undo}
+              disabled={history.length === 0}
+              aria-label="Undo"
+            >
+              <Undo2 size={13} aria-hidden="true" /> Undo
+            </button>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={redo}
+              disabled={future.length === 0}
+              aria-label="Redo"
+            >
+              <Redo2 size={13} aria-hidden="true" /> Redo
+            </button>
+            <span className="og-editor-toolbar-hint">Ctrl+Z to undo · drag layers to move</span>
           </div>
 
           <div
