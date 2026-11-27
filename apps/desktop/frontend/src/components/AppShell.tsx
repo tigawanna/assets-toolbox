@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
+import { Braces, LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
 import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 
 import { findPackage, toolPackages } from "../lib/catalog";
@@ -10,6 +10,7 @@ import { setDesktopModuleActive } from "../lib/desktop";
 import { formatPlatform, getSystemInfo, type NativeSystemInfo } from "../lib/native";
 import { toggleTheme, useTheme } from "../lib/theme";
 import { PackageIcon } from "./PackageIcon";
+import { ShortcutsDialog } from "./ShortcutsDialog";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { ShellLink } from "./ShellLink";
 import { projectToolSlug } from "../pages/ProjectHome";
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [systemInfo, setSystemInfo] = useState<NativeSystemInfo | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarPreference);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 900px)").matches);
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -154,6 +156,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    function handleShortcutKey(event: KeyboardEvent) {
+      if (event.key === "?" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        const target = event.target;
+        const typing =
+          target instanceof Element &&
+          target.closest("input, textarea, select, [contenteditable='true']");
+        if (typing) return;
+        event.preventDefault();
+        setShortcutsOpen((open) => !open);
+        return;
+      }
+      if (event.key === "Escape" && shortcutsOpen) setShortcutsOpen(false);
+    }
+    window.addEventListener("keydown", handleShortcutKey);
+    return () => window.removeEventListener("keydown", handleShortcutKey);
+  }, [shortcutsOpen]);
+
+  useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
       if (event.repeat || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "b") {
         return;
@@ -171,6 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="launch-main">
           <div className="page-content">{children}</div>
         </main>
+        {shortcutsOpen ? <ShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
       </div>
     );
   }
@@ -257,6 +278,20 @@ export function AppShell({ children }: { children: ReactNode }) {
               })}
             </div>
           ) : null}
+
+          <div className="nav-section">
+            <span className="nav-label">Developer</span>
+            <ShellLink
+              to="/mcp"
+              className="nav-link"
+              aria-label="MCP"
+              title="MCP"
+              aria-current={location.pathname === "/mcp" ? "page" : undefined}
+            >
+              <Braces size={17} strokeWidth={1.8} aria-hidden="true" />
+              <span>MCP</span>
+            </ShellLink>
+          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -316,6 +351,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="page-content">{children}</div>
         </main>
       </section>
+      {shortcutsOpen ? <ShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
     </div>
   );
 }

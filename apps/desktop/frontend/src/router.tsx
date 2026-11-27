@@ -13,6 +13,7 @@ import { findPackage } from "./lib/catalog";
 import { legacyBoardPath } from "./lib/legacy-route";
 import { getActiveProjectId } from "./lib/projects/client";
 import { ErrorPage } from "./pages/ErrorPage";
+import { McpPage } from "./pages/McpPage";
 import { PackagePlaceholderPage } from "./pages/PackagePlaceholderPage";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
 import { ProjectHome, projectToolSlug } from "./pages/ProjectHome";
@@ -60,6 +61,12 @@ const projectToolRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "projects/$projectId/$tool",
   component: ProjectToolRoutePage,
+});
+
+const mcpRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "mcp",
+  component: McpPage,
 });
 
 const packageRoute = createRoute({
@@ -155,6 +162,7 @@ const socialInspectRoute = createRoute({
 
 export const routeTree = rootRoute.addChildren([
   libraryRoute,
+  mcpRoute,
   projectRoute,
   projectToolRoute,
   svgComposeRoute,

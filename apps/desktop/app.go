@@ -61,6 +61,8 @@ type App struct {
 	mcpBridgeMu       sync.Mutex
 	mcpBridgeRequests map[string]chan mcpBridgeResult
 	mcpBridgeSeq      uint64
+	mcpLogMu          sync.Mutex
+	mcpLog            []mcpLogEntry
 }
 
 type mcpBridgeResult struct {
@@ -87,6 +89,7 @@ func NewApp() *App {
 		directories:       newDirectoryStore(defaultDirectoryStorePath()),
 		assetInputs:       make(map[string]string),
 		mcpBridgeRequests: make(map[string]chan mcpBridgeResult),
+		mcpLog:            loadMCPLog(),
 	}
 }
 

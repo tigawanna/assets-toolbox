@@ -30,6 +30,7 @@ func main() {
 	socialHandler := socialinspect.NewHandler(http.DefaultClient)
 	apiRoutes := map[string]http.Handler{
 		"/mcp":           app.mcpHandler(),
+		"/api/mcp/log":   app.mcpLogHandler(),
 		"/api/workspace": app.workspace.handler(),
 		"/api/inspect":   socialHandler,
 		"/api/asset":     socialHandler,

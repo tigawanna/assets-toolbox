@@ -12,11 +12,91 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/tigawanna/assets-toolbox/apps/desktop/internal/assetgen"
 )
 
 const mcpProtocolVersion = "2024-11-05"
+const mcpLogLimit = 200
+
+type mcpLogEntry struct {
+	At    string         `json:"at"`
+	Op    string         `json:"op"`
+	Tool  string         `json:"tool,omitempty"`
+	Args  map[string]any `json:"args,omitempty"`
+	OK    bool           `json:"ok"`
+	Error string         `json:"error,omitempty"`
+}
+
+func mcpLogPath() string {
+	return filepath.Join(defaultProjectsRoot(), "mcp", "calls.jsonl")
+}
+
+func loadMCPLog() []mcpLogEntry {
+	data, err := os.ReadFile(mcpLogPath())
+	if err != nil {
+		return nil
+	}
+	entries := []mcpLogEntry{}
+	for _, line := range bytes.Split(data, []byte("\n")) {
+		if len(bytes.TrimSpace(line)) == 0 {
+			continue
+		}
+		var entry mcpLogEntry
+		if err := json.Unmarshal(line, &entry); err == nil {
+			entries = append(entries, entry)
+		}
+	}
+	if len(entries) > mcpLogLimit {
+		entries = entries[len(entries)-mcpLogLimit:]
+	}
+	return entries
+}
+
+func appendMCPLog(entry mcpLogEntry) {
+	path := mcpLogPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	encoded, err := json.Marshal(entry)
+	if err != nil {
+		return
+	}
+	_, _ = file.Write(append(encoded, '\n'))
+}
+
+func (a *App) recordMCPCall(entry mcpLogEntry) {
+	a.mcpLogMu.Lock()
+	a.mcpLog = append(a.mcpLog, entry)
+	if len(a.mcpLog) > mcpLogLimit {
+		a.mcpLog = a.mcpLog[len(a.mcpLog)-mcpLogLimit:]
+	}
+	appendMCPLog(entry)
+	a.mcpLogMu.Unlock()
+	if a.emit != nil && a.ctx != nil {
+		a.emit(a.ctx, "mcp:call", entry)
+	}
+}
+
+func (a *App) mcpLogHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", "GET")
+			writeProjectsError(w, http.StatusMethodNotAllowed, "MCP log requires GET")
+			return
+		}
+		a.mcpLogMu.Lock()
+		entries := append([]mcpLogEntry(nil), a.mcpLog...)
+		a.mcpLogMu.Unlock()
+		writeProjectsJSON(w, http.StatusOK, map[string]any{"calls": entries})
+	})
+}
 
 type mcpRequest struct {
 	JSONRPC string          `json:"jsonrpc"`
@@ -164,7 +244,7 @@ func mcpToolResult(value any, isError bool) map[string]any {
 	}
 }
 
-func (a *App) callMCPTool(params json.RawMessage) (any, *mcpError) {
+func (a *App) callMCPTool(params json.RawMessage) (result any, rpcErr *mcpError) {
 	var payload struct {
 		Name string         `json:"name"`
 		Args map[string]any `json:"arguments"`
@@ -182,6 +262,23 @@ func (a *App) callMCPTool(params json.RawMessage) (any, *mcpError) {
 		nestedArgs = map[string]any{}
 	}
 	confirm, _ := payload.Args["confirm"].(bool)
+
+	entry := mcpLogEntry{
+		At:   time.Now().UTC().Format(time.RFC3339),
+		Op:   op,
+		Tool: toolID,
+		Args: payload.Args,
+	}
+	defer func() {
+		if rpcErr != nil {
+			entry.Error = rpcErr.Message
+		} else if output, ok := result.(map[string]any); ok && output["isError"] == true {
+			entry.Error = "tool returned an error"
+		} else {
+			entry.OK = true
+		}
+		a.recordMCPCall(entry)
+	}()
 
 	switch op {
 	case "list":

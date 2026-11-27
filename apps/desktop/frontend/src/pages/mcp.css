@@ -1,0 +1,164 @@
+.mcp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 32px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.mcp-header-mark {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mcp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mcp-section h2 {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mcp-section h3 {
+  margin: 0 0 6px;
+  color: var(--text-subtle);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mcp-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.mcp-config-grid pre {
+  overflow-x: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.mcp-env {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--text-subtle);
+  font-size: 10px;
+}
+
+.mcp-env span {
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.mcp-note,
+.mcp-error {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: 11px;
+}
+
+.mcp-note code {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.mcp-error {
+  color: var(--accent);
+}
+
+.mcp-tools,
+.mcp-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mcp-tool,
+.mcp-log-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-muted);
+}
+
+.mcp-tool code,
+.mcp-log-row code {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.mcp-tool span {
+  overflow: hidden;
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-tool-mutating {
+  flex: 0 0 auto !important;
+  color: var(--accent) !important;
+  font-family: var(--font-mono);
+  font-size: 9px !important;
+}
+
+.mcp-log-status {
+  min-width: 34px;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.mcp-log-status[data-ok="true"] {
+  color: var(--accent);
+}
+
+.mcp-log-row > span:nth-last-child(2) {
+  overflow: hidden;
+  flex: 1;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-log-row time {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
