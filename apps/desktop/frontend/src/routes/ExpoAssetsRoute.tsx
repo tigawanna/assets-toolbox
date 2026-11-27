@@ -12,7 +12,7 @@ import { EXPO_ASSET_DEFAULTS } from "@assets/expo-assets/types";
 import { PreviewGalleryDialog, type PreviewGalleryItem } from "../components/PreviewGalleryDialog";
 import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
-import { ToolHeader } from "../components/ToolHeader";
+import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -214,20 +214,19 @@ export function ExpoAssetsRoute() {
         actions={
           <>
             {result ? (
-              <button type="button" onClick={() => void saveAll()}>
+              <ToolHeaderButton onClick={() => void saveAll()}>
                 <FileArchive size={13} aria-hidden="true" />
                 Save all
-              </button>
+              </ToolHeaderButton>
             ) : null}
-            <button
-              type="button"
-              className="tool-header-primary"
+            <ToolHeaderButton
+              variant="primary"
               disabled={!native || busy || !sources.icon}
               onClick={() => void generate()}
             >
               {busy ? <LoaderCircle className="expo-spin" size={13} /> : <Download size={13} />}
               Generate
-            </button>
+            </ToolHeaderButton>
           </>
         }
       />
@@ -380,12 +379,28 @@ export function ExpoAssetsRoute() {
           {sourcePreviews.icon ? (
             <div className="expo-panel expo-preview-panel">
               <h2>Preview</h2>
-              <div className="expo-preview-stage" style={{ backgroundColor: brandColor }}>
-                <img src={sourcePreviews.icon} alt="Selected source logo" />
-              </div>
-              <div className="expo-preview-meta">
-                <span>App icon</span>
-                <span>{brandColor}</span>
+              <div className="expo-preview-grid">
+                <article className="expo-preview-card">
+                  <span className="expo-preview-label">App icon</span>
+                  <div className="expo-icon-preview" style={{ backgroundColor: brandColor }}>
+                    <img src={sourcePreviews.icon} alt="App icon preview" />
+                  </div>
+                  <span className="expo-preview-meta">1024×1024 · {brandColor}</span>
+                </article>
+                <article className="expo-preview-card">
+                  <span className="expo-preview-label">Splash screen</span>
+                  <div className="expo-phone-preview" style={{ backgroundColor: splashBackground }}>
+                    <span className="expo-phone-notch" aria-hidden="true" />
+                    <img
+                      src={sourcePreviews.icon}
+                      alt="Splash screen preview"
+                      style={{ width: Math.max(28, Math.round(splashLogoSize / 8)) }}
+                    />
+                  </div>
+                  <span className="expo-preview-meta">
+                    {splashBackground} · {splashLogoSize}px logo
+                  </span>
+                </article>
               </div>
             </div>
           ) : null}

@@ -22,12 +22,11 @@ import {
   type SoundName,
 } from "@tigawanna/cabra-sound";
 import { PackageIcon } from "../../components/PackageIcon";
-import { ToolHeader } from "../../components/ToolHeader";
+import { ToolHeader, ToolHeaderButton } from "../../components/ToolHeader";
 import { downloadBlob, zipStore } from "../../lib/zip";
 import "./sound-board.css";
 
-type Family = "all" | "favorites" | "mech" | "bubble" | "press" | "card" | "other";
-type SoundFamily = Exclude<Family, "all">;
+type SoundFamily = "mech" | "bubble" | "press" | "card" | "other";
 
 interface ExportProgress {
   completed: number;
@@ -138,7 +137,6 @@ const getVolume = () => controls.volume();
 
 export function SoundBoard() {
   const [query, setQuery] = useState("");
-  const [family, setFamily] = useState<Family>("all");
   const [selected, setSelected] = useState<SoundName | null>(null);
   const [revealed, setRevealed] = useState<SoundName | null>(null);
   const [favorites, setFavorites] = useState<Set<SoundName>>(loadFavorites);
@@ -194,15 +192,12 @@ export function SoundBoard() {
   const visibleNames = useMemo(
     () =>
       AVAILABLE_NAMES.filter((name) => {
-        const matchesFamily =
-          family === "all" ||
-          (family === "favorites" ? favorites.has(name) : familyOf(name) === family);
         const matchesQuery =
           name.toLowerCase().includes(normalizedQuery) ||
           formatName(name).toLowerCase().includes(normalizedQuery);
-        return matchesFamily && matchesQuery;
+        return matchesQuery;
       }),
-    [family, favorites, normalizedQuery],
+    [normalizedQuery],
   );
 
   const playSound = useCallback(
@@ -369,7 +364,6 @@ export function SoundBoard() {
 
   const resetFilters = useCallback(() => {
     setQuery("");
-    setFamily("all");
     searchInputRef.current?.focus();
   }, []);
 
@@ -381,21 +375,7 @@ export function SoundBoard() {
         meta={`${AVAILABLE_NAMES.length} sounds · ${enabled ? "audio on" : "muted"}`}
         actions={
           <>
-            <button
-              type="button"
-              aria-label={family === "favorites" ? "Show all sounds" : "Show favorites"}
-              aria-pressed={family === "favorites"}
-              onClick={() => setFamily(family === "favorites" ? "all" : "favorites")}
-            >
-              <Star
-                size={13}
-                fill={family === "favorites" ? "currentColor" : "none"}
-                aria-hidden="true"
-              />
-              Favorites
-            </button>
-            <button
-              type="button"
+            <ToolHeaderButton
               aria-label={enabled ? "Mute sounds" : "Enable sounds"}
               aria-pressed={enabled}
               onClick={() => controls.toggle()}
@@ -406,7 +386,7 @@ export function SoundBoard() {
                 <VolumeX size={13} aria-hidden="true" />
               )}
               Sound
-            </button>
+            </ToolHeaderButton>
             <label className="tool-header-volume">
               <span className="sound-sr-only">Volume</span>
               <input
@@ -419,26 +399,24 @@ export function SoundBoard() {
               />
               <span>{Math.round(volume * 100)}%</span>
             </label>
-            <button
-              type="button"
+            <ToolHeaderButton
               disabled={visibleNames.length === 0 || exporting}
               onClick={() => void exportMix()}
             >
               <Download size={13} aria-hidden="true" />
               Mix
-            </button>
-            <button
-              type="button"
+            </ToolHeaderButton>
+            <ToolHeaderButton
               disabled={visibleNames.length === 0 || exporting}
               onClick={() => void exportEach()}
             >
               <FileArchive size={13} aria-hidden="true" />
               WAVs
-            </button>
-            <button type="button" onClick={playRandom}>
+            </ToolHeaderButton>
+            <ToolHeaderButton onClick={playRandom}>
               <Shuffle size={13} aria-hidden="true" />
               Random
-            </button>
+            </ToolHeaderButton>
           </>
         }
       />

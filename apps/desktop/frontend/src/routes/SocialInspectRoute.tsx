@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { InspectorPage } from "@assets/social-inspect/components/InspectorPage";
 
 import { PackageIcon } from "../components/PackageIcon";
-import { ToolHeader } from "../components/ToolHeader";
+import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 
 export function SocialInspectRoute() {
   const navigate = useNavigate();
@@ -28,8 +28,7 @@ export function SocialInspectRoute() {
         title="Social Inspect"
         meta="Open Graph · favicons · previews"
         actions={
-          <button
-            type="button"
+          <ToolHeaderButton
             onClick={() =>
               document
                 .querySelector<HTMLInputElement>('input[aria-label="URL to inspect"]')
@@ -38,7 +37,7 @@ export function SocialInspectRoute() {
           >
             <Search size={13} aria-hidden="true" />
             Inspect URL
-          </button>
+          </ToolHeaderButton>
         }
       />
       <InspectorPage embedded initialUrl={url} onUrlChange={onUrlChange} />

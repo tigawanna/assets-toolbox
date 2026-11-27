@@ -13,7 +13,6 @@
   --svg-accent: var(--accent, #7c8cf8);
   --svg-accent-bright: var(--accent-bright, #a5b4fc);
   --ease-out: var(--ease, cubic-bezier(0.23, 1, 0.32, 1));
-  --accent: var(--svg-accent);
   --accent-soft: color-mix(in srgb, var(--svg-accent) 16%, var(--svg-surface));
   width: 100%;
   height: 100%;
@@ -68,7 +67,8 @@
     margin-left: auto;
   }
 
-  [data-svg-header-mark] {
+  [data-svg-header-mark],
+  [data-svg-header-brand] [data-svg-icon-button] {
     display: grid;
     width: 28px;
     height: 28px;
@@ -124,6 +124,19 @@
   [data-svg-editor-header] [aria-pressed="true"] {
     border-color: var(--svg-accent);
     color: var(--svg-accent);
+  }
+
+  [data-svg-editor-header] [data-svg-primary] {
+    border-color: var(--svg-accent);
+    background: var(--svg-accent);
+    color: var(--on-ink, #f1efe7);
+    font-weight: 600;
+  }
+
+  [data-svg-editor-header] [data-svg-primary]:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--svg-accent) 82%, var(--svg-text));
+    background: color-mix(in srgb, var(--svg-accent) 82%, var(--svg-text));
+    color: var(--on-ink, #f1efe7);
   }
 
   [data-svg-editor-header] input[type="file"] {

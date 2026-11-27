@@ -1,4 +1,5 @@
 .app-shell {
+  --sidebar-width: 208px;
   display: grid;
   height: 100dvh;
   grid-template-columns: 208px minmax(0, 1fr);
@@ -7,6 +8,7 @@
 }
 
 .app-shell.collapsed {
+  --sidebar-width: 64px;
   grid-template-columns: 64px minmax(0, 1fr);
 }
 
@@ -431,6 +433,7 @@
 
 @media (max-width: 900px) {
   .app-shell {
+    --sidebar-width: 0px;
     display: block;
   }
 

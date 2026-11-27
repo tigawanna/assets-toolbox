@@ -13,7 +13,7 @@ import { AssetPreviewDialog } from "../components/AssetPreviewDialog";
 import { ColorField } from "../components/ColorField";
 import { OgVisualEditor, type OgDesignResult } from "../components/OgVisualEditor";
 import { PackageIcon } from "../components/PackageIcon";
-import { ToolHeader } from "../components/ToolHeader";
+import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import {
   getAssetApp,
   hasAssetGeneration,
@@ -244,20 +244,19 @@ export function BrandAssetsRoute() {
         actions={
           <>
             {result ? (
-              <button type="button" onClick={() => void saveAll()}>
+              <ToolHeaderButton onClick={() => void saveAll()}>
                 <FileArchive size={13} aria-hidden="true" />
                 Save all
-              </button>
+              </ToolHeaderButton>
             ) : null}
-            <button
-              type="button"
-              className="tool-header-primary"
+            <ToolHeaderButton
+              variant="primary"
               disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
               onClick={() => void generate()}
             >
               {busy ? <LoaderCircle className="brand-spin" size={13} /> : <Download size={13} />}
               Generate
-            </button>
+            </ToolHeaderButton>
           </>
         }
       />

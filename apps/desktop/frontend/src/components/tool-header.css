@@ -1,4 +1,5 @@
-.tool-header {
+/* Shared, compound tool header. Every screen uses the same sticky, full-width shell. */
+[data-slot="tool-header"] {
   position: sticky;
   z-index: 20;
   top: 0;
@@ -8,20 +9,21 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px;
+  /* Cancel .page-content padding so the header spans the whole scroll surface. */
+  width: calc(100% + 76px);
   margin: -24px -38px 18px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 
-.tool-header-identity {
+[data-slot="tool-header-brand"] {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 10px;
 }
 
-.tool-header-icon {
+[data-slot="tool-header-icon"] {
   display: grid;
   width: 26px;
   height: 26px;
@@ -30,14 +32,14 @@
   color: var(--accent);
 }
 
-.tool-header-copy {
+[data-slot="tool-header-copy"] {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 2px;
 }
 
-.tool-header-copy strong {
+[data-slot="tool-header-title"] {
   overflow: hidden;
   font-size: 12px;
   font-weight: 650;
@@ -46,7 +48,7 @@
   white-space: nowrap;
 }
 
-.tool-header-copy span {
+[data-slot="tool-header-description"] {
   overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
@@ -55,14 +57,14 @@
   white-space: nowrap;
 }
 
-.tool-header-actions {
+[data-slot="tool-header-actions"] {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 6px;
 }
 
-.tool-header-actions button {
+[data-slot="tool-header-button"] {
   display: inline-flex;
   min-height: 28px;
   align-items: center;
@@ -82,15 +84,38 @@
     color 150ms var(--ease);
 }
 
-.tool-header-actions button:hover:not(:disabled) {
+[data-slot="tool-header-button"]:hover:not(:disabled) {
   border-color: var(--line-strong);
   background: var(--surface-hover);
   color: var(--text);
 }
 
-.tool-header-actions button:disabled {
+[data-slot="tool-header-button"]:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+[data-slot="tool-header-button"][data-variant="primary"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-ink);
+  font-weight: 600;
+}
+
+[data-slot="tool-header-button"][data-variant="primary"]:hover:not(:disabled) {
+  border-color: var(--ink-hover);
+  background: var(--ink-hover);
+  color: var(--on-ink);
+}
+
+[data-slot="tool-header-button"][data-variant="ghost"] {
+  border-color: transparent;
+  background: transparent;
+}
+
+[data-slot="tool-header-button"][data-variant="icon"] {
+  width: 28px;
+  padding: 0;
 }
 
 .tool-header-volume {
@@ -110,30 +135,22 @@
   cursor: pointer;
 }
 
-.tool-header-actions .tool-header-primary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-ink);
-  font-weight: 600;
-}
-
-.tool-header-actions .tool-header-primary:hover:not(:disabled) {
-  background: var(--ink-hover);
-  color: var(--on-ink);
-}
-
 @media (max-width: 900px) {
-  .tool-header {
+  [data-slot="tool-header"] {
+    width: calc(100% + 44px);
     margin: -30px -22px 18px;
   }
 }
 
 @media (max-width: 640px) {
-  .tool-header {
-    margin: -25px -16px 16px;
-  }
-
-  .tool-header-copy span {
+  [data-slot="tool-header-description"] {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  [data-slot="tool-header"] {
+    width: calc(100% + 32px);
+    margin: -25px -16px 16px;
   }
 }

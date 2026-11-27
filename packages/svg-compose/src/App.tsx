@@ -611,6 +611,7 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
             <button
               type="button"
               className="button"
+              data-svg-primary
               onClick={() => {
                 stageRef.current?.downloadSvg("compose");
                 notify("Exported SVG");
