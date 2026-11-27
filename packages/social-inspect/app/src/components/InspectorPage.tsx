@@ -252,7 +252,6 @@ export function InspectorPage({
       ) : null}
 
       <div className="inspect-command-wrap">
-        <p className="inspect-command-label">Inspect a URL</p>
         <form
           className="inspect-command"
           onSubmit={(event) => {
