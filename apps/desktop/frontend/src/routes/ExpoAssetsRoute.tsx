@@ -13,6 +13,7 @@ import { PreviewGalleryDialog, type PreviewGalleryItem } from "../components/Pre
 import { ColorField } from "../components/ColorField";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
+import { Checkbox } from "../components/ui/checkbox";
 import { selectWebImage } from "../lib/asset-input";
 import { getProjectClient } from "../lib/projects/client";
 import { mergeDocumentDefaults, useProject, useProjectDocument } from "../lib/projects/context";
@@ -484,16 +485,14 @@ export function ExpoAssetsRoute() {
             </div>
             <div className="expo-options">
               <label>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={noMonochrome}
                   onChange={(event) => setNoMonochrome(event.target.checked)}
                 />
                 Skip monochrome icon
               </label>
               <label>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={writeConfig}
                   onChange={(event) => setWriteConfig(event.target.checked)}
                 />

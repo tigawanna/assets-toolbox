@@ -167,16 +167,8 @@
   gap: 6px;
 }
 
-.project-assets-tools select {
-  height: 28px;
-  max-width: 200px;
-  padding: 0 7px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface);
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 10px;
+.project-assets-tools .ui-select {
+  width: 180px;
 }
 
 .project-assets-group {
@@ -230,11 +222,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-}
-
-.project-assets-card-top input {
-  accent-color: var(--accent);
-  cursor: pointer;
 }
 
 .project-assets-preview {

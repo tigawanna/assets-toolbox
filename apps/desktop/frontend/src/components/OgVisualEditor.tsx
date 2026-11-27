@@ -29,6 +29,8 @@ import {
 
 import { deleteTemplate, listTemplates, saveTemplate } from "../lib/templates/client";
 import type { TemplateRecord } from "../lib/templates/types";
+import { Checkbox } from "./ui/checkbox";
+import { Select } from "./ui/select";
 import "../modules/brand-assets/og-editor.css";
 
 export interface OgDesignResult {
@@ -2001,21 +2003,19 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                       />
                       <label className="og-editor-field-stack">
                         <span>Weight</span>
-                        <select
+                        <Select
                           value={selectedLayer.fontWeight}
+                          options={[400, 500, 600, 700, 800].map((weight) => ({
+                            value: String(weight),
+                            label: String(weight),
+                          }))}
                           onChange={(event) =>
                             updateLayer(selectedLayer.id, {
                               fontWeight: Number(event.target.value),
                             })
                           }
                           aria-label="Font weight"
-                        >
-                          <option value={400}>400</option>
-                          <option value={500}>500</option>
-                          <option value={600}>600</option>
-                          <option value={700}>700</option>
-                          <option value={800}>800</option>
-                        </select>
+                        />
                       </label>
                       <NumberField
                         label="Line height"
@@ -2026,19 +2026,20 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                       />
                       <label className="og-editor-field-stack">
                         <span>Align</span>
-                        <select
+                        <Select
                           value={selectedLayer.align}
+                          options={[
+                            { value: "left", label: "Left" },
+                            { value: "center", label: "Center" },
+                            { value: "right", label: "Right" },
+                          ]}
                           onChange={(event) =>
                             updateLayer(selectedLayer.id, {
                               align: event.target.value as TextAlign,
                             })
                           }
                           aria-label="Text alignment"
-                        >
-                          <option value="left">Left</option>
-                          <option value="center">Center</option>
-                          <option value="right">Right</option>
-                        </select>
+                        />
                       </label>
                     </div>
                     <ColorControl
@@ -2058,8 +2059,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                       onChange={(fill) => updateLayer(selectedLayer.id, { fill })}
                     />
                     <label className="og-editor-gradient-toggle">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={Boolean(selectedLayer.fillGradient)}
                         onChange={(event) =>
                           updateLayer(selectedLayer.id, {

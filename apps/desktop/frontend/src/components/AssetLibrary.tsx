@@ -9,6 +9,8 @@ import type { AssetId, AssetRecord, ProjectId, ToolId } from "../lib/projects/ty
 import { TOOL_IDS } from "../lib/projects/types";
 import { PreviewGalleryDialog, type PreviewGalleryItem } from "./PreviewGalleryDialog";
 import { ToolHeaderButton } from "./ToolHeader";
+import { Checkbox } from "./ui/checkbox";
+import { Select } from "./ui/select";
 
 const TOOL_LABELS: Record<string, string> = {
   brand: "Brand Assets",
@@ -154,18 +156,13 @@ export function AssetLibrary() {
       <div className="project-assets-head">
         <h2>Project assets</h2>
         <div className="project-assets-tools">
-          <select
+          <Select
             aria-label="Target project"
+            placeholder="Target project…"
             value={target}
+            options={targets.map((item) => ({ value: item.id, label: item.name }))}
             onChange={(event) => setTarget(event.currentTarget.value)}
-          >
-            <option value="">Target project…</option>
-            {targets.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          />
           <ToolHeaderButton
             disabled={selected.length === 0 || !target}
             onClick={() => void runMove("copy")}
@@ -219,8 +216,7 @@ export function AssetLibrary() {
                 return (
                   <article className="project-assets-card" key={asset.id}>
                     <div className="project-assets-card-top">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         aria-label={`Select ${asset.name}`}
                         checked={selected.includes(asset.id)}
                         onChange={() => toggle(asset.id)}

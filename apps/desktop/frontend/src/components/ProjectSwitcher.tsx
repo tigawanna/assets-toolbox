@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { FolderOpen } from "lucide-react";
 
+import { Select } from "./ui/select";
+
 import { getActiveProjectId, getProjectClient, setActiveProjectId } from "../lib/projects/client";
 import type { ProjectId, ProjectSummary } from "../lib/projects/types";
 
@@ -51,21 +53,14 @@ export function ProjectSwitcher({ collapsed = false }: { collapsed?: boolean }) 
     <label className={`project-switcher${collapsed ? " project-switcher-compact" : ""}`}>
       <FolderOpen size={15} aria-hidden="true" />
       <span className="project-switcher-label">Project</span>
-      <select
+      <Select
         aria-label="Active project"
         title={active ? `Active project: ${active}` : "Select a project"}
         value={active ?? ""}
+        placeholder="Select project"
+        options={projects.map((project) => ({ value: project.id, label: project.name }))}
         onChange={(event) => change(event.currentTarget.value as ProjectId)}
-      >
-        <option value="" disabled>
-          Select project
-        </option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.name}
-          </option>
-        ))}
-      </select>
+      />
     </label>
   );
 }

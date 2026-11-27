@@ -102,7 +102,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
   const [error, setError] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toolId, setToolId] = useState<string | null>(null);
-  const [actionHint, setActionHint] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("loading");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [railExpanded, setRailExpanded] = useState(true);
@@ -779,33 +778,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   ? `${selectedIds.length} item${selectedIds.length > 1 ? "s" : ""} · drag to move · Ctrl+drag to copy`
                   : "Click a shape to select it. Drag to move, Ctrl+drag to copy."}
               </p>
-              {selectedIds.length < 2 && (
-                <p className="inline-hint">
-                  To group: Shift+click a second object, then press <kbd>Ctrl</kbd> + <kbd>G</kbd>.
-                  Ctrl+click selects a shape inside a group.
-                </p>
-              )}
-              {toolId === "corner" && style && !["rect", "path"].includes(style.tag) && (
-                <p className="inline-hint">
-                  <strong>Morph corners</strong> works on rectangles and 4-node paths. Select one,
-                  or use <kbd>N</kbd> (Node / morph) for other paths.
-                </p>
-              )}
-              {toolId === "node" && style?.tag !== "path" && (
-                <p className="inline-hint node-hint">
-                  <strong>Node tool:</strong> select a path first. Press <kbd>Ctrl</kbd>+
-                  <kbd>Shift</kbd>+<kbd>C</kbd> to convert this shape — then square nodes and green
-                  <strong> + </strong> dots appear on its segments.
-                </p>
-              )}
-              {toolId === "node" && style?.tag === "path" && (
-                <p className="inline-hint node-hint">
-                  <strong>Node tool:</strong> drag squares to move nodes, circles to pull bezier
-                  handles, or click a green <strong>+</strong> dot on a segment to add a node.{" "}
-                  <kbd>S</kbd> toggles smooth/corner, <kbd>Del</kbd> removes the focused node.
-                </p>
-              )}
-              {actionHint && <p className="action-description">{actionHint}</p>}
               <div className="action-list">
                 <ActionButton
                   label="Duplicate"
@@ -814,7 +786,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   shortcut="⌘D"
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.duplicateSelection()}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Delete"
@@ -824,7 +795,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   danger
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.deleteSelection()}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Bring front"
@@ -832,7 +802,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Move the selection to the top of the stacking order."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.reorder("front")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Send back"
@@ -840,7 +809,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Move the selection behind its siblings."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.reorder("back")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Move up"
@@ -848,7 +816,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Raise the selection one step in the stacking order."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.reorder("up")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Move down"
@@ -856,7 +823,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Lower the selection one step in the stacking order."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.reorder("down")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Group"
@@ -868,7 +834,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                     stageRef.current?.groupSelection();
                     notify("Grouped", "⌘G");
                   }}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Ungroup"
@@ -880,7 +845,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                     stageRef.current?.ungroupSelection();
                     notify("Ungrouped", "⌘⇧G");
                   }}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Detach"
@@ -888,7 +852,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Pull a nested object out of its group without moving it on screen."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.detachSelection()}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Object to Path"
@@ -900,7 +863,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                     stageRef.current?.convertSelectionToPath();
                     notify("Object to Path", "⌘⇧C");
                   }}
-                  onHover={setActionHint}
                 />
               </div>
 
@@ -912,7 +874,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align selected objects by their left edges."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("left")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Align center"
@@ -920,7 +881,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align the horizontal centers of the selection."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("center")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Align right"
@@ -928,7 +888,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align selected objects by their right edges."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("right")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Align top"
@@ -936,7 +895,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align selected objects by their top edges."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("top")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Align middle"
@@ -944,7 +902,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align the vertical centers of the selection."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("middle")}
-                  onHover={setActionHint}
                 />
                 <ActionButton
                   label="Align bottom"
@@ -952,7 +909,6 @@ export default function App({ onReady, onHome, embedded = false }: AppProps) {
                   hint="Align selected objects by their bottom edges."
                   disabled={!hasSelection}
                   onClick={() => stageRef.current?.align("bottom")}
-                  onHover={setActionHint}
                 />
               </div>
             </div>

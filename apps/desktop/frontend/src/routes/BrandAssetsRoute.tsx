@@ -20,6 +20,8 @@ import {
 } from "../components/OgVisualEditor";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
+import { Checkbox } from "../components/ui/checkbox";
+import { Select } from "../components/ui/select";
 import { selectWebImage } from "../lib/asset-input";
 import { getProjectClient } from "../lib/projects/client";
 import { mergeDocumentDefaults, useProject, useProjectDocument } from "../lib/projects/context";
@@ -566,11 +568,7 @@ export function BrandAssetsRoute() {
             <h2>Icons and plate</h2>
             <ColorField label="Plate color" value={plate} onChange={setPlate} />
             <label className="brand-check">
-              <input
-                type="checkbox"
-                checked={copySvg}
-                onChange={(event) => setCopySvg(event.target.checked)}
-              />
+              <Checkbox checked={copySvg} onChange={(event) => setCopySvg(event.target.checked)} />
               Copy source as favicon.svg
             </label>
             <label className="brand-field">
@@ -583,8 +581,7 @@ export function BrandAssetsRoute() {
             <div className="brand-section-head">
               <h2>Social card</h2>
               <label className="brand-switch">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={ogEnabled}
                   onChange={(event) => setOgEnabled(event.target.checked)}
                 />
@@ -673,8 +670,7 @@ export function BrandAssetsRoute() {
             <div className="brand-section-head">
               <h2>Web manifest</h2>
               <label className="brand-switch">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={manifestEnabled}
                   onChange={(event) => setManifestEnabled(event.target.checked)}
                 />
@@ -707,12 +703,16 @@ export function BrandAssetsRoute() {
                 </label>
                 <label className="brand-field">
                   <span>Display</span>
-                  <select value={display} onChange={(event) => setDisplay(event.target.value)}>
-                    <option value="standalone">standalone</option>
-                    <option value="fullscreen">fullscreen</option>
-                    <option value="minimal-ui">minimal-ui</option>
-                    <option value="browser">browser</option>
-                  </select>
+                  <Select
+                    value={display}
+                    options={[
+                      { value: "standalone", label: "standalone" },
+                      { value: "fullscreen", label: "fullscreen" },
+                      { value: "minimal-ui", label: "minimal-ui" },
+                      { value: "browser", label: "browser" },
+                    ]}
+                    onChange={(event) => setDisplay(event.target.value)}
+                  />
                 </label>
               </div>
             </fieldset>

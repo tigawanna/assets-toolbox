@@ -498,9 +498,8 @@
   font-size: 10px;
 }
 
-.og-editor-gradient-toggle input {
-  accent-color: var(--accent);
-  cursor: pointer;
+.og-editor-field-stack .ui-select {
+  width: 100%;
 }
 
 .og-editor-field-stack input[type="range"] {
