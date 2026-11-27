@@ -77,6 +77,25 @@
   gap: 6px;
 }
 
+.preview-gallery-action {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+}
+
+.preview-gallery-action:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .preview-gallery-icon-button {
   display: grid;
   width: 28px;

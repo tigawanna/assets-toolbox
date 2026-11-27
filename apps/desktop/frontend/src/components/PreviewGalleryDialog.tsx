@@ -14,6 +14,8 @@ export interface PreviewGalleryDialogProps {
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -127,6 +129,18 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
             </strong>
           </div>
           <div className="preview-gallery-actions">
+            {props.actionLabel ? (
+              <button
+                type="button"
+                className="preview-gallery-action"
+                onClick={() => {
+                  onClose();
+                  props.onAction?.();
+                }}
+              >
+                {props.actionLabel}
+              </button>
+            ) : null}
             <button
               type="button"
               className="preview-gallery-icon-button"
