@@ -4,7 +4,7 @@
   gap: 18px;
   padding-bottom: 24px;
   color: var(--text);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
 }
 
 .projects-list {
@@ -34,7 +34,7 @@
 
 .projects-row-main strong {
   overflow: hidden;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -43,13 +43,13 @@
 .projects-row-main span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .projects-row-active {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .projects-actions {
@@ -77,13 +77,13 @@
   background: var(--canvas);
   color: var(--text);
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .projects-empty {
   margin: 0;
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   line-height: 1.6;
 }
 
@@ -129,14 +129,14 @@
 }
 
 .projects-tool strong {
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
 }
 
 .projects-tool small {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .project-assets {
@@ -157,7 +157,7 @@
 
 .project-assets-head h2 {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
 }
 
@@ -172,7 +172,7 @@
   max-width: 620px;
   margin: 2px 0 0;
   color: var(--text-subtle);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   line-height: 1.5;
 }
 
@@ -189,7 +189,7 @@
   background: var(--accent);
   color: var(--surface);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-weight: 700;
 }
 
@@ -221,7 +221,7 @@
   color: var(--text);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   text-align: left;
 }
 
@@ -244,7 +244,7 @@
 .project-assets-actions-confirm {
   margin: 2px 8px 4px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   line-height: 1.4;
 }
 
@@ -271,7 +271,7 @@
 .project-assets-group-head h3 {
   margin: 0;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -280,7 +280,7 @@
 .project-assets-group-head span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .project-assets-grid {
@@ -329,7 +329,7 @@
   color: var(--text-subtle);
   cursor: zoom-in;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .project-assets-preview:disabled {
@@ -408,7 +408,7 @@
   color: var(--text);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   text-align: left;
   white-space: nowrap;
 }
@@ -444,7 +444,7 @@
 
 .project-assets-card-meta strong {
   overflow: hidden;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -460,7 +460,7 @@
 .project-assets-source,
 .project-assets-source-missing {
   overflow: hidden;
-  font-size: 8px !important;
+  font-size: calc(8px * var(--text-scale, 1)) !important;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -474,14 +474,14 @@
 .project-assets-error {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .project-assets-empty {
   grid-column: 1 / -1;
   margin: 8px 0;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 /* Launch screen — compact welcome panel, no hero text or competing inputs. */
@@ -490,7 +490,7 @@
   min-height: 100%;
   flex-direction: column;
   color: var(--text);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
 }
 
 .launch-top {
@@ -525,7 +525,7 @@
 
 .launch-brand-copy strong {
   overflow: hidden;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: -0.02em;
   text-overflow: ellipsis;
@@ -534,7 +534,7 @@
 
 .launch-brand-copy small {
   color: var(--text-subtle);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .launch-top-actions {
@@ -563,7 +563,7 @@
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   outline: none;
 }
 
@@ -581,7 +581,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .launch-icon-action {
@@ -636,7 +636,7 @@
   padding: 0 4px 10px;
   border-bottom: 1px solid var(--line);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -688,7 +688,7 @@
   border-radius: 7px;
   background: var(--surface-muted);
   color: var(--accent);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 700;
 }
 
@@ -702,7 +702,7 @@
 
 .launch-project-copy strong {
   overflow: hidden;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -712,7 +712,7 @@
   overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -720,7 +720,7 @@
 .launch-project-active {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .launch-project-delete {
@@ -745,7 +745,7 @@
 .launch-error {
   margin: 10px 4px 0;
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .launch-error {
@@ -782,7 +782,7 @@
 }
 
 .launch-dialog-head strong {
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
   font-weight: 650;
 }
 
@@ -794,7 +794,7 @@
   background: var(--canvas);
   color: var(--text);
   font: inherit;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   outline: none;
 }
 

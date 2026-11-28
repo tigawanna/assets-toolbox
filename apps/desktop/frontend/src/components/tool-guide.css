@@ -15,7 +15,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   transition:
     border-color 150ms var(--ease),
@@ -39,7 +39,7 @@
   margin-bottom: 6px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
 }

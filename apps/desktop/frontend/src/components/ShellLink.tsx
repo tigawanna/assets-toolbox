@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import type { ToolRoute } from "../lib/catalog";
 
 type ShellLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
-  to: ToolRoute | "/" | "/mcp" | "/help";
+  to: ToolRoute | "/" | "/mcp" | "/help" | "/settings";
   children: ReactNode;
 };
 

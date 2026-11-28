@@ -20,7 +20,8 @@ desktop/bin/
 desktop/build/
 desktop/frontend/svg-compose/*
 !desktop/frontend/svg-compose/.gitkeep
-apps/desktop/build/
+apps/desktop/build/*
+!apps/desktop/build/appicon.png
 apps/desktop/frontend/build/*
 !apps/desktop/frontend/build/.gitkeep
 apps/desktop/frontend/node_modules/

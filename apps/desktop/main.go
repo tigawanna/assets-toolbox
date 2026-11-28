@@ -15,10 +15,18 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 )
 
 //go:embed all:frontend/build
 var assets embed.FS
+
+// Wails builds the platform app icons from build/appicon.png. Keep it in sync
+// with appicon.svg (512x512 PNG, rendered from that source artwork).
+//
+//go:embed build/appicon.png
+var appIcon []byte
 
 func main() {
 	frontend, err := fs.Sub(assets, "frontend/build")
@@ -80,6 +88,18 @@ func main() {
 		OnShutdown:    app.shutdown,
 		OnBeforeClose: app.beforeClose,
 		Bind:          []interface{}{app},
+		Linux: &linux.Options{
+			Icon: appIcon,
+			// Preserve the previous default: passing Linux options would
+			// otherwise switch GPU policy to "on demand".
+			WebviewGpuPolicy: linux.WebviewGpuPolicyNever,
+		},
+		Mac: &mac.Options{
+			About: &mac.AboutInfo{
+				Title: appName,
+				Icon:  appIcon,
+			},
+		},
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "com.tigawanna.assets-toolbox",
 		},

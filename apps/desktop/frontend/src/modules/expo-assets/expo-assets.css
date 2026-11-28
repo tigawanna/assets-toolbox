@@ -5,7 +5,7 @@
   flex-direction: column;
   gap: 18px;
   color: var(--text);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
 }
 
 .expo-heading {
@@ -21,7 +21,7 @@
   margin: 0 0 6px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -29,7 +29,7 @@
 
 .expo-heading h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: calc(28px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: -0.04em;
 }
@@ -38,7 +38,7 @@
   max-width: 62ch;
   margin: 8px 0 0;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   line-height: 1.6;
 }
 
@@ -49,7 +49,7 @@
   border-radius: 6px;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .expo-notice,
@@ -104,7 +104,7 @@
 
   .expo-panel h2 {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 }
 
@@ -129,7 +129,7 @@
 
 .expo-panel h2 {
   margin: 0 0 14px;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: -0.01em;
 }
@@ -186,7 +186,7 @@
   background: var(--surface-muted);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-output-list li span:last-child {
@@ -231,7 +231,7 @@
 .expo-source-copy span {
   overflow: hidden;
   color: var(--text-subtle);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -254,7 +254,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   transition:
     border-color 150ms var(--ease),
     background-color 150ms var(--ease),
@@ -301,7 +301,7 @@
   flex-direction: column;
   gap: 5px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-panel input[type="text"],
@@ -315,7 +315,7 @@
   color: var(--text);
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .expo-panel input[type="number"] {
@@ -328,7 +328,7 @@
   color: var(--text);
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .expo-inline-field {
@@ -399,7 +399,7 @@
 .expo-preview-label {
   align-self: flex-start;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
 }
 
@@ -455,7 +455,7 @@
 .expo-preview-meta {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-align: center;
 }
 
@@ -489,7 +489,7 @@
   color: var(--text-subtle);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .expo-asset-preview img {
@@ -512,7 +512,7 @@
 
 .expo-asset-meta strong {
   overflow: hidden;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -521,7 +521,7 @@
 .expo-asset-meta span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .expo-asset-save {
@@ -536,7 +536,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-results {
@@ -572,13 +572,13 @@
 }
 
 .expo-score strong {
-  font-size: 20px;
+  font-size: calc(20px * var(--text-scale, 1));
   font-weight: 600;
 }
 
 .expo-score span {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-artifact-grid {
@@ -611,7 +611,7 @@ button.expo-artifact-preview {
   background: var(--canvas);
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-artifact-preview img {
@@ -629,7 +629,7 @@ button.expo-artifact-preview {
 
 .expo-artifact-meta strong {
   overflow: hidden;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -638,13 +638,13 @@ button.expo-artifact-preview {
 .expo-artifact-meta span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .expo-artifact button {
   min-height: 26px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .expo-agent {
@@ -663,14 +663,14 @@ button.expo-artifact-preview {
 
 .expo-agent h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   font-weight: 650;
 }
 
 .expo-agent p {
   margin: 8px 0 0;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   line-height: 1.6;
 }
 

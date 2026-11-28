@@ -121,7 +121,7 @@
 .category {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -133,7 +133,7 @@
 
 .package-card h3 {
   margin: 9px 0 8px;
-  font-size: 22px;
+  font-size: calc(22px * var(--text-scale, 1));
   font-weight: 620;
   letter-spacing: -0.035em;
   line-height: 1.15;
@@ -143,7 +143,7 @@
   max-width: 46ch;
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
   line-height: 1.55;
 }
 
@@ -156,7 +156,7 @@
   z-index: 1;
   padding-top: 16px;
   border-top: 1px solid var(--line);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
 }
 
 .featured .card-footer {
@@ -190,7 +190,7 @@
   overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   text-overflow: ellipsis;
   white-space: nowrap;
 }

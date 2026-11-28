@@ -51,37 +51,11 @@
 }
 
 .brand-mark {
-  position: relative;
   display: block;
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
-  overflow: hidden;
-  border-radius: 9px;
-  background: var(--accent);
-}
-
-.brand-mark::before,
-.brand-mark::after {
-  position: absolute;
-  border: 1.5px solid var(--sidebar);
-  content: "";
-}
-
-.brand-mark::before {
-  top: 8px;
-  left: 8px;
-  width: 11px;
-  height: 11px;
-}
-
-.brand-mark::after {
-  right: 7px;
-  bottom: 7px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--sidebar);
+  background: url("/app-icon.svg") center / contain no-repeat;
 }
 
 .brand-copy {
@@ -92,14 +66,14 @@
 }
 
 .brand-copy strong {
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: -0.02em;
 }
 
 .brand-copy small {
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .project-switcher {
@@ -124,7 +98,7 @@
 .project-switcher-label {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-transform: uppercase;
 }
 
@@ -171,7 +145,7 @@
   padding: 0 10px 9px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -186,7 +160,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--text-scale, 1));
   font-weight: 500;
   text-decoration: none;
   transition:
@@ -226,7 +200,7 @@
   border-radius: 5px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   text-align: center;
 }
 
@@ -241,7 +215,7 @@
   align-items: center;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .backend-meta {
@@ -252,7 +226,7 @@
   padding-left: 0;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .sidebar-footer {
@@ -279,7 +253,7 @@
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -341,7 +315,7 @@
   align-items: center;
   gap: 10px;
   color: var(--text-subtle);
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
 }
 
 .breadcrumb strong {
@@ -567,7 +541,7 @@
 
   .breadcrumb {
     gap: 7px;
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
   }
 
   .page-content {

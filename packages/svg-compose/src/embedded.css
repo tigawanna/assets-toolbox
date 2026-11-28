@@ -85,7 +85,7 @@
   }
 
   [data-svg-header-title] strong {
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
     font-weight: 650;
     letter-spacing: -0.02em;
   }
@@ -94,7 +94,7 @@
     overflow: hidden;
     color: var(--svg-text-muted);
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 9px;
+    font-size: calc(9px * var(--text-scale, 1));
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -107,7 +107,7 @@
     justify-content: center;
     gap: 6px;
     padding: 4px 8px;
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     font-weight: 550;
   }
 
@@ -238,7 +238,7 @@
   }
 
   .rail-brand-name {
-    font-size: 13px;
+    font-size: calc(13px * var(--text-scale, 1));
     font-weight: 650;
     letter-spacing: 0.01em;
     white-space: nowrap;
@@ -260,7 +260,7 @@
   .rail-section-label {
     padding: 2px 9px 5px;
     color: var(--svg-text-subtle);
-    font-size: 9px;
+    font-size: calc(9px * var(--text-scale, 1));
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -339,7 +339,7 @@
   .action-label {
     flex: 1;
     overflow: hidden;
-    font-size: 12.5px;
+    font-size: calc(12.5px * var(--text-scale, 1));
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -351,7 +351,7 @@
     background: var(--svg-surface-muted);
     color: var(--svg-text-subtle);
     font-family: inherit;
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     line-height: 1;
     padding: 3px 4px;
   }
@@ -388,7 +388,7 @@
     background: var(--svg-canvas);
     color: var(--svg-text);
     content: attr(data-tip);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
     pointer-events: none;
     white-space: nowrap;
     transform: translateY(-50%);
@@ -421,7 +421,7 @@
     right: 14px;
     padding: 4px 8px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
     font-variant-numeric: tabular-nums;
     pointer-events: none;
   }
@@ -443,7 +443,7 @@
     padding: 7px 13px 7px 9px;
     border-radius: 999px;
     box-shadow: 0 8px 24px color-mix(in srgb, var(--svg-canvas) 32%, transparent);
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
     white-space: nowrap;
   }
 
@@ -458,7 +458,7 @@
     background: var(--svg-surface-muted);
     color: var(--svg-text);
     font-family: inherit;
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
     font-weight: 600;
   }
 
@@ -466,7 +466,7 @@
     padding-left: 9px;
     border-left: 1px solid var(--svg-line-strong);
     color: var(--svg-text-subtle);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .hud-drag,
@@ -559,7 +559,7 @@
   .shortcuts-section h2 {
     margin: 0 0 12px;
     color: var(--svg-text-muted);
-    font-size: 13px;
+    font-size: calc(13px * var(--text-scale, 1));
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -574,7 +574,7 @@
     align-items: center;
     gap: 5px;
     color: var(--svg-text-subtle);
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     letter-spacing: 0.02em;
   }
 
@@ -622,7 +622,7 @@
   }
 
   .panel-toggle.vertical span {
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     letter-spacing: 0.1em;
     text-transform: uppercase;
     writing-mode: vertical-rl;
@@ -643,7 +643,7 @@
     min-height: 28px;
     padding: 3px 4px;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
   }
 
   .layer:hover {
@@ -673,7 +673,7 @@
   .layer-eye {
     width: 20px;
     color: var(--svg-text-muted);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .layer-spacer {
@@ -691,7 +691,7 @@
 
   .layer-tag {
     color: var(--svg-text-subtle);
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     text-transform: uppercase;
   }
 
@@ -751,7 +751,7 @@
     background: transparent;
     color: inherit;
     cursor: pointer;
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
     text-align: left;
   }
 
@@ -793,7 +793,7 @@
 
   .empty {
     color: var(--svg-text-subtle);
-    font-size: 13px;
+    font-size: calc(13px * var(--text-scale, 1));
     line-height: 1.5;
   }
 
@@ -805,7 +805,7 @@
     border-radius: 6px;
     background: var(--svg-surface-muted);
     color: var(--svg-text-muted);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
     line-height: 1.5;
   }
 
@@ -821,7 +821,7 @@
     background: var(--svg-surface-muted);
     color: var(--svg-text);
     font: inherit;
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     padding: 1px 4px;
     border-radius: 3px;
   }
@@ -845,7 +845,7 @@
   }
 
   .action-grid .button {
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
   }
 
   .align-heading {
@@ -860,7 +860,7 @@
 
   .align-grid .button {
     padding: 5px;
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .inspector {
@@ -881,7 +881,7 @@
     align-items: center;
     gap: 6px;
     padding: 5px 8px;
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .color-row {
@@ -894,12 +894,12 @@
     justify-content: space-between;
     margin-bottom: 7px;
     color: var(--svg-text-muted);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .color-row-head code {
     color: var(--svg-text-subtle);
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
   }
 
   .swatch-row {
@@ -970,7 +970,7 @@
     border: 1px dashed var(--svg-line-strong);
     background: var(--svg-surface-muted);
     color: var(--svg-text-muted);
-    font-size: 14px;
+    font-size: calc(14px * var(--text-scale, 1));
   }
 
   .swatch.custom input {
@@ -987,7 +987,7 @@
     gap: 5px;
     margin-bottom: 10px;
     color: var(--svg-text-muted);
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
   }
 
   .inspector-field input,
@@ -999,7 +999,7 @@
     background: var(--svg-canvas);
     color: inherit;
     font: inherit;
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
   }
 
   .inspector-field textarea {
@@ -1010,7 +1010,7 @@
   .inspector-meta {
     margin: 6px 0 0;
     color: var(--svg-text-subtle);
-    font-size: 10px;
+    font-size: calc(10px * var(--text-scale, 1));
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -1056,7 +1056,7 @@
 
   .shortcuts-modal h1 {
     margin: 0 0 20px;
-    font-size: 24px;
+    font-size: calc(24px * var(--text-scale, 1));
   }
 
   .modal-close {
@@ -1070,7 +1070,7 @@
     background: var(--svg-surface-muted);
     color: inherit;
     cursor: pointer;
-    font-size: 14px;
+    font-size: calc(14px * var(--text-scale, 1));
   }
 
   .shortcuts-grid {
@@ -1082,7 +1082,7 @@
   .shortcuts-section h2 {
     margin: 0;
     padding-bottom: 10px;
-    font-size: 12px;
+    font-size: calc(12px * var(--text-scale, 1));
     font-weight: 600;
     letter-spacing: 0.1em;
   }
@@ -1100,7 +1100,7 @@
     gap: 16px;
     padding: 10px 0;
     border-bottom: 1px solid var(--svg-line);
-    font-size: 13px;
+    font-size: calc(13px * var(--text-scale, 1));
   }
 
   .shortcut-keys {
@@ -1111,7 +1111,7 @@
 
   .shortcut-keys kbd {
     padding: 3px 7px;
-    font-size: 11px;
+    font-size: calc(11px * var(--text-scale, 1));
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;

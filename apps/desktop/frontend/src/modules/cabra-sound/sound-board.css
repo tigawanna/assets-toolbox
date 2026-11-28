@@ -72,7 +72,7 @@
   outline: 0;
   background: transparent;
   color: var(--text);
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .sound-search input::placeholder {
@@ -86,7 +86,7 @@
   border-radius: 4px;
   background: var(--surface-muted);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: calc(8px * var(--text-scale, 1));
 }
 
 .sound-audio-controls {
@@ -110,7 +110,7 @@
   border-radius: 7px;
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -153,7 +153,7 @@
   gap: 8px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .sound-volume-control input {
@@ -190,7 +190,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-weight: 550;
   white-space: nowrap;
   cursor: pointer;
@@ -234,7 +234,7 @@
   gap: 8px;
   margin: 12px 0 10px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .sound-status-message {
@@ -247,7 +247,7 @@
   flex: 0 0 auto;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-weight: 500;
   white-space: nowrap;
 }
@@ -385,7 +385,7 @@
 
 .sound-name {
   overflow: hidden;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   font-weight: 550;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -394,7 +394,7 @@
 .sound-meta {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: calc(8px * var(--text-scale, 1));
 }
 
 .sound-waveform {
@@ -459,14 +459,14 @@
 }
 
 .sound-now-copy strong {
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
   font-weight: 600;
 }
 
 .sound-now-copy span {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-transform: capitalize;
 }
 
@@ -564,12 +564,12 @@
 .sound-empty h2 {
   margin: 14px 0 5px;
   color: var(--text);
-  font-size: 16px;
+  font-size: calc(16px * var(--text-scale, 1));
 }
 
 .sound-empty p {
   margin: 0;
-  font-size: 11px;
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .sound-empty button {
@@ -585,7 +585,7 @@
   padding-top: 13px;
   border-top: 1px solid var(--line);
   color: var(--text-subtle);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   line-height: 1.5;
 }
 

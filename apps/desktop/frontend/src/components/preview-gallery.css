@@ -48,7 +48,7 @@
 .preview-gallery-eyebrow {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -57,13 +57,13 @@
 .preview-gallery-count {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-variant-numeric: tabular-nums;
 }
 
 .preview-gallery-title {
   overflow: hidden;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: -0.02em;
   text-overflow: ellipsis;
@@ -93,7 +93,7 @@
   color: var(--text-subtle);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   font-variant-numeric: tabular-nums;
 }
 
@@ -112,7 +112,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
 }
 
 .preview-gallery-action:hover {
@@ -212,7 +212,7 @@
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   pointer-events: none;
 }
 
@@ -260,7 +260,7 @@
   max-width: 100%;
   overflow: hidden;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-overflow: ellipsis;
   white-space: nowrap;
 }

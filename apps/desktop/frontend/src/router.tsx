@@ -18,6 +18,7 @@ import { HelpToolPage } from "./pages/HelpToolPage";
 import { McpPage } from "./pages/McpPage";
 import { PackagePlaceholderPage } from "./pages/PackagePlaceholderPage";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
+import { SettingsPage } from "./pages/SettingsPage";
 import { ProjectHome, projectToolSlug } from "./pages/ProjectHome";
 import { ProjectToolRoutePage } from "./routes/ProjectToolRoute";
 
@@ -84,6 +85,12 @@ const helpToolRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "help/$slug",
   component: HelpToolPage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings",
+  component: SettingsPage,
 });
 
 const packageRoute = createRoute({
@@ -181,6 +188,7 @@ export const routeTree = rootRoute.addChildren([
   libraryRoute,
   helpRoute,
   helpToolRoute,
+  settingsRoute,
   mcpRoute,
   projectRoute,
   projectToolRoute,

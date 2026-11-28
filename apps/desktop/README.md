@@ -78,6 +78,35 @@ also includes a visual OG card editor for placing text, shapes, and images befor
 - `/packages/brand-assets` — favicon, OG card, and manifest generator
 - `/packages/expo-assets` — Expo asset generator
 - `/packages/cabra-sound` — sound browser and exporter
+- `/settings` — appearance preferences
+
+## Settings
+
+The `/settings` page controls the shell's appearance: theme (`Light`, `Dark`,
+`Pitch black`, or `System`, which follows the OS live), **Scale everything**
+(root `zoom`, applied through `--ui-scale`), **Scale text only** (a `--text-scale`
+multiplier used by every font-size declaration), and a **Colors** section for the
+primary accent (presets plus custom), background, and text color. The two scales
+are independent and combine multiplicatively. The accent is written to `--accent`
+and picked up by the shell and the embedded tool stylesheets, which derive their
+highlight and focus tokens from it. Custom background and text colors set
+`--canvas` and `--text` plus `data-custom-bg` / `data-custom-text` attributes;
+the remaining palette is derived from them only while those preferences exist,
+so default themes stay as authored. **Reset to system defaults** clears every
+preference. The sidebar theme button cycles light → dark → pitch black → light.
+
+Preferences are saved in local storage and applied by the pre-hydration script in
+`frontend/index.html`, so they take effect before React mounts. Keep the storage
+keys, defaults and clamping in that script in sync with `src/lib/theme.ts`.
+
+## App icon
+
+The source artwork is `appicon.svg`. It is copied to
+`frontend/public/app-icon.svg` for the UI (sidebar brand mark and favicon), and
+`build/appicon.png` is the 512×512 raster Wails uses to generate the platform
+app icons during `wails build`. Keep the PNG in sync when the SVG changes.
+`main.go` also embeds that PNG for the Linux window icon and the macOS About
+dialog.
 
 ## Persistence
 

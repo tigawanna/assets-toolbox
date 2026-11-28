@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Braces, CircleHelp, LayoutGrid, List, Moon, PanelLeft, Sun } from "lucide-react";
+import {
+  Braces,
+  CircleHelp,
+  Eclipse,
+  LayoutGrid,
+  List,
+  Moon,
+  PanelLeft,
+  SlidersHorizontal,
+  Sun,
+} from "lucide-react";
 import { Link, useBlocker, useLocation } from "@tanstack/react-router";
 
 import { findPackage, toolPackages } from "../lib/catalog";
@@ -9,7 +19,7 @@ import { hasSeenTour } from "../lib/tour";
 import { registerMcpBridge } from "../lib/mcp";
 import { setDesktopModuleActive } from "../lib/desktop";
 import { formatPlatform, getSystemInfo, type NativeSystemInfo } from "../lib/native";
-import { toggleTheme, useTheme } from "../lib/theme";
+import { THEME_LABELS, nextTheme, toggleTheme, useTheme } from "../lib/theme";
 import { PackageIcon } from "./PackageIcon";
 import { ShortcutsDialog } from "./ShortcutsDialog";
 import { IntroTour } from "./IntroTour";
@@ -25,9 +35,13 @@ function readSidebarPreference(): boolean {
   }
 }
 
+const THEME_ICONS = { light: Sun, dark: Moon, black: Eclipse };
+
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const theme = useTheme();
+  const upcomingTheme = nextTheme(theme);
+  const UpcomingThemeIcon = THEME_ICONS[upcomingTheme];
   const [systemInfo, setSystemInfo] = useState<NativeSystemInfo | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarPreference);
@@ -61,7 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
   const currentPackage = findPackage(toolPackagesBySlug[currentSlug] ?? currentSlug);
   const currentLabel =
-    currentPackage?.name ?? (pathParts[0] === "projects" ? "Project" : "Projects");
+    pathParts[0] === "settings"
+      ? "Settings"
+      : (currentPackage?.name ?? (pathParts[0] === "projects" ? "Project" : "Projects"));
   // Only real tool workspaces use the edge-to-edge editor layout. A help guide
   // such as /help/compose shares the slug but must keep normal page padding and
   // scrolling.
@@ -313,6 +329,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <CircleHelp size={17} strokeWidth={1.8} aria-hidden="true" />
               <span>Help</span>
             </ShellLink>
+            <ShellLink
+              to="/settings"
+              className="nav-link"
+              aria-label="Settings"
+              title="Settings"
+              aria-current={location.pathname === "/settings" ? "page" : undefined}
+            >
+              <SlidersHorizontal size={17} strokeWidth={1.8} aria-hidden="true" />
+              <span>Settings</span>
+            </ShellLink>
           </div>
         </nav>
 
@@ -331,16 +357,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               className="sidebar-control theme-control"
-              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              aria-label={`Switch to ${THEME_LABELS[upcomingTheme]} theme`}
+              title={`Switch to ${THEME_LABELS[upcomingTheme]} theme`}
               onClick={toggleTheme}
             >
-              {theme === "dark" ? (
-                <Sun size={17} aria-hidden="true" />
-              ) : (
-                <Moon size={17} aria-hidden="true" />
-              )}
-              <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+              <UpcomingThemeIcon size={17} aria-hidden="true" />
+              <span>{THEME_LABELS[upcomingTheme]} mode</span>
             </button>
             <button
               type="button"

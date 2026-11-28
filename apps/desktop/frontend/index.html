@@ -5,18 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>Assets Toolbox</title>
+    <link rel="icon" type="image/svg+xml" href="/app-icon.svg" />
     <script>
+      // Apply saved appearance before React mounts to avoid a flash of the wrong theme/scale.
+      // Keep the keys, defaults and clamping in sync with src/lib/theme.ts.
       try {
+        const root = document.documentElement;
         const saved = localStorage.getItem("assets-toolbox-theme");
-        const theme =
-          saved === "light" || saved === "dark"
-            ? saved
-            : matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.toggle("dark", theme === "dark");
-        document.documentElement.style.colorScheme = theme;
+        const isTheme = (value) =>
+          value === "light" ||
+          value === "dark" ||
+          value === "black" ||
+          value === "system" ||
+          value === "custom";
+        const mode = isTheme(saved) ? saved : "system";
+
+        const isColor = (value) =>
+          value !== null && /^#[\da-fA-F]{3}(?:[\da-fA-F]{3})?$/.test(value);
+        const isDarkColor = (value) => {
+          const hex =
+            value.length === 4
+              ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
+              : value;
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
+        };
+
+        const systemDark = matchMedia("(prefers-color-scheme: dark)").matches;
+        const background = localStorage.getItem("assets-toolbox-background");
+        let theme;
+        if (mode === "system") theme = systemDark ? "dark" : "light";
+        else if (mode === "custom")
+          theme = isColor(background) && isDarkColor(background) ? "dark" : "light";
+        else theme = mode;
+        root.dataset.theme = theme;
+        root.classList.toggle("dark", theme === "dark" || theme === "black");
+        root.style.colorScheme = theme === "light" ? "light" : "dark";
+
+        const accent = localStorage.getItem("assets-toolbox-accent");
+        if (isColor(accent)) root.style.setProperty("--accent", accent);
+        if (isColor(background)) {
+          root.style.setProperty("--canvas", background);
+          root.setAttribute("data-custom-bg", "");
+        }
+        const text = localStorage.getItem("assets-toolbox-text");
+        if (isColor(text)) {
+          root.style.setProperty("--text", text);
+          root.setAttribute("data-custom-text", "");
+        }
+
+        function readScale(key) {
+          const raw = localStorage.getItem(key);
+          const value = raw === null ? 1 : Number(raw);
+          if (!isFinite(value)) return 1;
+          return Math.round(Math.min(1.5, Math.max(0.8, value)) * 100) / 100;
+        }
+        root.style.setProperty("--ui-scale", String(readScale("assets-toolbox-ui-scale")));
+        root.style.setProperty("--text-scale", String(readScale("assets-toolbox-text-scale")));
       } catch {}
     </script>
   </head>

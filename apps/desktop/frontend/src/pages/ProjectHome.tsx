@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Moon, Plus, Search, Sun, Trash2, X } from "lucide-react";
+import { Eclipse, Moon, Plus, Search, Sun, Trash2, X } from "lucide-react";
 
 import { getActiveProjectId, getProjectClient, setActiveProjectId } from "../lib/projects/client";
-import { toggleTheme, useTheme } from "../lib/theme";
+import { THEME_LABELS, nextTheme, toggleTheme, useTheme } from "../lib/theme";
 import type { ProjectSummary } from "../lib/projects/types";
 import "./projects.css";
+
+const THEME_ICONS = { light: Sun, dark: Moon, black: Eclipse };
 
 export function ProjectHome() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const upcomingTheme = nextTheme(theme);
+  const UpcomingThemeIcon = THEME_ICONS[upcomingTheme];
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -167,11 +171,11 @@ export function ProjectHome() {
           <button
             type="button"
             className="launch-icon-action"
-            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            title={theme === "dark" ? "Light mode" : "Dark mode"}
+            aria-label={`Switch to ${THEME_LABELS[upcomingTheme]} theme`}
+            title={`${THEME_LABELS[upcomingTheme]} mode`}
             onClick={toggleTheme}
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            <UpcomingThemeIcon size={16} aria-hidden="true" />
           </button>
         </div>
       </header>

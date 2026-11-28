@@ -46,7 +46,7 @@
 
 [data-slot="tool-header-title"] {
   overflow: hidden;
-  font-size: 12px;
+  font-size: calc(12px * var(--text-scale, 1));
   font-weight: 650;
   letter-spacing: -0.02em;
   text-overflow: ellipsis;
@@ -57,7 +57,7 @@
   overflow: hidden;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -82,7 +82,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 10px;
+  font-size: calc(10px * var(--text-scale, 1));
   transition:
     border-color 150ms var(--ease),
     background-color 150ms var(--ease),
@@ -129,7 +129,7 @@
   gap: 6px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--text-scale, 1));
 }
 
 .tool-header-volume input[type="range"] {
