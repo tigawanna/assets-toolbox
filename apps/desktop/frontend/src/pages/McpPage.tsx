@@ -248,11 +248,13 @@ export function McpPage() {
                       <span>{items.length}</span>
                     </h3>
                     {items.map((tool) => (
-                      <div className="mcp-tool" key={tool.id}>
-                        <code>{tool.id}</code>
-                        <span>{tool.summary}</span>
-                        {tool.mutating ? <span className="mcp-tool-mutating">writes</span> : null}
-                      </div>
+                      <article className="mcp-tool" key={tool.id}>
+                        <div className="mcp-tool-top">
+                          <code>{tool.id}</code>
+                          {tool.mutating ? <span className="mcp-tool-mutating">writes</span> : null}
+                        </div>
+                        <span className="mcp-tool-summary">{tool.summary}</span>
+                      </article>
                     ))}
                   </Fragment>
                 ))}
