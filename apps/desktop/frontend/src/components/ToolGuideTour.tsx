@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { EVENTS, Joyride, STATUS, type EventData } from "react-joyride";
 import { LifeBuoy } from "lucide-react";
 
@@ -17,7 +17,20 @@ export function ToolGuideTour({
 }) {
   const guide = getHelpGuide(slug);
   const [playing, setPlaying] = useState(run);
-  const steps = useMemo(() => (guide ? tourStepsFor(guide) : []), [guide]);
+  const steps = useMemo(() => {
+    const base = guide ? tourStepsFor(guide) : [];
+    return base.map((step, index) => ({
+      ...step,
+      content: (
+        <Fragment>
+          <span className="tour-step-count">
+            {index + 1} / {base.length}
+          </span>
+          {step.content}
+        </Fragment>
+      ),
+    }));
+  }, [guide]);
 
   useEffect(() => {
     setPlaying(run);
@@ -73,6 +86,7 @@ export function ToolGuideTour({
           close: "Close",
           last: "Finish",
           next: "Next",
+          nextWithProgress: "Next",
           skip: "Skip tour",
         }}
         options={{
@@ -82,7 +96,7 @@ export function ToolGuideTour({
           primaryColor: "var(--accent)",
           textColor: "var(--text)",
           zIndex: 200,
-          showProgress: true,
+          showProgress: false,
           buttons: ["back", "skip", "primary"],
           closeButtonAction: "skip",
           overlayClickAction: false,

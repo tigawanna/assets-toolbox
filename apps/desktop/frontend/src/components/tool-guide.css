@@ -28,3 +28,13 @@
   color: var(--text);
   outline: none;
 }
+
+.tour-step-count {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
