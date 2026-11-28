@@ -46,12 +46,21 @@ export function useProjectAssets() {
     [projectId, reload],
   );
 
-  const remove = useCallback(
-    async (assetId: AssetId) => {
-      await getProjectClient().deleteAsset(projectId, assetId);
+  const removeMany = useCallback(
+    async (assetIds: AssetId[]) => {
+      await Promise.all(
+        assetIds.map((assetId) => getProjectClient().deleteAsset(projectId, assetId)),
+      );
       await reload();
     },
     [projectId, reload],
+  );
+
+  const remove = useCallback(
+    async (assetId: AssetId) => {
+      await removeMany([assetId]);
+    },
+    [removeMany],
   );
 
   const move = useCallback(
@@ -76,5 +85,5 @@ export function useProjectAssets() {
     [projectId],
   );
 
-  return { assets, loading, add, remove, move, preview, reload };
+  return { assets, loading, add, remove, removeMany, move, preview, reload };
 }

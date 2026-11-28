@@ -167,8 +167,90 @@
   gap: 6px;
 }
 
-.project-assets-tools .ui-select {
-  width: 180px;
+.project-assets-hint {
+  max-width: 620px;
+  margin: 2px 0 0;
+  color: var(--text-subtle);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.project-assets-actions {
+  position: relative;
+}
+
+.project-assets-selected-count {
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.project-assets-actions-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  min-width: 176px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 35%);
+}
+
+.project-assets-actions-menu button {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+
+.project-assets-actions-menu button:hover,
+.project-assets-actions-menu button:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
+  outline: none;
+}
+
+.project-assets-actions-menu button:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.project-assets-actions-menu .project-assets-actions-danger:hover,
+.project-assets-actions-menu .project-assets-actions-danger:focus-visible {
+  color: var(--accent);
+}
+
+.project-assets-actions-confirm {
+  margin: 2px 8px 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.project-assets-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
 }
 
 .project-assets-group {

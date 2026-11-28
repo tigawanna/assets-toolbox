@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Copy, ImagePlus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, ImagePlus, Trash2 } from "lucide-react";
 
 import { useProjectAssets } from "../lib/projects/assets";
 import { getProjectClient } from "../lib/projects/client";
 import { useProject } from "../lib/projects/context";
-import type { AssetId, AssetRecord, ProjectId, ToolId } from "../lib/projects/types";
+import type { AssetId, AssetRecord, ToolId } from "../lib/projects/types";
 import { TOOL_IDS } from "../lib/projects/types";
 import { PreviewGalleryDialog, type PreviewGalleryItem } from "./PreviewGalleryDialog";
 import { ToolHeaderButton } from "./ToolHeader";
 import { Checkbox } from "./ui/checkbox";
-import { Select } from "./ui/select";
 
 const TOOL_LABELS: Record<string, string> = {
   brand: "Brand Assets",
@@ -23,26 +22,40 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 export function AssetLibrary() {
-  const { assets, add, remove, move, preview } = useProjectAssets();
+  const { assets, add, remove, removeMany, move, preview } = useProjectAssets();
   const { projectId } = useProject();
   const navigate = useNavigate();
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [owners, setOwners] = useState<Partial<Record<AssetId, ToolId>>>({});
   const [sources, setSources] = useState<Partial<Record<AssetId, AssetId>>>({});
-  const [targets, setTargets] = useState<Array<{ id: ProjectId; name: string }>>([]);
-  const [target, setTarget] = useState("");
   const [selected, setSelected] = useState<AssetId[]>([]);
   const [error, setError] = useState("");
   const [galleryTool, setGalleryTool] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void getProjectClient()
-      .listProjects()
-      .then((projects) => setTargets(projects.map(({ id, name }) => ({ id, name }))))
-      .catch(() => setTargets([]));
-  }, [assets.length]);
+    if (!actionsOpen) return;
+    function handlePointerDown(event: PointerEvent) {
+      if (actionsRef.current?.contains(event.target as Node)) return;
+      setActionsOpen(false);
+      setConfirmDelete(false);
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setActionsOpen(false);
+      setConfirmDelete(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [actionsOpen]);
 
   useEffect(() => {
     let active = true;
@@ -138,14 +151,32 @@ export function AssetLibrary() {
     );
   };
 
-  const runMove = async (mode: "copy" | "move") => {
-    if (selected.length === 0 || !target) return;
+  const closeActions = () => {
+    setActionsOpen(false);
+    setConfirmDelete(false);
+  };
+
+  const runCopy = async () => {
+    if (selected.length === 0) return;
     try {
-      await move(selected, target as ProjectId, mode);
+      await move(selected, projectId, "copy");
       setSelected([]);
       setError("");
+      closeActions();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not move those assets.");
+      setError(cause instanceof Error ? cause.message : "Could not copy those assets.");
+    }
+  };
+
+  const runDelete = async () => {
+    if (selected.length === 0) return;
+    try {
+      await removeMany(selected);
+      setSelected([]);
+      setError("");
+      closeActions();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not delete those assets.");
     }
   };
 
@@ -156,26 +187,63 @@ export function AssetLibrary() {
       <div className="project-assets-head">
         <h2>Project assets</h2>
         <div className="project-assets-tools">
-          <Select
-            aria-label="Target project"
-            placeholder="Target project…"
-            value={target}
-            options={targets.map((item) => ({ value: item.id, label: item.name }))}
-            onChange={(event) => setTarget(event.currentTarget.value)}
-          />
-          <ToolHeaderButton
-            disabled={selected.length === 0 || !target}
-            onClick={() => void runMove("copy")}
-          >
-            <Copy size={13} />
-            Copy
-          </ToolHeaderButton>
-          <ToolHeaderButton
-            disabled={selected.length === 0 || !target}
-            onClick={() => void runMove("move")}
-          >
-            Move
-          </ToolHeaderButton>
+          <div className="project-assets-actions" ref={actionsRef}>
+            <ToolHeaderButton
+              aria-label="Asset actions"
+              aria-expanded={actionsOpen}
+              aria-haspopup="menu"
+              disabled={selected.length === 0}
+              onClick={() => {
+                setConfirmDelete(false);
+                setActionsOpen((open) => !open);
+              }}
+            >
+              Actions
+              <span className="project-assets-selected-count">{selected.length}</span>
+              <ChevronDown size={12} aria-hidden="true" />
+            </ToolHeaderButton>
+            {actionsOpen ? (
+              <div className="project-assets-actions-menu" role="menu">
+                {confirmDelete ? (
+                  <>
+                    <p className="project-assets-actions-confirm">
+                      Delete {selected.length} {selected.length === 1 ? "asset" : "assets"}?
+                    </p>
+                    <div className="project-assets-actions-row">
+                      <button type="button" role="menuitem" onClick={() => setConfirmDelete(false)}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="project-assets-actions-danger"
+                        onClick={() => void runDelete()}
+                      >
+                        <Trash2 size={12} aria-hidden="true" />
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" role="menuitem" onClick={() => void runCopy()}>
+                      <Copy size={12} aria-hidden="true" />
+                      Copy
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="project-assets-actions-danger"
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      <Trash2 size={12} aria-hidden="true" />
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
           <ToolHeaderButton variant="primary" onClick={() => fileRef.current?.click()}>
             <ImagePlus size={13} />
             Add asset
@@ -193,6 +261,11 @@ export function AssetLibrary() {
           />
         </div>
       </div>
+
+      <p className="project-assets-hint">
+        These files are shared by every tool in this project. Select assets to copy or delete them
+        with Actions, or add a new file to import it here.
+      </p>
 
       {error ? <p className="project-assets-error">{error}</p> : null}
 
