@@ -1,6 +1,11 @@
-import { useEffect, useId, useRef, useState, type CSSProperties, type JSX } from "react";
+import { useEffect, useId, useRef, useState, type JSX } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
+import {
+  TransformComponent,
+  TransformWrapper,
+  type ReactZoomPanPinchRef,
+} from "react-zoom-pan-pinch";
 
 import "./preview-gallery.css";
 
@@ -28,9 +33,9 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
   const { items, index, onIndexChange, onClose } = props;
   const headingId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
   const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [zoom, setZoom] = useState(1);
+  const [zoomPercent, setZoomPercent] = useState(100);
   const closeHandlerRef = useRef(onClose);
   const indexHandlerRef = useRef(onIndexChange);
   const indexRef = useRef(0);
@@ -44,9 +49,6 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
   const hasItems = items.length > 0;
   const safeIndex = hasItems ? Math.min(Math.max(index, 0), items.length - 1) : 0;
   const active = items[safeIndex];
-  const imageStyle = {
-    "--preview-zoom": String(zoom),
-  } as CSSProperties & Record<`--${string}`, string>;
   indexRef.current = safeIndex;
 
   function step(delta: number): void {
@@ -57,24 +59,10 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
   }
   stepRef.current = step;
 
-  function clampZoom(value: number): number {
-    return Math.min(4, Math.max(0.25, Math.round(value * 100) / 100));
-  }
-
+  // A fresh wrapper per image resets pan/zoom when navigating the gallery.
   useEffect(() => {
-    setZoom(1);
+    setZoomPercent(100);
   }, [index]);
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      setZoom((current) => clampZoom(current + (event.deltaY < 0 ? 0.15 : -0.15)));
-    };
-    stage.addEventListener("wheel", handleWheel, { passive: false });
-    return () => stage.removeEventListener("wheel", handleWheel);
-  }, []);
 
   useEffect(() => {
     if (!hasItems) return;
@@ -159,7 +147,7 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
                 className="preview-gallery-icon-button"
                 aria-label="Zoom out"
                 title="Zoom out"
-                onClick={() => setZoom((current) => clampZoom(current - 0.25))}
+                onClick={() => void transformRef.current?.zoomOut(0.25, 0)}
               >
                 <Minus size={14} aria-hidden="true" />
               </button>
@@ -167,17 +155,17 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
                 type="button"
                 className="preview-gallery-zoom-value"
                 aria-label="Reset zoom"
-                title="Reset zoom"
-                onClick={() => setZoom(1)}
+                title="Reset zoom to 100%"
+                onClick={() => void transformRef.current?.resetTransform(0)}
               >
-                {Math.round(zoom * 100)}%
+                {zoomPercent}%
               </button>
               <button
                 type="button"
                 className="preview-gallery-icon-button"
                 aria-label="Zoom in"
                 title="Zoom in"
-                onClick={() => setZoom((current) => clampZoom(current + 0.25))}
+                onClick={() => void transformRef.current?.zoomIn(0.25, 0)}
               >
                 <Plus size={14} aria-hidden="true" />
               </button>
@@ -185,8 +173,8 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
                 type="button"
                 className="preview-gallery-icon-button"
                 aria-label="Fit to view"
-                title="Fit to view"
-                onClick={() => setZoom(1)}
+                title="Fit image to view"
+                onClick={() => void transformRef.current?.fitToView({ animationTime: 0 })}
               >
                 <RotateCcw size={13} aria-hidden="true" />
               </button>
@@ -234,8 +222,33 @@ export function PreviewGalleryDialog(props: PreviewGalleryDialogProps): JSX.Elem
           </div>
         </header>
 
-        <div className="preview-gallery-stage" ref={stageRef}>
-          <img src={active.src} alt={active.title} style={imageStyle} />
+        <div className="preview-gallery-stage">
+          <TransformWrapper
+            key={`${safeIndex}-${active.src}`}
+            ref={transformRef}
+            initialScale={1}
+            minScale={0.25}
+            maxScale={8}
+            centerOnInit
+            centerZoomedOut
+            limitToBounds
+            smooth={false}
+            wheel={{ step: 0.25 }}
+            doubleClick={{ mode: "toggle", step: 0.5, animationTime: 0 }}
+            velocityAnimation={{ disabled: true }}
+            onTransform={(_, state) => setZoomPercent(Math.round(state.scale * 100))}
+          >
+            <TransformComponent
+              wrapperClass="preview-gallery-transform-wrapper"
+              contentClass="preview-gallery-transform-content"
+              wrapperStyle={{ width: "100%", height: "100%" }}
+            >
+              <img src={active.src} alt={active.title} draggable={false} />
+            </TransformComponent>
+          </TransformWrapper>
+          <span className="preview-gallery-hint" aria-hidden="true">
+            Scroll to zoom · Drag to pan · Double-click to toggle
+          </span>
         </div>
 
         <div className="preview-gallery-strip" role="group" aria-label="Gallery images">
