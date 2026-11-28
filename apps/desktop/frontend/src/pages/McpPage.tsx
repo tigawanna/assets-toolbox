@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Search } from "lucide-react";
 
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import "./mcp.css";
@@ -24,6 +24,31 @@ type WailsRuntime = {
   EventsOn: (event: string, callback: (...data: unknown[]) => void) => () => void;
 };
 
+const TOOL_GROUPS: Record<string, string> = {
+  projects: "Projects",
+  assets: "Assets",
+  brand: "Brand Assets",
+  compose: "Icon Compose",
+  expo: "Expo Assets",
+  studio: "Screenshot Studio",
+  sound: "Cabra Sound",
+  inspect: "Social Inspect",
+  documents: "Documents",
+  templates: "Templates",
+  jobs: "Jobs",
+};
+
+function toolGroup(id: string): string {
+  return id.split(".")[0] ?? "other";
+}
+
+function groupLabel(group: string): string {
+  return (
+    TOOL_GROUPS[group] ??
+    group.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+  );
+}
+
 function snippet(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
@@ -31,6 +56,7 @@ function snippet(value: unknown): string {
 export function McpPage() {
   const [calls, setCalls] = useState<McpCall[]>([]);
   const [tools, setTools] = useState<NestedTool[]>([]);
+  const [toolQuery, setToolQuery] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
 
@@ -97,6 +123,29 @@ export function McpPage() {
   const stdioConfig = snippet({ mcpServers: { "assets-toolbox": stdioServer } });
   const httpServerOnly = snippet(httpServer);
   const stdioServerOnly = snippet(stdioServer);
+
+  const needle = toolQuery.trim().toLowerCase();
+  const filteredTools = tools.filter((tool) =>
+    `${tool.id} ${tool.summary} ${groupLabel(toolGroup(tool.id))}`.toLowerCase().includes(needle),
+  );
+  const groupedTools = useMemo(() => {
+    const groups = new Map<string, NestedTool[]>();
+    for (const tool of filteredTools) {
+      const group = toolGroup(tool.id);
+      const items = groups.get(group) ?? [];
+      items.push(tool);
+      groups.set(group, items);
+    }
+    const preferred = Object.keys(TOOL_GROUPS);
+    return [...groups.entries()].sort(([left], [right]) => {
+      const leftIndex = preferred.indexOf(left);
+      const rightIndex = preferred.indexOf(right);
+      return (
+        (leftIndex < 0 ? preferred.length : leftIndex) -
+          (rightIndex < 0 ? preferred.length : rightIndex) || left.localeCompare(right)
+      );
+    });
+  }, [filteredTools]);
 
   return (
     <section className="mcp-page">
@@ -172,15 +221,44 @@ export function McpPage() {
         {tools.length === 0 ? (
           <p className="mcp-note">Connect the native backend to load the tool catalog.</p>
         ) : (
-          <div className="mcp-tools">
-            {tools.map((tool) => (
-              <div className="mcp-tool" key={tool.id}>
-                <code>{tool.id}</code>
-                <span>{tool.summary}</span>
-                {tool.mutating ? <span className="mcp-tool-mutating">writes</span> : null}
+          <>
+            <div className="mcp-toolbar">
+              <label className="mcp-search">
+                <Search size={13} aria-hidden="true" />
+                <span className="sr-only">Filter available tools</span>
+                <input
+                  type="search"
+                  value={toolQuery}
+                  placeholder="Filter tools…"
+                  onChange={(event) => setToolQuery(event.currentTarget.value)}
+                />
+              </label>
+              <span className="mcp-tool-count">
+                {filteredTools.length} of {tools.length} tools
+              </span>
+            </div>
+            {groupedTools.length === 0 ? (
+              <p className="mcp-note">No tools match “{toolQuery}”.</p>
+            ) : (
+              <div className="mcp-tools">
+                {groupedTools.map(([group, items]) => (
+                  <Fragment key={group}>
+                    <h3 className="mcp-group-head">
+                      {groupLabel(group)}
+                      <span>{items.length}</span>
+                    </h3>
+                    {items.map((tool) => (
+                      <div className="mcp-tool" key={tool.id}>
+                        <code>{tool.id}</code>
+                        <span>{tool.summary}</span>
+                        {tool.mutating ? <span className="mcp-tool-mutating">writes</span> : null}
+                      </div>
+                    ))}
+                  </Fragment>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </section>
 
