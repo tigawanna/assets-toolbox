@@ -65,6 +65,22 @@ const EXPO_DOCUMENT_DEFAULTS: ExpoDocumentData = {
   sourceAssetIds: {},
 };
 
+function iconPreviewSize(foregroundSize: number): number {
+  const value =
+    Number.isFinite(foregroundSize) && foregroundSize > 0
+      ? foregroundSize
+      : EXPO_ASSET_DEFAULTS.foregroundSize;
+  return Math.round(
+    Math.min(224, Math.max(96, (value / EXPO_ASSET_DEFAULTS.foregroundSize) * 140)),
+  );
+}
+
+function splashPreviewSize(logoSize: number): number {
+  const value =
+    Number.isFinite(logoSize) && logoSize > 0 ? logoSize : EXPO_ASSET_DEFAULTS.splashLogoSize;
+  return Math.round(Math.min(180, Math.max(36, (value / EXPO_ASSET_DEFAULTS.splashLogoSize) * 92)));
+}
+
 export function ExpoAssetsRoute() {
   const [sources, setSources] = useState<Record<SourceRole, AssetInput | null>>({
     icon: null,
@@ -560,10 +576,19 @@ export function ExpoAssetsRoute() {
               <div className="expo-preview-grid">
                 <article className="expo-preview-card">
                   <span className="expo-preview-label">App icon</span>
-                  <div className="expo-icon-preview" style={{ backgroundColor: brandColor }}>
+                  <div
+                    className="expo-icon-preview"
+                    style={{
+                      backgroundColor: brandColor,
+                      width: iconPreviewSize(foregroundSize),
+                      height: iconPreviewSize(foregroundSize),
+                    }}
+                  >
                     <img src={sourcePreviews.icon} alt="App icon preview" />
                   </div>
-                  <span className="expo-preview-meta">1024×1024 · {brandColor}</span>
+                  <span className="expo-preview-meta">
+                    1024×1024 · {foregroundSize}px foreground · {brandColor}
+                  </span>
                 </article>
                 <article className="expo-preview-card">
                   <span className="expo-preview-label">Splash screen</span>
@@ -572,7 +597,7 @@ export function ExpoAssetsRoute() {
                     <img
                       src={sourcePreviews.icon}
                       alt="Splash screen preview"
-                      style={{ width: Math.max(28, Math.round(splashLogoSize / 8)) }}
+                      style={{ width: splashPreviewSize(splashLogoSize) }}
                     />
                   </div>
                   <span className="expo-preview-meta">
