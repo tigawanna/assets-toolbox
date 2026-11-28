@@ -3,6 +3,7 @@ import { HotkeysProvider, useHotkeys, useFormatForDisplay } from "@tanstack/reac
 import { useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import {
+  BookmarkPlus,
   Download,
   Library,
   LocateFixed,
@@ -118,13 +119,26 @@ export type StudioProps = {
   projectId: string;
   onReady?: (flush: DesktopFlush | null) => void;
   onHome?: () => void;
+  onSaveTemplate?: (name: string) => Promise<void> | void;
   embedded?: boolean;
 };
 
-export function Studio({ projectId, onReady, onHome, embedded = false }: StudioProps) {
+export function Studio({
+  projectId,
+  onReady,
+  onHome,
+  onSaveTemplate,
+  embedded = false,
+}: StudioProps) {
   return (
     <HotkeysProvider>
-      <StudioShell projectId={projectId} onReady={onReady} onHome={onHome} embedded={embedded} />
+      <StudioShell
+        projectId={projectId}
+        onReady={onReady}
+        onHome={onHome}
+        onSaveTemplate={onSaveTemplate}
+        embedded={embedded}
+      />
     </HotkeysProvider>
   );
 }
@@ -133,11 +147,13 @@ function StudioShell({
   projectId,
   onReady,
   onHome,
+  onSaveTemplate,
   embedded,
 }: {
   projectId: string;
   onReady?: (flush: DesktopFlush | null) => void;
   onHome?: () => void;
+  onSaveTemplate?: (name: string) => Promise<void> | void;
   embedded: boolean;
 }) {
   const boardQuery = useLiveQuery((q) => q.from({ board: boardCollection }));
@@ -157,6 +173,8 @@ function StudioShell({
   const [nameDraft, setNameDraft] = useState("Untitled");
   const [stripDraft, setStripDraft] = useState("Scenes");
   const [busy, setBusy] = useState("");
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
   const [hydratedProjectId, setHydratedProjectId] = useState<string | null>(null);
   const hydrated = hydratedProjectId === projectId;
   const undoRef = useRef<() => void>(() => {});
@@ -1227,6 +1245,52 @@ function StudioShell({
           onDuplicate={() => void cloneCurrent()}
           onCloneStore={(store) => void cloneCurrent(store)}
         />
+        {onSaveTemplate ? (
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size={embedded ? "icon-xs" : "xs"}
+              title="Save this board as a reusable template"
+              aria-label="Save board as template"
+              onClick={() => setTemplateOpen((open) => !open)}
+            >
+              <BookmarkPlus />
+              {embedded ? null : "Template"}
+            </Button>
+            {templateOpen ? (
+              <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-border bg-popover p-2 shadow-md">
+                <input
+                  autoFocus
+                  aria-label="Board template name"
+                  value={templateName}
+                  placeholder="Template name"
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none"
+                  onChange={(event) => setTemplateName(event.currentTarget.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setTemplateOpen(false);
+                  }}
+                />
+                <div className="mt-2 flex justify-end gap-1">
+                  <Button size="xs" variant="ghost" onClick={() => setTemplateOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="xs"
+                    disabled={!templateName.trim()}
+                    onClick={() => {
+                      void Promise.resolve(onSaveTemplate?.(templateName.trim())).finally(() => {
+                        setTemplateOpen(false);
+                        setTemplateName("");
+                      });
+                    }}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <Button
           variant="ghost"
           size={embedded ? "icon-xs" : "xs"}

@@ -5,6 +5,7 @@ import { ProjectProvider } from "../lib/projects/context";
 import { setActiveProjectId } from "../lib/projects/client";
 import { isProjectId, isToolId, type ToolId } from "../lib/projects/types";
 import { setDesktopModuleActive } from "../lib/desktop";
+import { saveStudioTemplate } from "../lib/studio-templates";
 import { useFlushRegistry } from "../lib/flush";
 import { ErrorPage } from "../pages/ErrorPage";
 
@@ -83,6 +84,11 @@ function ProjectStudio({ projectId }: { projectId: `p_${string}` }) {
     void navigate({ to: "/projects/$projectId", params: { projectId } });
   }, [navigate, projectId]);
 
+  const onSaveTemplate = useCallback(
+    (name: string) => saveStudioTemplate(projectId, name).then(() => undefined),
+    [projectId],
+  );
+
   useEffect(() => {
     setDesktopModuleActive("studio", true);
     return () => setDesktopModuleActive("studio", false);
@@ -90,7 +96,13 @@ function ProjectStudio({ projectId }: { projectId: `p_${string}` }) {
 
   return (
     <div className="editor-page">
-      <Studio projectId={projectId} embedded onReady={onReady} onHome={onHome} />
+      <Studio
+        projectId={projectId}
+        embedded
+        onReady={onReady}
+        onHome={onHome}
+        onSaveTemplate={onSaveTemplate}
+      />
     </div>
   );
 }
