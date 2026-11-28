@@ -427,13 +427,6 @@ export function ExpoAssetsRoute() {
         }
       />
 
-      {native ? null : (
-        <p className="expo-notice">
-          Choose images to preview them here. Generating the asset set requires the Wails desktop
-          app.
-        </p>
-      )}
-
       <div
         className={
           sourcePreviews.icon || result ? "expo-layout" : "expo-layout expo-layout-form-only"

@@ -52,7 +52,6 @@
   font-size: calc(9px * var(--text-scale, 1));
 }
 
-.expo-notice,
 .expo-error {
   display: flex;
   align-items: center;

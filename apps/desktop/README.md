@@ -45,6 +45,13 @@ pnpm --filter @assets-toolbox/desktop typecheck
 
 The executable is written to `apps/desktop/build/bin/assets-toolbox`.
 
+## Releases
+
+`.github/workflows/desktop-release.yml` builds a Linux amd64 binary, a Windows
+amd64 `.exe`, and a universal macOS `.app` zip on native runners, then publishes
+them with `SHA256SUMS` to a GitHub release. Push a `v*` tag or run the workflow
+manually with a tag name to publish.
+
 ## Package integration
 
 The desktop does not copy package applications or translate them into another

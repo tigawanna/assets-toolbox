@@ -52,7 +52,6 @@
   font-size: calc(9px * var(--text-scale, 1));
 }
 
-.brand-notice,
 .brand-error {
   display: flex;
   align-items: center;

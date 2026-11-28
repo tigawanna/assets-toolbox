@@ -564,12 +564,6 @@ export function BrandAssetsRoute() {
         }
       />
 
-      {native ? null : (
-        <p className="brand-notice">
-          Choose a mark to preview it here. Generating the asset set requires the Wails desktop app.
-        </p>
-      )}
-
       <div className={result ? "brand-layout" : "brand-layout brand-layout-form-only"}>
         <div className="brand-column">
           <div className="brand-card">
