@@ -11,6 +11,11 @@ export default defineConfig({
       "**/dist/**",
       "**/build/**",
       "references/**",
+      // Vendored agent skills and planning notes are not application source.
+      ".agents/**",
+      "MCP_PLAN.md",
+      "PROJECTS_PLAN.md",
+      "VERIFICATION.md",
       "apps/desktop-svelte/**",
       "apps/desktop/frontend/src/lib/wailsjs/**",
     ],
@@ -23,6 +28,8 @@ export default defineConfig({
       "**/dist/**",
       "**/build/**",
       "references/**",
+      // Vendored agent skills ship their own style; don't lint them as app code.
+      ".agents/**",
       "apps/desktop-svelte/**",
       "apps/desktop/frontend/src/lib/wailsjs/**",
     ],
