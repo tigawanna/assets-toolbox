@@ -62,9 +62,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const currentPackage = findPackage(toolPackagesBySlug[currentSlug] ?? currentSlug);
   const currentLabel =
     currentPackage?.name ?? (pathParts[0] === "projects" ? "Project" : "Projects");
+  // Only real tool workspaces use the edge-to-edge editor layout. A help guide
+  // such as /help/compose shares the slug but must keep normal page padding and
+  // scrolling.
   const editorRoute =
-    currentSlug === "compose" ||
-    currentSlug === "studio" ||
+    (pathParts[0] === "projects" && (currentSlug === "compose" || currentSlug === "studio")) ||
     location.pathname.startsWith("/packages/svg-compose") ||
     location.pathname.startsWith("/packages/screenshot-studio");
   const projectId = getActiveProjectId();
