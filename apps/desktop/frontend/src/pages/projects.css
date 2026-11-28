@@ -284,37 +284,46 @@
 
 .project-assets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 8px;
 }
 
 .project-assets-card {
-  display: flex;
+  display: grid;
   min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-  padding: 7px;
+  aspect-ratio: 3 / 4;
+  grid-template-rows: 70% 30%;
+  overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--surface-muted);
+  transition:
+    border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
 }
 
-.project-assets-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+.project-assets-card:hover {
+  border-color: var(--line-strong);
+}
+
+.project-assets-card-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.project-assets-preview-wrap {
+  position: relative;
+  min-height: 0;
 }
 
 .project-assets-preview {
   display: grid;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 100%;
   place-items: center;
   overflow: hidden;
-  padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
+  padding: 0;
+  border: 0;
   background: var(--canvas);
   color: var(--text-subtle);
   cursor: zoom-in;
@@ -332,19 +341,119 @@
   object-fit: contain;
 }
 
+.project-assets-card-controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+}
+
+.project-assets-card-controls > button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 150ms var(--ease),
+    color 150ms var(--ease),
+    border-color 150ms var(--ease);
+}
+
+.project-assets-card:hover .project-assets-card-controls > button,
+.project-assets-card-controls > button[aria-expanded="true"],
+.project-assets-card-controls > button:focus-visible {
+  opacity: 1;
+}
+
+.project-assets-card-controls > button:hover,
+.project-assets-card-controls > button[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.project-assets-card-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  min-width: 112px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 40%);
+  cursor: default;
+}
+
+.project-assets-card-menu button {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.project-assets-card-menu button:hover,
+.project-assets-card-menu button:focus-visible {
+  background: var(--surface-hover);
+  outline: none;
+}
+
+.project-assets-card-menu .project-assets-actions-danger:hover,
+.project-assets-card-menu .project-assets-actions-danger:focus-visible {
+  color: var(--accent);
+}
+
 .project-assets-card-meta {
   display: flex;
   min-width: 0;
+  min-height: 0;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 7px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.project-assets-card-info {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .project-assets-card-meta strong {
   overflow: hidden;
   font-size: 10px;
   font-weight: 600;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (hover: none) {
+  .project-assets-card-controls > button {
+    opacity: 1;
+  }
 }
 
 .project-assets-source,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, Copy, ImagePlus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, Ellipsis, ImagePlus, Trash2 } from "lucide-react";
 
 import { useProjectAssets } from "../lib/projects/assets";
 import { getProjectClient } from "../lib/projects/client";
@@ -34,6 +34,7 @@ export function AssetLibrary() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cardMenuId, setCardMenuId] = useState<AssetId | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +57,23 @@ export function AssetLibrary() {
       document.removeEventListener("keydown", handleKey);
     };
   }, [actionsOpen]);
+
+  useEffect(() => {
+    if (!cardMenuId) return;
+    function handlePointerDown(event: PointerEvent) {
+      if ((event.target as HTMLElement).closest(".project-assets-card-controls")) return;
+      setCardMenuId(null);
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setCardMenuId(null);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [cardMenuId]);
 
   useEffect(() => {
     let active = true;
@@ -156,11 +174,11 @@ export function AssetLibrary() {
     setConfirmDelete(false);
   };
 
-  const runCopy = async () => {
-    if (selected.length === 0) return;
+  const copyAssets = async (ids: AssetId[]) => {
+    if (ids.length === 0) return;
     try {
-      await move(selected, projectId, "copy");
-      setSelected([]);
+      await move(ids, projectId, "copy");
+      setSelected((current) => current.filter((id) => !ids.includes(id)));
       setError("");
       closeActions();
     } catch (cause) {
@@ -226,7 +244,7 @@ export function AssetLibrary() {
                   </>
                 ) : (
                   <>
-                    <button type="button" role="menuitem" onClick={() => void runCopy()}>
+                    <button type="button" role="menuitem" onClick={() => void copyAssets(selected)}>
                       <Copy size={12} aria-hidden="true" />
                       Copy
                     </button>
@@ -287,50 +305,99 @@ export function AssetLibrary() {
                 const sourceId = asset.origin?.derivedFrom ?? sources[asset.id];
                 const source = sourceId ? assetById.get(sourceId as AssetId) : undefined;
                 return (
-                  <article className="project-assets-card" key={asset.id}>
-                    <div className="project-assets-card-top">
+                  <article
+                    className={`project-assets-card${selected.includes(asset.id) ? " project-assets-card-selected" : ""}`}
+                    key={asset.id}
+                  >
+                    <div className="project-assets-preview-wrap">
+                      <button
+                        type="button"
+                        className="project-assets-preview"
+                        aria-label={`Preview ${asset.name}`}
+                        disabled={position < 0}
+                        onClick={() => {
+                          setGalleryTool(tool);
+                          setGalleryIndex(Math.max(0, position));
+                        }}
+                      >
+                        {thumbs[asset.id] ? (
+                          <img src={thumbs[asset.id]} alt="" />
+                        ) : (
+                          <span>{asset.mime.split("/").at(-1)?.slice(0, 4)}</span>
+                        )}
+                      </button>
+                      <div className="project-assets-card-controls">
+                        <button
+                          type="button"
+                          aria-label={`Controls for ${asset.name}`}
+                          aria-expanded={cardMenuId === asset.id}
+                          onClick={() =>
+                            setCardMenuId((current) => (current === asset.id ? null : asset.id))
+                          }
+                        >
+                          <Ellipsis size={14} aria-hidden="true" />
+                        </button>
+                        {cardMenuId === asset.id ? (
+                          <div className="project-assets-card-menu" role="menu">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                toggle(asset.id);
+                                setCardMenuId(null);
+                              }}
+                            >
+                              {selected.includes(asset.id) ? "Deselect" : "Select"}
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                void copyAssets([asset.id]);
+                                setCardMenuId(null);
+                              }}
+                            >
+                              <Copy size={12} aria-hidden="true" />
+                              Copy
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="project-assets-actions-danger"
+                              onClick={() => {
+                                void remove(asset.id).catch((cause: unknown) =>
+                                  setError(String(cause)),
+                                );
+                                setCardMenuId(null);
+                              }}
+                            >
+                              <Trash2 size={12} aria-hidden="true" />
+                              Delete
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="project-assets-card-meta">
                       <Checkbox
                         aria-label={`Select ${asset.name}`}
                         checked={selected.includes(asset.id)}
                         onChange={() => toggle(asset.id)}
                       />
-                      <ToolHeaderButton
-                        variant="icon"
-                        aria-label={`Delete ${asset.name}`}
-                        onClick={() => void remove(asset.id)}
-                      >
-                        <Trash2 size={13} />
-                      </ToolHeaderButton>
-                    </div>
-                    <button
-                      type="button"
-                      className="project-assets-preview"
-                      aria-label={`Preview ${asset.name}`}
-                      disabled={position < 0}
-                      onClick={() => {
-                        setGalleryTool(tool);
-                        setGalleryIndex(Math.max(0, position));
-                      }}
-                    >
-                      {thumbs[asset.id] ? (
-                        <img src={thumbs[asset.id]} alt="" />
-                      ) : (
-                        <span>{asset.mime.split("/").at(-1)?.slice(0, 4)}</span>
-                      )}
-                    </button>
-                    <div className="project-assets-card-meta">
-                      <strong title={asset.name}>{asset.name}</strong>
-                      <span>{Math.round(asset.bytes / 1024)} KB</span>
-                      {sourceId ? (
-                        <span
-                          className={
-                            source ? "project-assets-source" : "project-assets-source-missing"
-                          }
-                          title={source ? source.name : "Starting asset was deleted"}
-                        >
-                          {source ? `from ${source.name}` : "Source deleted"}
-                        </span>
-                      ) : null}
+                      <div className="project-assets-card-info">
+                        <strong title={asset.name}>{asset.name}</strong>
+                        <span>{Math.round(asset.bytes / 1024)} KB</span>
+                        {sourceId ? (
+                          <span
+                            className={
+                              source ? "project-assets-source" : "project-assets-source-missing"
+                            }
+                            title={source ? source.name : "Starting asset was deleted"}
+                          >
+                            {source ? `from ${source.name}` : "Source deleted"}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
                 );
