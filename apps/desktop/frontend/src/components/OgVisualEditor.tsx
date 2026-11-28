@@ -18,6 +18,7 @@ import {
   Circle,
   Download,
   ImagePlus,
+  BookmarkPlus,
   LayoutTemplate,
   Redo2,
   RotateCcw,
@@ -1116,6 +1117,8 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
   const [savedTemplates, setSavedTemplates] = useState<Array<TemplateRecord<OgEditorDraft>>>([]);
   const [templateName, setTemplateName] = useState("");
   const [templateError, setTemplateError] = useState("");
+  const [focusTemplateInput, setFocusTemplateInput] = useState(false);
+  const templateInputRef = useRef<HTMLInputElement>(null);
 
   const headingId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -1200,6 +1203,13 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
     props.title,
     savedTemplates,
   ]);
+
+  useEffect(() => {
+    if (showTemplates && focusTemplateInput) {
+      templateInputRef.current?.focus();
+      setFocusTemplateInput(false);
+    }
+  }, [focusTemplateInput, showTemplates]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -1803,6 +1813,17 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             <button
               type="button"
               className="og-editor-button"
+              onClick={() => {
+                setShowTemplates(true);
+                setFocusTemplateInput(true);
+              }}
+              aria-label="Save current design as template"
+            >
+              <BookmarkPlus size={13} aria-hidden="true" /> Save as template
+            </button>
+            <button
+              type="button"
+              className="og-editor-button"
               onClick={() => setShowTemplates(true)}
               aria-label="Choose a template"
             >
@@ -1840,6 +1861,7 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
                 </div>
                 <div className="og-editor-template-save">
                   <input
+                    ref={templateInputRef}
                     aria-label="Template name"
                     value={templateName}
                     placeholder="Save current design as…"
