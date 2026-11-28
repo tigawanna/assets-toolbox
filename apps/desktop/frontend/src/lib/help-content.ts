@@ -1042,6 +1042,115 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
 ];
 
+/**
+ * A curated first-run journey for Icon Compose. The generic per-control tour
+ * tries to cover everything; this one follows a single job from a rectangle to
+ * one exported SVG so a new user can actually follow along.
+ */
+export const COMPOSE_TOUR_STEPS: TourStep[] = [
+  {
+    id: "compose-select",
+    title: "Start with Select",
+    content: "Select is the default tool. Click a shape to pick it, then drag to move it.",
+    target: 'button[aria-label="Select"]',
+    placement: "right",
+  },
+  {
+    id: "compose-rectangle",
+    title: "Pick the rectangle",
+    content:
+      "Choose Rectangle (press R). You are going to draw the first piece of your mark with it.",
+    target: 'button[aria-label="Rectangle"]',
+    placement: "right",
+  },
+  {
+    id: "compose-draw",
+    title: "Draw the shape",
+    content:
+      "Drag on the canvas to draw your rectangle. Hold Shift while dragging for a perfect square.",
+    target: ".canvas-area",
+    placement: "bottom",
+  },
+  {
+    id: "compose-layers",
+    title: "Meet the layer list",
+    content:
+      "Every shape you draw becomes a layer here. Click a layer to select it, even when another shape sits on top of it.",
+    target: ".layers",
+    placement: "left",
+  },
+  {
+    id: "compose-layer-actions",
+    title: "Work with a layer",
+    content:
+      "A layer has its own controls: delete it, move it up or down the stack, or hide it while you work on something else.",
+    target: ".layers",
+    placement: "left",
+  },
+  {
+    id: "compose-colors",
+    title: "Change the colours",
+    content:
+      "With the shape selected, use Appearance to change its fill or stroke. Pick a swatch, or open the custom colour field to type a value.",
+    target: ".inspector",
+    placement: "left",
+  },
+  {
+    id: "compose-group-intro",
+    title: "Group is down here",
+    content:
+      "This is Group. Later you will shift-click two shapes and use it to make them one object — press ⌘G (Ctrl G on Windows).",
+    target: 'button[title^="Combine selected objects"]',
+    placement: "left",
+  },
+  {
+    id: "compose-object-to-path",
+    title: "Object to Path",
+    content: "Convert a plain shape into a path so its individual points become editable.",
+    target: 'button[title^="Convert a shape"]',
+    placement: "left",
+  },
+  {
+    id: "compose-node",
+    title: "Pull the shape into form",
+    content:
+      "Switch to Node / morph and drag the point handles to deform the path into whatever silhouette you need.",
+    target: 'button[aria-label="Node / morph"]',
+    placement: "right",
+  },
+  {
+    id: "compose-ellipse",
+    title: "Add a second shape",
+    content:
+      "Now press E and draw an ellipse close to the rectangle. You need two shapes to combine.",
+    target: 'button[aria-label="Ellipse"]',
+    placement: "right",
+  },
+  {
+    id: "compose-shift-click",
+    title: "Select both shapes",
+    content:
+      "Hold Shift and click the ellipse and the rectangle on the canvas so both are selected together.",
+    target: ".canvas-area",
+    placement: "bottom",
+  },
+  {
+    id: "compose-group",
+    title: "Combine them",
+    content:
+      "Press ⌘G or click Group. The two shapes become one object that moves and exports together.",
+    target: 'button[title^="Combine selected objects"]',
+    placement: "left",
+  },
+  {
+    id: "compose-export",
+    title: "Export one SVG",
+    content: "Click Download to export the combined artwork as a single SVG file.",
+    target: "button[data-svg-primary]",
+    placement: "bottom",
+  },
+];
+
 export interface QuickStart {
   slug: string;
   workflow: number;
@@ -1083,6 +1192,8 @@ export function getHelpGuide(slug: string): HelpGuide | undefined {
 }
 
 export function tourStepsFor(guide: HelpGuide): TourStep[] {
+  if (guide.slug === "compose") return COMPOSE_TOUR_STEPS;
+
   const steps: TourStep[] = [
     {
       id: `${guide.slug}-intro`,

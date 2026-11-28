@@ -7,6 +7,8 @@ import { ToolGuideTour } from "./ToolGuideTour";
 
 export function ToolTourHost({ slug, children }: { slug: string; children: ReactNode }) {
   const [run, setRun] = useState(false);
+  // Remount the tour on each replay so Joyride starts from its first step.
+  const [tourKey, setTourKey] = useState(0);
   const navigate = useNavigate();
   const { replayTour } = useSearch({ from: "/projects/$projectId/$tool" });
 
@@ -15,6 +17,7 @@ export function ToolTourHost({ slug, children }: { slug: string; children: React
   useEffect(() => {
     if (replayTour !== "1") return;
     markToolTourSeen(slug);
+    setTourKey((key) => key + 1);
     setRun(true);
     void navigate({ to: ".", search: {}, replace: true });
   }, [replayTour, slug, navigate]);
@@ -32,7 +35,9 @@ export function ToolTourHost({ slug, children }: { slug: string; children: React
 
   useEffect(() => {
     function handleReplay(event: Event) {
-      if ((event as CustomEvent<string>).detail === slug) setRun(true);
+      if ((event as CustomEvent<string>).detail !== slug) return;
+      setTourKey((key) => key + 1);
+      setRun(true);
     }
     window.addEventListener(REPLAY_TOOL_TOUR_EVENT, handleReplay);
     return () => window.removeEventListener(REPLAY_TOOL_TOUR_EVENT, handleReplay);
@@ -41,7 +46,7 @@ export function ToolTourHost({ slug, children }: { slug: string; children: React
   return (
     <>
       {children}
-      <ToolGuideTour slug={slug} run={run} onRunChange={setRun} />
+      <ToolGuideTour key={tourKey} slug={slug} run={run} onRunChange={setRun} />
     </>
   );
 }

@@ -106,7 +106,13 @@ export function ToolGuideTour({
         }}
         floatingOptions={{
           flipOptions: { padding: 20, crossAxis: true },
-          shiftOptions: { padding: 16 },
+          shiftOptions: {
+            boundary: document.body,
+            rootBoundary: "viewport",
+            padding: 16,
+            mainAxis: true,
+            crossAxis: true,
+          },
         }}
         styles={{
           tooltip: {
