@@ -22,9 +22,9 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { ProjectHome, projectToolSlug } from "./pages/ProjectHome";
 import { ProjectToolRoutePage } from "./routes/ProjectToolRoute";
 
-function RootError({ error }: ErrorComponentProps) {
+function RootError({ error, info }: ErrorComponentProps) {
   const message = error instanceof Error ? error.message : "This page could not be opened.";
-  return <ErrorPage message={message} />;
+  return <ErrorPage message={message} error={error} componentStack={info?.componentStack} />;
 }
 
 function NotFoundPage() {
