@@ -14,6 +14,7 @@ import { legacyBoardPath } from "./lib/legacy-route";
 import { getActiveProjectId } from "./lib/projects/client";
 import { ErrorPage } from "./pages/ErrorPage";
 import { HelpPage } from "./pages/HelpPage";
+import { HelpToolPage } from "./pages/HelpToolPage";
 import { McpPage } from "./pages/McpPage";
 import { PackagePlaceholderPage } from "./pages/PackagePlaceholderPage";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
@@ -74,6 +75,12 @@ const helpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "help",
   component: HelpPage,
+});
+
+const helpToolRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "help/$slug",
+  component: HelpToolPage,
 });
 
 const packageRoute = createRoute({
@@ -170,6 +177,7 @@ const socialInspectRoute = createRoute({
 export const routeTree = rootRoute.addChildren([
   libraryRoute,
   helpRoute,
+  helpToolRoute,
   mcpRoute,
   projectRoute,
   projectToolRoute,

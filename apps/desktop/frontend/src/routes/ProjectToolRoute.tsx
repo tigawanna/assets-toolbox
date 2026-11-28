@@ -7,6 +7,7 @@ import { isProjectId, isToolId, type ToolId } from "../lib/projects/types";
 import { setDesktopModuleActive } from "../lib/desktop";
 import { saveStudioTemplate } from "../lib/studio-templates";
 import { StudioTemplates } from "../components/StudioTemplates";
+import { ToolTourHost } from "../components/ToolTourHost";
 import { useFlushRegistry } from "../lib/flush";
 import { ErrorPage } from "../pages/ErrorPage";
 
@@ -57,15 +58,35 @@ export function ProjectToolRoutePage() {
 function ProjectTool({ tool, projectId }: { tool: ToolId; projectId: `p_${string}` }) {
   switch (tool) {
     case "brand":
-      return <BrandAssetsRoute />;
+      return (
+        <ToolTourHost slug="brand">
+          <BrandAssetsRoute />
+        </ToolTourHost>
+      );
     case "expo":
-      return <ExpoAssetsRoute />;
+      return (
+        <ToolTourHost slug="expo">
+          <ExpoAssetsRoute />
+        </ToolTourHost>
+      );
     case "compose":
-      return <SvgComposeRoute />;
+      return (
+        <ToolTourHost slug="compose">
+          <SvgComposeRoute />
+        </ToolTourHost>
+      );
     case "sound":
-      return <CabraSoundRoute />;
+      return (
+        <ToolTourHost slug="sound">
+          <CabraSoundRoute />
+        </ToolTourHost>
+      );
     case "inspect":
-      return <SocialInspectRoute />;
+      return (
+        <ToolTourHost slug="inspect">
+          <SocialInspectRoute />
+        </ToolTourHost>
+      );
     case "studio":
       return <ProjectStudio projectId={projectId} />;
     default:
@@ -97,22 +118,24 @@ function ProjectStudio({ projectId }: { projectId: `p_${string}` }) {
   }, []);
 
   return (
-    <div className="editor-page">
-      <Studio
-        projectId={projectId}
-        embedded
-        onReady={onReady}
-        onHome={onHome}
-        onSaveTemplate={onSaveTemplate}
-        reloadKey={templateReloadKey}
-        templatesPanel={
-          <StudioTemplates
-            projectId={projectId}
-            panel
-            onApplied={() => setTemplateReloadKey((key) => key + 1)}
-          />
-        }
-      />
-    </div>
+    <ToolTourHost slug="studio">
+      <div className="editor-page">
+        <Studio
+          projectId={projectId}
+          embedded
+          onReady={onReady}
+          onHome={onHome}
+          onSaveTemplate={onSaveTemplate}
+          reloadKey={templateReloadKey}
+          templatesPanel={
+            <StudioTemplates
+              projectId={projectId}
+              panel
+              onApplied={() => setTemplateReloadKey((key) => key + 1)}
+            />
+          }
+        />
+      </div>
+    </ToolTourHost>
   );
 }

@@ -553,6 +553,7 @@ export function BrandAssetsRoute() {
             </ToolHeaderButton>
             <ToolHeaderButton
               variant="primary"
+              data-tour="generate"
               disabled={!native || busy || !icon || (ogEnabled && !ogTitle)}
               onClick={() => void generate()}
             >
@@ -597,7 +598,7 @@ export function BrandAssetsRoute() {
                     : "Transparent SVG or PNG"}
                 </span>
               </div>
-              <button type="button" onClick={() => void chooseIcon()}>
+              <button type="button" data-tour="choose-source" onClick={() => void chooseIcon()}>
                 {icon ? <Check size={14} /> : <FolderOpen size={14} />}
                 {icon ? "Change" : "Choose"}
               </button>
@@ -764,6 +765,7 @@ export function BrandAssetsRoute() {
                   <span>Display</span>
                   <Select
                     value={display}
+                    data-tour="card-layout"
                     options={[
                       { value: "standalone", label: "standalone" },
                       { value: "fullscreen", label: "fullscreen" },

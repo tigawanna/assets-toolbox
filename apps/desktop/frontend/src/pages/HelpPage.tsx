@@ -2,9 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
-import { projectToolSlug } from "./ProjectHome";
+import { HELP_TOOL_PACKAGES } from "../lib/help-content";
 import { toolPackages } from "../lib/catalog";
-import { getActiveProjectId } from "../lib/projects/client";
 import "./help.css";
 
 const TIPS: Array<{ title: string; body: string }> = [
@@ -62,7 +61,11 @@ export function HelpPage() {
       />
 
       <section className="help-section">
-        <h2>Tools</h2>
+        <h2>Tool guides</h2>
+        <p className="help-section-note">
+          Open a guide for what the tool is for, what it cannot do, and a searchable list of every
+          control. The first time you open a tool, a short tour shows the essentials.
+        </p>
         <div className="help-tools">
           {toolPackages.map((tool) => (
             <button
@@ -70,15 +73,10 @@ export function HelpPage() {
               className="help-tool"
               key={tool.id}
               onClick={() => {
-                const projectId = getActiveProjectId();
-                if (!projectId) {
-                  void navigate({ to: "/" });
-                  return;
-                }
-                void navigate({
-                  to: "/projects/$projectId/$tool",
-                  params: { projectId, tool: projectToolSlug(tool.id) },
-                });
+                const slug = Object.entries(HELP_TOOL_PACKAGES).find(
+                  ([, packageId]) => packageId === tool.id,
+                )?.[0];
+                if (slug) void navigate({ to: "/help/$slug", params: { slug } });
               }}
             >
               <span className="help-tool-icon">

@@ -416,6 +416,7 @@ export function ExpoAssetsRoute() {
             </ToolHeaderButton>
             <ToolHeaderButton
               variant="primary"
+              data-tour="generate"
               disabled={!native || busy || !sources.icon}
               onClick={() => void generate()}
             >
@@ -465,7 +466,11 @@ export function ExpoAssetsRoute() {
                         </span>
                       </div>
                     </div>
-                    <button type="button" onClick={() => void chooseSource(source.role)}>
+                    <button
+                      type="button"
+                      data-tour={source.optional ? "optional-logos" : "change-source"}
+                      onClick={() => void chooseSource(source.role)}
+                    >
                       {selected ? <Check size={14} /> : <FolderOpen size={14} />}
                       {sourceActionLabel(Boolean(selected), source.optional)}
                     </button>

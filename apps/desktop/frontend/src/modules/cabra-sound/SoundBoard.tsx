@@ -435,6 +435,7 @@ export function SoundBoard() {
               <span>{Math.round(volume * 100)}%</span>
             </label>
             <ToolHeaderButton
+              data-tour="mix-tab"
               disabled={visibleNames.length === 0 || exporting}
               onClick={() => void exportMix()}
             >
@@ -442,13 +443,14 @@ export function SoundBoard() {
               Mix
             </ToolHeaderButton>
             <ToolHeaderButton
+              data-tour="wavs-tab"
               disabled={visibleNames.length === 0 || exporting}
               onClick={() => void exportEach()}
             >
               <FileArchive size={13} aria-hidden="true" />
               WAVs
             </ToolHeaderButton>
-            <ToolHeaderButton onClick={playRandom}>
+            <ToolHeaderButton data-tour="random-tab" onClick={playRandom}>
               <Shuffle size={13} aria-hidden="true" />
               Random
             </ToolHeaderButton>
@@ -552,6 +554,7 @@ export function SoundBoard() {
                 <button
                   className="sound-play"
                   type="button"
+                  data-tour="sound-pad"
                   aria-pressed={isSelected}
                   onClick={() => playSound(name)}
                 >

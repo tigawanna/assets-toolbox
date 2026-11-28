@@ -274,7 +274,12 @@ export function InspectorPage({
           <span className="inspect-shortcut" aria-hidden="true">
             /
           </span>
-          <button className="inspect-btn" type="submit" disabled={loading || !input.trim()}>
+          <button
+            className="inspect-btn"
+            type="submit"
+            data-tour="inspect-button"
+            disabled={loading || !input.trim()}
+          >
             {loading ? "Running" : "Inspect"}
           </button>
         </form>
@@ -308,6 +313,7 @@ export function InspectorPage({
               <button
                 key={example.url}
                 type="button"
+                data-tour="sample-url"
                 className="inspect-example"
                 onClick={() => {
                   setInput(example.url);
