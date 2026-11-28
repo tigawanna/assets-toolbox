@@ -248,7 +248,7 @@
 
 .mcp-tool-summary {
   color: var(--text-muted);
-  font-size: calc(10px * var(--text-scale, 1));
+  font-size: calc(11px * var(--text-scale, 1));
   line-height: 1.5;
 }
 
@@ -290,7 +290,7 @@
   padding: 2px 0 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: calc(10px * var(--text-scale, 1));
+  font-size: calc(11px * var(--text-scale, 1));
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -302,14 +302,14 @@
 .mcp-log-row code {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: calc(10px * var(--text-scale, 1));
+  font-size: calc(11px * var(--text-scale, 1));
 }
 
 .mcp-tool-mutating {
   flex: 0 0 auto !important;
   color: var(--accent) !important;
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--text-scale, 1)) !important;
+  font-size: calc(10px * var(--text-scale, 1)) !important;
 }
 
 .mcp-log-status {
@@ -319,7 +319,7 @@
   border-radius: 5px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--text-scale, 1));
+  font-size: calc(10px * var(--text-scale, 1));
   text-align: center;
 }
 
@@ -330,5 +330,5 @@
 .mcp-log-row time {
   color: var(--text-subtle);
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--text-scale, 1));
+  font-size: calc(10px * var(--text-scale, 1));
 }
