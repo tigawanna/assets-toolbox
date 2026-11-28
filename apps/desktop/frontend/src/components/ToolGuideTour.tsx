@@ -102,6 +102,11 @@ export function ToolGuideTour({
           overlayClickAction: false,
           skipBeacon: true,
           targetWaitTimeout: 1500,
+          width: 340,
+        }}
+        floatingOptions={{
+          flipOptions: { padding: 20, crossAxis: true },
+          shiftOptions: { padding: 16 },
         }}
         styles={{
           tooltip: {

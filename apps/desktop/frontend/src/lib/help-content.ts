@@ -36,7 +36,7 @@ export interface TourStep {
   title: string;
   content: string;
   target: string;
-  placement?: "center" | "top" | "bottom" | "left" | "right";
+  placement?: "auto" | "center" | "top" | "bottom" | "left" | "right";
 }
 
 export const HELP_GUIDES: HelpGuide[] = [
@@ -1100,7 +1100,7 @@ export function tourStepsFor(guide: HelpGuide): TourStep[] {
       title: `${control.title}${control.keys.length ? ` · ${control.keys.join(" / ")}` : ""}`,
       content: control.tour ?? control.detail,
       target: control.target ?? "body",
-      placement: control.target ? "bottom" : "center",
+      placement: control.target ? "auto" : "center",
     });
   }
   return steps;

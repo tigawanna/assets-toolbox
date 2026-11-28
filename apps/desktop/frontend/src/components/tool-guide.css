@@ -29,6 +29,11 @@
   outline: none;
 }
 
+.react-joyride__floater,
+.react-joyride__tooltip {
+  max-width: calc(100vw - 24px);
+}
+
 .tour-step-count {
   display: block;
   margin-bottom: 6px;
