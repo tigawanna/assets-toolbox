@@ -1370,6 +1370,50 @@ export const BRAND_TOUR_STEPS: TourStep[] = [
   },
 ];
 
+/** Expo keeps it short: source, two colours, two previews, generate. */
+export const EXPO_TOUR_STEPS: TourStep[] = [
+  {
+    id: "expo-source",
+    title: "Pick the primary logo",
+    content:
+      "Start here. Choose the logo every icon and splash screen will be built from — you can reuse a mark already in this project.",
+    target: 'button[data-tour="change-source"]',
+    placement: "bottom",
+  },
+  {
+    id: "expo-brand-color",
+    title: "Set the brand colour",
+    content:
+      "This tints the adaptive and notification icons. Change it once and the previews update together.",
+    target: 'input[aria-label="Brand color hex value"]',
+    placement: "bottom",
+  },
+  {
+    id: "expo-splash-color",
+    title: "Set the splash background",
+    content:
+      "This is the colour behind the splash logo on both platforms. The other fields can stay as they are for now.",
+    target: 'input[aria-label="Splash background hex value"]',
+    placement: "bottom",
+  },
+  {
+    id: "expo-previews",
+    title: "Icon and splash previews",
+    content:
+      "Once a logo is chosen, this column shows the app icon and the splash screen on a phone. Click a preview to zoom into its edges.",
+    target: ".expo-layout",
+    placement: "bottom",
+  },
+  {
+    id: "expo-generate",
+    title: "Generate the set",
+    content:
+      "That is the essentials. Hit Generate to add every icon and splash screen to this project's asset library.",
+    target: 'button[data-tour="generate"]',
+    placement: "bottom",
+  },
+];
+
 export interface QuickStart {
   slug: string;
   workflow: number;
@@ -1414,6 +1458,7 @@ export function tourStepsFor(guide: HelpGuide): TourStep[] {
   if (guide.slug === "compose") return COMPOSE_TOUR_STEPS;
   if (guide.slug === "inspect") return INSPECT_TOUR_STEPS;
   if (guide.slug === "brand") return BRAND_TOUR_STEPS;
+  if (guide.slug === "expo") return EXPO_TOUR_STEPS;
 
   const steps: TourStep[] = [
     {
