@@ -401,7 +401,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Give it a logo and it produces a consistent set of brand files: favicons, an app icon, a social sharing card and a web manifest, all derived from the same artwork and colors.",
     goodFor: [
       "Turning one logo into a coherent favicon and icon set",
-      "Building an Open Graph card that matches your brand",
+      "Building an Open Graph card that matches your brand — generate one automatically or create a custom card in the built-in visual editor.",
       "Keeping a project's brand files in one place",
       "Handing a repeatable recipe to an MCP agent",
     ],
@@ -1062,6 +1062,11 @@ export const HELP_TEXT_LINKS: Record<string, { label: string; slug: string }> = 
     label: "Icon Compose",
     slug: "compose",
   },
+  "Building an Open Graph card that matches your brand — generate one automatically or create a custom card in the built-in visual editor.":
+    {
+      label: "built-in visual editor",
+      slug: "brand",
+    },
 };
 
 export const HELP_TOOL_PACKAGES: Record<string, string> = {
