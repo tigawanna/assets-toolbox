@@ -1,16 +1,10 @@
-import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowLeft, ExternalLink, Play, Search } from "lucide-react";
+import { ArrowLeft, ExternalLink, Play } from "lucide-react";
 
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { findPackage } from "../lib/catalog";
-import {
-  getHelpGuide,
-  HELP_TEXT_LINKS,
-  HELP_TOOL_PACKAGES,
-  searchHelpControl,
-} from "../lib/help-content";
+import { getHelpGuide, HELP_TEXT_LINKS, HELP_TOOL_PACKAGES } from "../lib/help-content";
 import { getActiveProjectId } from "../lib/projects/client";
 import { projectToolSlug } from "./ProjectHome";
 import { replayToolTour } from "../lib/tool-tours";
@@ -20,7 +14,6 @@ import "./help.css";
 export function HelpToolPage() {
   const { slug } = useParams({ from: "/help/$slug" });
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
   const guide = getHelpGuide(slug);
 
   if (!guide) {
@@ -28,21 +21,9 @@ export function HelpToolPage() {
   }
 
   const pkg = findPackage(HELP_TOOL_PACKAGES[slug] ?? "");
-  const needle = query.trim().toLowerCase();
-  const matches = (text: string) => !needle || text.toLowerCase().includes(needle);
-
-  const workflows = guide.workflows
-    .map((workflow) => ({
-      ...workflow,
-      steps: workflow.steps.filter((step) =>
-        matches(`${workflow.title} ${step.title} ${step.detail}`),
-      ),
-    }))
-    .filter((workflow) => workflow.steps.length > 0 || matches(workflow.summary));
-
-  const features = guide.features.filter(matches);
-  const controls = guide.controls.filter((control) => searchHelpControl(control, query));
-  const total = workflows.length + features.length + controls.length;
+  const workflows = guide.workflows;
+  const features = guide.features;
+  const controls = guide.controls;
 
   function openToolFor(targetSlug: string) {
     const projectId = getActiveProjectId();
@@ -115,22 +96,6 @@ export function HelpToolPage() {
           again.
         </p>
       </header>
-
-      <div className="help-search-wrap">
-        <label className="help-search help-search-large">
-          <Search size={16} aria-hidden="true" />
-          <span className="help-sr-only">Search this guide</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Search a step, a feature or a shortcut…"
-            onChange={(event) => setQuery(event.currentTarget.value)}
-          />
-          <span className="help-search-count">
-            {query ? `${total} result${total === 1 ? "" : "s"}` : "Search this guide"}
-          </span>
-        </label>
-      </div>
 
       {workflows.length > 0 ? (
         <section className="help-block">
@@ -210,31 +175,23 @@ export function HelpToolPage() {
         <div className="help-block-head">
           <p className="help-eyebrow">Reference</p>
           <h2>Controls &amp; shortcuts</h2>
-          <p>
-            {controls.length} of {guide.controls.length} shown.
-          </p>
+          <p>{controls.length} controls and shortcuts in this tool.</p>
         </div>
-        {controls.length === 0 ? (
-          <p className="help-empty">
-            Nothing matches “{query}”. Try a key like “⌘Z” or a control name.
-          </p>
-        ) : (
-          <ul className="help-controls">
-            {controls.map((control) => (
-              <li className="help-control" key={control.title}>
-                <span className="help-control-keys">
-                  {control.keys.map((key) => (
-                    <kbd key={key}>{key}</kbd>
-                  ))}
-                </span>
-                <span className="help-control-copy">
-                  <strong>{control.title}</strong>
-                  <span>{control.detail}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="help-controls">
+          {controls.map((control) => (
+            <li className="help-control" key={control.title}>
+              <span className="help-control-keys">
+                {control.keys.map((key) => (
+                  <kbd key={key}>{key}</kbd>
+                ))}
+              </span>
+              <span className="help-control-copy">
+                <strong>{control.title}</strong>
+                <span>{control.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
     </section>
   );

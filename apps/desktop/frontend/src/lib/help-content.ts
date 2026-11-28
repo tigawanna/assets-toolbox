@@ -1082,33 +1082,6 @@ export function getHelpGuide(slug: string): HelpGuide | undefined {
   return HELP_GUIDES.find((guide) => guide.slug === slug);
 }
 
-export function searchHelpControl(control: HelpControl, query: string): boolean {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return true;
-  return [control.title, control.detail, ...control.keys].join(" ").toLowerCase().includes(needle);
-}
-
-export function searchHelpGuide(guide: HelpGuide, query: string): boolean {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return true;
-  return [
-    guide.name,
-    guide.summary,
-    guide.whatItIs,
-    ...guide.features,
-    ...guide.goodFor,
-    ...guide.workflows.flatMap((workflow) => [
-      workflow.title,
-      workflow.summary,
-      ...workflow.steps.flatMap((step) => [step.title, step.detail]),
-    ]),
-    ...guide.controls.flatMap((control) => [control.title, control.detail, ...control.keys]),
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(needle);
-}
-
 export function tourStepsFor(guide: HelpGuide): TourStep[] {
   const steps: TourStep[] = [
     {

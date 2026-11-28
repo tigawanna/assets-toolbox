@@ -1,31 +1,14 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { toolPackages } from "../lib/catalog";
-import {
-  getHelpGuide,
-  HELP_TOOL_PACKAGES,
-  HELP_GUIDES,
-  QUICK_STARTS,
-  searchHelpGuide,
-} from "../lib/help-content";
+import { getHelpGuide, HELP_TOOL_PACKAGES, QUICK_STARTS } from "../lib/help-content";
 import "./help.css";
 
 export function HelpPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-
-  const guides = HELP_GUIDES.filter((guide) => searchHelpGuide(guide, query));
-  const matchingSlugs = new Set(guides.map((guide) => guide.slug));
-  const tools = toolPackages.filter((tool) =>
-    Object.entries(HELP_TOOL_PACKAGES).some(
-      ([slug, packageId]) => packageId === tool.id && matchingSlugs.has(slug),
-    ),
-  );
-  const starts = QUICK_STARTS.filter((start) => matchingSlugs.has(start.slug));
 
   function openGuide(slug: string) {
     void navigate({ to: "/help/$slug", params: { slug } });
@@ -61,51 +44,33 @@ export function HelpPage() {
         </p>
       </header>
 
-      <div className="help-search-wrap">
-        <label className="help-search help-search-large">
-          <Search size={16} aria-hidden="true" />
-          <span className="help-sr-only">Search guides and features</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Search a feature, a task or a shortcut…"
-            onChange={(event) => setQuery(event.currentTarget.value)}
-          />
-          <span className="help-search-count">
-            {query ? `${guides.length} guide${guides.length === 1 ? "" : "s"}` : "6 guides"}
-          </span>
-        </label>
-      </div>
-
-      {starts.length > 0 ? (
-        <section className="help-block">
-          <div className="help-block-head">
-            <p className="help-eyebrow">Start here</p>
-            <h2>Common jobs, step by step</h2>
-            <p>Pick a job and follow it from the first click to the exported file.</p>
-          </div>
-          <ol className="help-steps-list">
-            {starts.map((start, index) => {
-              const guide = getHelpGuide(start.slug);
-              const workflow = guide?.workflows[start.workflow];
-              if (!guide || !workflow) return null;
-              return (
-                <li key={start.slug}>
-                  <button type="button" onClick={() => openGuide(start.slug)}>
-                    <span className="help-step-number">{String(index + 1).padStart(2, "0")}</span>
-                    <span className="help-step-copy">
-                      <span className="help-step-tool">{guide.name}</span>
-                      <strong>{workflow.title}</strong>
-                      <span>{workflow.summary}</span>
-                    </span>
-                    <ArrowRight size={16} aria-hidden="true" />
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      ) : null}
+      <section className="help-block">
+        <div className="help-block-head">
+          <p className="help-eyebrow">Start here</p>
+          <h2>Common jobs, step by step</h2>
+          <p>Pick a job and follow it from the first click to the exported file.</p>
+        </div>
+        <ol className="help-steps-list">
+          {QUICK_STARTS.map((start, index) => {
+            const guide = getHelpGuide(start.slug);
+            const workflow = guide?.workflows[start.workflow];
+            if (!guide || !workflow) return null;
+            return (
+              <li key={start.slug}>
+                <button type="button" onClick={() => openGuide(start.slug)}>
+                  <span className="help-step-number">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="help-step-copy">
+                    <span className="help-step-tool">{guide.name}</span>
+                    <strong>{workflow.title}</strong>
+                    <span>{workflow.summary}</span>
+                  </span>
+                  <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
       <section className="help-block">
         <div className="help-block-head">
@@ -113,34 +78,30 @@ export function HelpPage() {
           <h2>All tool guides</h2>
           <p>What each tool is for, where it falls short, and every control it offers.</p>
         </div>
-        {tools.length === 0 ? (
-          <p className="help-empty">No guide matches “{query}”. Try a tool name or a shortcut.</p>
-        ) : (
-          <ul className="help-guide-list">
-            {tools.map((tool) => {
-              const slug = Object.entries(HELP_TOOL_PACKAGES).find(
-                ([, packageId]) => packageId === tool.id,
-              )?.[0];
-              if (!slug) return null;
-              const guide = getHelpGuide(slug);
-              return (
-                <li key={tool.id}>
-                  <button type="button" onClick={() => openGuide(slug)}>
-                    <span className="help-guide-icon">
-                      <PackageIcon name={tool.icon} size={20} />
-                    </span>
-                    <span className="help-guide-copy">
-                      <strong>{tool.name}</strong>
-                      <span>{guide?.summary ?? tool.description}</span>
-                    </span>
-                    <span className="help-guide-tags">{tool.tags.join(" · ")}</span>
-                    <ArrowRight size={15} aria-hidden="true" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <ul className="help-guide-list">
+          {toolPackages.map((tool) => {
+            const slug = Object.entries(HELP_TOOL_PACKAGES).find(
+              ([, packageId]) => packageId === tool.id,
+            )?.[0];
+            if (!slug) return null;
+            const guide = getHelpGuide(slug);
+            return (
+              <li key={tool.id}>
+                <button type="button" onClick={() => openGuide(slug)}>
+                  <span className="help-guide-icon">
+                    <PackageIcon name={tool.icon} size={20} />
+                  </span>
+                  <span className="help-guide-copy">
+                    <strong>{tool.name}</strong>
+                    <span>{guide?.summary ?? tool.description}</span>
+                  </span>
+                  <span className="help-guide-tags">{tool.tags.join(" · ")}</span>
+                  <ArrowRight size={15} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </section>
     </section>
   );

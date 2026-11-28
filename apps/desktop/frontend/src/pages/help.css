@@ -20,15 +20,6 @@
   font-weight: 700;
 }
 
-.help-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
 .help-eyebrow {
   margin: 0;
   color: var(--accent);
@@ -68,61 +59,6 @@
   color: var(--text-subtle);
   font-size: 12px;
   line-height: 1.6;
-}
-
-.help-search-wrap {
-  position: sticky;
-  z-index: 10;
-  top: 44px;
-  padding: 10px 0 14px;
-  background: var(--canvas);
-}
-
-.help-search {
-  display: flex;
-  height: 32px;
-  align-items: center;
-  gap: 9px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-subtle);
-}
-
-.help-search-large {
-  height: 44px;
-  gap: 11px;
-  padding: 0 14px;
-  border-radius: 10px;
-}
-
-.help-search:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus);
-}
-
-.help-search input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  outline: none;
-}
-
-.help-search-large input {
-  font-size: 13px;
-}
-
-.help-search-count {
-  flex: 0 0 auto;
-  color: var(--text-subtle);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  white-space: nowrap;
 }
 
 .help-block {
@@ -252,12 +188,6 @@
   color: var(--text-subtle);
   font-family: var(--font-mono);
   font-size: 10px;
-}
-
-.help-empty {
-  margin: 0;
-  color: var(--text-subtle);
-  font-size: 12px;
 }
 
 .help-workflows {
