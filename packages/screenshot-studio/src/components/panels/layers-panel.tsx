@@ -86,7 +86,7 @@ export function LayersPanel({
   }
 
   return (
-    <Panel title="Layers" icon={Layers3} fill bodyClassName="pt-2">
+    <Panel title="Layers" icon={Layers3} fill bodyClassName="pt-2" dataTour="layers">
       {layers.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border/70 bg-background/25 p-3 text-xs text-muted-foreground">
           Add a device or headline to start composing.

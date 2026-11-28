@@ -110,7 +110,7 @@ export function DevicesPanel({
           <ToolTile icon={Spline} label="Curve" onClick={() => onLine(true)} />
           <Popover open={shapeOpen} onOpenChange={setShapeOpen}>
             <PopoverTrigger asChild>
-              <ToolTile icon={Shapes} label="Shape" />
+              <ToolTile icon={Shapes} label="Shape" data-tour="add-shape" />
             </PopoverTrigger>
             <PopoverContent className="w-64" align="start">
               <div className="grid gap-3">
@@ -167,6 +167,7 @@ export function DevicesPanel({
             title={group.label}
             count={group.ids.length}
             bodyClassName="gap-0.5"
+            dataTour={group.id === "android" ? "android-devices" : undefined}
           >
             {group.ids.map((id) => {
               const Icon = formIcon(id);

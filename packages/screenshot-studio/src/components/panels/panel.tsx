@@ -15,6 +15,7 @@ export function Panel({
   defaultOpen = true,
   className,
   bodyClassName,
+  dataTour,
   children,
 }: {
   title: string;
@@ -26,6 +27,7 @@ export function Panel({
   defaultOpen?: boolean;
   className?: string;
   bodyClassName?: string;
+  dataTour?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -46,6 +48,7 @@ export function Panel({
 
   return (
     <section
+      data-tour={dataTour}
       className={cn(
         "flex min-h-0 flex-col border-b border-border/80",
         fill && open && "flex-1",
@@ -121,6 +124,7 @@ export function CollapsibleSection({
   defaultOpen = true,
   className,
   bodyClassName,
+  dataTour,
   children,
 }: {
   title: string;
@@ -128,13 +132,14 @@ export function CollapsibleSection({
   defaultOpen?: boolean;
   className?: string;
   bodyClassName?: string;
+  dataTour?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const bodyId = useId();
 
   return (
-    <section className={className}>
+    <section data-tour={dataTour} className={className}>
       <button
         type="button"
         aria-expanded={open}

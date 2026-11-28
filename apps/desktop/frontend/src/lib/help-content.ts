@@ -1414,6 +1414,66 @@ export const EXPO_TOUR_STEPS: TourStep[] = [
   },
 ];
 
+/** Studio in seven steps: slices, a shape, layers, devices, clone, export. */
+export const STUDIO_TOUR_STEPS: TourStep[] = [
+  {
+    id: "studio-slices",
+    title: "These are your slices",
+    content:
+      "The dotted zones on the board are scene slices. Each one becomes its own screenshot when you export.",
+    target: '[data-testid="canvas"]',
+    placement: "right",
+  },
+  {
+    id: "studio-add-shape",
+    title: "Add something to a slice",
+    content:
+      "Elements are added from the left panel. Try Shape and pick a rectangle — it drops onto the selected slice.",
+    target: 'button[data-tour="add-shape"]',
+    placement: "right",
+  },
+  {
+    id: "studio-shape-result",
+    title: "It is on the board",
+    content:
+      "Anything you place inside a slice becomes part of that slice's exported image, alongside the device frame.",
+    target: '[data-testid="canvas"]',
+    placement: "right",
+  },
+  {
+    id: "studio-layers",
+    title: "Layers to manipulate things",
+    content:
+      "Everything on the board is listed here. Select a layer to move it, change it, restack it or remove it.",
+    target: '[data-tour="layers"]',
+    placement: "right",
+  },
+  {
+    id: "studio-devices",
+    title: "Pick a device family",
+    content:
+      "Add phone, tablet, foldable or desktop frames from here. Android is shown; Apple and Desktop sit just below it.",
+    target: '[data-tour="android-devices"]',
+    placement: "right",
+  },
+  {
+    id: "studio-clone",
+    title: "Clone for another version",
+    content:
+      "Clone the board to make a second version — for example one layout for Android and another for Apple.",
+    target: 'button[data-testid="clone-board"]',
+    placement: "bottom",
+  },
+  {
+    id: "studio-export",
+    title: "Export the board",
+    content:
+      "That is the essentials. Hit Export and every slice is downloaded as a PNG, ready for the store listing.",
+    target: 'button[data-testid="export-board"]',
+    placement: "bottom",
+  },
+];
+
 export interface QuickStart {
   slug: string;
   workflow: number;
@@ -1459,6 +1519,7 @@ export function tourStepsFor(guide: HelpGuide): TourStep[] {
   if (guide.slug === "inspect") return INSPECT_TOUR_STEPS;
   if (guide.slug === "brand") return BRAND_TOUR_STEPS;
   if (guide.slug === "expo") return EXPO_TOUR_STEPS;
+  if (guide.slug === "studio") return STUDIO_TOUR_STEPS;
 
   const steps: TourStep[] = [
     {
