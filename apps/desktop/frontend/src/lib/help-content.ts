@@ -37,6 +37,7 @@ export interface TourStep {
   content: string;
   target: string;
   placement?: "auto" | "center" | "top" | "bottom" | "left" | "right";
+  before?: () => Promise<void>;
 }
 
 export const HELP_GUIDES: HelpGuide[] = [
@@ -1151,6 +1152,114 @@ export const COMPOSE_TOUR_STEPS: TourStep[] = [
   },
 ];
 
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Fill the URL field, run the inspector, and wait for the report to mount. */
+async function typeAndInspectExample(): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>('input[aria-label="URL to inspect"]');
+  if (!input) return;
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  const setValue: ((value: string) => void) | undefined = descriptor?.set?.bind(input);
+  setValue?.("https://github.com");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  await wait(250);
+  document.querySelector<HTMLButtonElement>('button[data-tour="inspect-button"]')?.click();
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    if (document.querySelector('.inspect-tabs[aria-label="Inspection views"]')) return;
+    if (document.querySelector(".inspect-error-banner")) return;
+    await wait(250);
+  }
+}
+
+/**
+ * A short tour that actually runs an inspection on github.com and then points
+ * at the parts of the report that matter most: the share previews, the issues,
+ * and the copyable fix prompts.
+ */
+export const INSPECT_TOUR_STEPS: TourStep[] = [
+  {
+    id: "inspect-input",
+    title: "Start with a URL",
+    content:
+      "This is the address field. Type the page you want to check — we will use github.com as an example.",
+    target: 'input[aria-label="URL to inspect"]',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-run",
+    title: "Run the inspection",
+    content:
+      "Click Inspect, or press Enter. It fetches the page and builds a report from its real metadata.",
+    target: 'button[data-tour="inspect-button"]',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-report",
+    title: "The report is ready",
+    content:
+      "You now have Previews, Assets, Meta tags, Fixes and Checks. We will focus on the parts that help you spot and repair problems.",
+    target: '.inspect-tabs[aria-label="Inspection views"]',
+    placement: "bottom",
+    before: typeAndInspectExample,
+  },
+  {
+    id: "inspect-google",
+    title: "Google preview",
+    content:
+      "This is the card Google shows in search results: the title, description and image it picked up.",
+    target: '.inspect-tabs[aria-label="Platform previews"] button:nth-of-type(1)',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-twitter",
+    title: "X / Twitter preview",
+    content:
+      "The card people see when the link is posted on X. It often uses different tags from Google, so check both.",
+    target: '.inspect-tabs[aria-label="Platform previews"] button:nth-of-type(2)',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-other-platforms",
+    title: "Other platforms",
+    content:
+      "Facebook, Discord, LinkedIn, WhatsApp, Slack and Telegram are one click away if you need to check them too.",
+    target: '.inspect-tabs[aria-label="Platform previews"]',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-issues",
+    title: "Issues at a glance",
+    content:
+      "This panel sums up what is wrong with the page. Copy for agent gives you a brief you can hand straight to an assistant.",
+    target: ".inspect-meta-head",
+    placement: "left",
+  },
+  {
+    id: "inspect-fixes",
+    title: "Fixes",
+    content:
+      "Every issue comes with the exact change to make and an agent prompt you can copy to fix it.",
+    target: '.inspect-tabs[aria-label="Inspection views"] button:nth-of-type(4)',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-checks",
+    title: "Checks",
+    content:
+      "Checks shows which social tags passed and which failed — useful for a quick health read before you publish.",
+    target: '.inspect-tabs[aria-label="Inspection views"] button:nth-of-type(5)',
+    placement: "bottom",
+  },
+  {
+    id: "inspect-copy-prompt",
+    title: "Copy the fix prompt",
+    content:
+      "Open Fixes and copy the agent prompt for an issue, then paste it into your coding assistant to have it repaired.",
+    target: ".inspect-copy-mini",
+    placement: "bottom",
+  },
+];
+
 export interface QuickStart {
   slug: string;
   workflow: number;
@@ -1193,6 +1302,7 @@ export function getHelpGuide(slug: string): HelpGuide | undefined {
 
 export function tourStepsFor(guide: HelpGuide): TourStep[] {
   if (guide.slug === "compose") return COMPOSE_TOUR_STEPS;
+  if (guide.slug === "inspect") return INSPECT_TOUR_STEPS;
 
   const steps: TourStep[] = [
     {

@@ -102,6 +102,7 @@ export function ToolGuideTour({
           overlayClickAction: false,
           skipBeacon: true,
           targetWaitTimeout: 1500,
+          beforeTimeout: 8000,
           width: 340,
         }}
         floatingOptions={{
