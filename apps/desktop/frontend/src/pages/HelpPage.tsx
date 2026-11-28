@@ -1,51 +1,42 @@
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Search } from "lucide-react";
 
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
-import { HELP_TOOL_PACKAGES } from "../lib/help-content";
 import { toolPackages } from "../lib/catalog";
+import {
+  getHelpGuide,
+  HELP_TOOL_PACKAGES,
+  HELP_GUIDES,
+  QUICK_STARTS,
+  searchHelpGuide,
+} from "../lib/help-content";
 import "./help.css";
-
-const TIPS: Array<{ title: string; body: string }> = [
-  {
-    title: "Press ? anywhere",
-    body: "Opens the full keyboard shortcut list for the current screen. Esc closes it.",
-  },
-  {
-    title: "One project, one place",
-    body: "Pick a project on the launch screen. Every tool, asset, and saved form lives inside it.",
-  },
-  {
-    title: "Reuse source artwork",
-    body: "A mark chosen in Brand Assets is stored in the project. Expo Assets can use it without re-uploading.",
-  },
-  {
-    title: "Starred sounds lead",
-    body: "Favorites in Cabra Sound float to the top of the list and are saved per project.",
-  },
-  {
-    title: "Gallery navigation",
-    body: "Arrow keys move through asset previews, Home/End jump to the ends, Escape closes. Wheel zooms.",
-  },
-  {
-    title: "Edit MCP results",
-    body: "Generated files are saved as editable tool documents — open the tool again to tweak and re-export.",
-  },
-  {
-    title: "MCP in three steps",
-    body: "Call assets_toolbox with op=list to discover tools, op=describe for a schema, then op=call.",
-  },
-];
 
 export function HelpPage() {
   const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const guides = HELP_GUIDES.filter((guide) => searchHelpGuide(guide, query));
+  const matchingSlugs = new Set(guides.map((guide) => guide.slug));
+  const tools = toolPackages.filter((tool) =>
+    Object.entries(HELP_TOOL_PACKAGES).some(
+      ([slug, packageId]) => packageId === tool.id && matchingSlugs.has(slug),
+    ),
+  );
+  const starts = QUICK_STARTS.filter((start) => matchingSlugs.has(start.slug));
+
+  function openGuide(slug: string) {
+    void navigate({ to: "/help/$slug", params: { slug } });
+  }
 
   return (
-    <section className="help-page">
+    <section className="help-page help-index">
       <ToolHeader
         icon={<span className="help-header-mark">?</span>}
         title="Help"
-        description="tools · workflows · tips"
+        description="learn the tools · find a workflow"
         actions={
           <>
             <ToolHeaderButton
@@ -60,48 +51,96 @@ export function HelpPage() {
         }
       />
 
-      <section className="help-section">
-        <h2>Tool guides</h2>
-        <p className="help-section-note">
-          Open a guide for what the tool is for, what it cannot do, and a searchable list of every
-          control. The first time you open a tool, a short tour shows the essentials.
+      <header className="help-hero">
+        <p className="help-eyebrow">Help centre</p>
+        <h1>Get something made.</h1>
+        <p className="help-hero-lead">
+          Every tool has a guide that walks through real jobs — draw a mark, check a link, build a
+          screenshot strip, export a sound — with the exact steps and the shortcuts that make them
+          quick.
         </p>
-        <div className="help-tools">
-          {toolPackages.map((tool) => (
-            <button
-              type="button"
-              className="help-tool"
-              key={tool.id}
-              onClick={() => {
-                const slug = Object.entries(HELP_TOOL_PACKAGES).find(
-                  ([, packageId]) => packageId === tool.id,
-                )?.[0];
-                if (slug) void navigate({ to: "/help/$slug", params: { slug } });
-              }}
-            >
-              <span className="help-tool-icon">
-                <PackageIcon name={tool.icon} size={18} />
-              </span>
-              <span className="help-tool-copy">
-                <strong>{tool.name}</strong>
-                <span>{tool.description}</span>
-                <span className="help-tool-tags">{tool.tags.join(" · ")}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+      </header>
 
-      <section className="help-section">
-        <h2>Tips &amp; tricks</h2>
-        <div className="help-tips">
-          {TIPS.map((tip) => (
-            <article className="help-tip" key={tip.title}>
-              <strong>{tip.title}</strong>
-              <p>{tip.body}</p>
-            </article>
-          ))}
+      <div className="help-search-wrap">
+        <label className="help-search help-search-large">
+          <Search size={16} aria-hidden="true" />
+          <span className="help-sr-only">Search guides and features</span>
+          <input
+            type="search"
+            value={query}
+            placeholder="Search a feature, a task or a shortcut…"
+            onChange={(event) => setQuery(event.currentTarget.value)}
+          />
+          <span className="help-search-count">
+            {query ? `${guides.length} guide${guides.length === 1 ? "" : "s"}` : "6 guides"}
+          </span>
+        </label>
+      </div>
+
+      {starts.length > 0 ? (
+        <section className="help-block">
+          <div className="help-block-head">
+            <p className="help-eyebrow">Start here</p>
+            <h2>Common jobs, step by step</h2>
+            <p>Pick a job and follow it from the first click to the exported file.</p>
+          </div>
+          <ol className="help-steps-list">
+            {starts.map((start, index) => {
+              const guide = getHelpGuide(start.slug);
+              const workflow = guide?.workflows[start.workflow];
+              if (!guide || !workflow) return null;
+              return (
+                <li key={start.slug}>
+                  <button type="button" onClick={() => openGuide(start.slug)}>
+                    <span className="help-step-number">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="help-step-copy">
+                      <span className="help-step-tool">{guide.name}</span>
+                      <strong>{workflow.title}</strong>
+                      <span>{workflow.summary}</span>
+                    </span>
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : null}
+
+      <section className="help-block">
+        <div className="help-block-head">
+          <p className="help-eyebrow">Reference</p>
+          <h2>All tool guides</h2>
+          <p>What each tool is for, where it falls short, and every control it offers.</p>
         </div>
+        {tools.length === 0 ? (
+          <p className="help-empty">No guide matches “{query}”. Try a tool name or a shortcut.</p>
+        ) : (
+          <ul className="help-guide-list">
+            {tools.map((tool) => {
+              const slug = Object.entries(HELP_TOOL_PACKAGES).find(
+                ([, packageId]) => packageId === tool.id,
+              )?.[0];
+              if (!slug) return null;
+              const guide = getHelpGuide(slug);
+              return (
+                <li key={tool.id}>
+                  <button type="button" onClick={() => openGuide(slug)}>
+                    <span className="help-guide-icon">
+                      <PackageIcon name={tool.icon} size={20} />
+                    </span>
+                    <span className="help-guide-copy">
+                      <strong>{tool.name}</strong>
+                      <span>{guide?.summary ?? tool.description}</span>
+                    </span>
+                    <span className="help-guide-tags">{tool.tags.join(" · ")}</span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
     </section>
   );

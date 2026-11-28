@@ -23,7 +23,21 @@ export function HelpToolPage() {
   }
 
   const pkg = findPackage(HELP_TOOL_PACKAGES[slug] ?? "");
+  const needle = query.trim().toLowerCase();
+  const matches = (text: string) => !needle || text.toLowerCase().includes(needle);
+
+  const workflows = guide.workflows
+    .map((workflow) => ({
+      ...workflow,
+      steps: workflow.steps.filter((step) =>
+        matches(`${workflow.title} ${step.title} ${step.detail}`),
+      ),
+    }))
+    .filter((workflow) => workflow.steps.length > 0 || matches(workflow.summary));
+
+  const features = guide.features.filter(matches);
   const controls = guide.controls.filter((control) => searchHelpControl(control, query));
+  const total = workflows.length + features.length + controls.length;
 
   function openTool() {
     const projectId = getActiveProjectId();
@@ -61,69 +75,116 @@ export function HelpToolPage() {
         }
       />
 
-      <div className="help-detail-intro">
-        <span className="help-detail-eyebrow">Guide</span>
+      <header className="help-hero help-hero-detail">
+        <p className="help-eyebrow">Tool guide</p>
         <h1>{guide.name}</h1>
-        <p>{guide.whatItIs}</p>
-        <p className="help-detail-tour-note">
-          Opening this tool for the first time starts a short guided tour. Use Replay tour any time
-          to see it again.
+        <p className="help-hero-lead">{guide.whatItIs}</p>
+        <p className="help-hero-note">
+          A guided tour starts the first time you open this tool. Use Replay tour above to see it
+          again.
         </p>
+      </header>
+
+      <div className="help-search-wrap">
+        <label className="help-search help-search-large">
+          <Search size={16} aria-hidden="true" />
+          <span className="help-sr-only">Search this guide</span>
+          <input
+            type="search"
+            value={query}
+            placeholder="Search a step, a feature or a shortcut…"
+            onChange={(event) => setQuery(event.currentTarget.value)}
+          />
+          <span className="help-search-count">
+            {query ? `${total} result${total === 1 ? "" : "s"}` : "Search this guide"}
+          </span>
+        </label>
       </div>
 
-      <div className="help-detail-columns">
-        <section className="help-detail-panel">
-          <h2>Good for</h2>
-          <ul>
+      {workflows.length > 0 ? (
+        <section className="help-block">
+          <div className="help-block-head">
+            <p className="help-eyebrow">How to</p>
+            <h2>Workflows</h2>
+            <p>Follow these in order to get from a blank start to a finished file.</p>
+          </div>
+          <div className="help-workflows">
+            {workflows.map((workflow) => (
+              <section className="help-workflow" key={workflow.title}>
+                <h3>{workflow.title}</h3>
+                <p className="help-workflow-summary">{workflow.summary}</p>
+                <ol>
+                  {workflow.steps.map((step, index) => (
+                    <li key={step.title}>
+                      <span className="help-workflow-number">{index + 1}</span>
+                      <span>
+                        <strong>{step.title}</strong>
+                        <span>{step.detail}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="help-block help-columns">
+        <div>
+          <div className="help-block-head">
+            <p className="help-eyebrow">Use it for</p>
+            <h2>Good at</h2>
+          </div>
+          <ul className="help-list">
             {guide.goodFor.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </section>
-        <section className="help-detail-panel help-detail-panel-muted">
-          <h2>Not good at</h2>
-          <ul>
+        </div>
+        <div>
+          <div className="help-block-head">
+            <p className="help-eyebrow">Don't expect</p>
+            <h2>Not good at</h2>
+          </div>
+          <ul className="help-list help-list-muted">
             {guide.notGoodFor.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </section>
-      </div>
-
-      <section className="help-detail-panel">
-        <h2>Features worth knowing</h2>
-        <ul>
-          {guide.features.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        </div>
       </section>
 
-      <section className="help-detail-panel">
-        <div className="help-detail-panel-head">
+      {features.length > 0 ? (
+        <section className="help-block">
+          <div className="help-block-head">
+            <p className="help-eyebrow">Details</p>
+            <h2>Things worth knowing</h2>
+          </div>
+          <ul className="help-list help-list-features">
+            {features.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="help-block">
+        <div className="help-block-head">
+          <p className="help-eyebrow">Reference</p>
           <h2>Controls &amp; shortcuts</h2>
-          <span>
-            {controls.length} of {guide.controls.length}
-          </span>
+          <p>
+            {controls.length} of {guide.controls.length} shown.
+          </p>
         </div>
-        <label className="help-search">
-          <Search size={14} aria-hidden="true" />
-          <span className="help-sr-only">Search controls and shortcuts</span>
-          <input
-            type="search"
-            value={query}
-            placeholder="Search controls, keys or actions…"
-            onChange={(event) => setQuery(event.currentTarget.value)}
-          />
-        </label>
         {controls.length === 0 ? (
           <p className="help-empty">
             Nothing matches “{query}”. Try a key like “⌘Z” or a control name.
           </p>
         ) : (
-          <div className="help-controls">
+          <ul className="help-controls">
             {controls.map((control) => (
-              <article className="help-control" key={control.title}>
+              <li className="help-control" key={control.title}>
                 <span className="help-control-keys">
                   {control.keys.map((key) => (
                     <kbd key={key}>{key}</kbd>
@@ -133,9 +194,9 @@ export function HelpToolPage() {
                   <strong>{control.title}</strong>
                   <span>{control.detail}</span>
                 </span>
-              </article>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
     </section>

@@ -8,6 +8,17 @@ export interface HelpControl {
   tour?: string;
 }
 
+export interface HelpStep {
+  title: string;
+  detail: string;
+}
+
+export interface HelpWorkflow {
+  title: string;
+  summary: string;
+  steps: HelpStep[];
+}
+
 export interface HelpGuide {
   slug: string;
   name: string;
@@ -16,6 +27,7 @@ export interface HelpGuide {
   goodFor: string[];
   notGoodFor: string[];
   features: string[];
+  workflows: HelpWorkflow[];
   controls: HelpControl[];
 }
 
@@ -52,6 +64,92 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Morph corners turns a rectangle into a custom silhouette you can keep editing.",
       "Focus mode hides the panels when you just want to look at the artwork.",
       "Press ? on any screen for the full shortcut list.",
+    ],
+    workflows: [
+      {
+        title: "Draw and style a mark",
+        summary: "From an empty canvas to a finished icon you can export.",
+        steps: [
+          {
+            title: "Draw the first shape",
+            detail:
+              "Pick Rectangle with R and drag on the canvas. Hold Shift while dragging for a perfect square.",
+          },
+          {
+            title: "Change its colour",
+            detail:
+              "Keep the shape selected and set the fill and stroke in the inspector on the right. The change applies immediately.",
+          },
+          {
+            title: "Add the rest of the mark",
+            detail:
+              "Switch to Ellipse (E) or the Pen (P) and draw the remaining pieces. Each one stays a separate, editable object.",
+          },
+          {
+            title: "Reshape with points",
+            detail:
+              "Press N for Node / morph, then drag the round handles to move corners and curves into the silhouette you want.",
+          },
+          {
+            title: "Fit and export",
+            detail:
+              "Press ⌘0 to fit the whole drawing, then use Download PNG or Copy to take the result into another tool.",
+          },
+        ],
+      },
+      {
+        title: "Group, ungroup and detach",
+        summary: "Keep a multi-part mark together without losing control of its pieces.",
+        steps: [
+          {
+            title: "Select several objects",
+            detail:
+              "Hold Shift and click each shape on the canvas, or drag a selection box around them.",
+          },
+          {
+            title: "Group them",
+            detail: "Press ⌘G (Ctrl G on Windows). The shapes now move and resize as one object.",
+          },
+          {
+            title: "Ungroup when you need a part",
+            detail: "Press ⌘⇧G. The objects split apart again and their transforms are preserved.",
+          },
+          {
+            title: "Detach one nested object",
+            detail:
+              "Use Detach to pull a single object out of a group without flattening the rest of it.",
+          },
+        ],
+      },
+      {
+        title: "Clean up a dropped-in SVG",
+        summary: "Take artwork from elsewhere and make it editable here.",
+        steps: [
+          {
+            title: "Bring the SVG in",
+            detail:
+              "Add the SVG to the project library, then open it in Icon Compose. It arrives as editable objects.",
+          },
+          {
+            title: "Replace stray paths with lines",
+            detail: "Use the Line tool (L) to draw over broken edges, then delete the old path.",
+          },
+          {
+            title: "Reposition with the dot handles",
+            detail:
+              "Switch to Node / morph and drag the dot handles to move individual points until the shape sits right.",
+          },
+          {
+            title: "Convert a shape to a path",
+            detail: "Object to Path (⌘⇧C) lets you morph a plain shape as freely as a drawn path.",
+          },
+          {
+            title: "Export the cleaned version",
+            detail:
+              "Download the result — generated files are committed back to the project asset library.",
+          },
+        ],
+      },
     ],
     controls: [
       {
@@ -176,6 +274,60 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Example URLs are one click away when you have nothing to paste.",
       "Found images can be added to the project's shared asset library.",
     ],
+    workflows: [
+      {
+        title: "Check a share card before you publish",
+        summary: "See exactly what people will see when the link is pasted into an app.",
+        steps: [
+          {
+            title: "Paste the address",
+            detail:
+              "Press / to jump into the URL field, paste the address and press Enter (or click Inspect).",
+          },
+          {
+            title: "Look at the rendered previews",
+            detail:
+              "Open the preview tabs to see the card as Slack, X, iMessage and search results would show it.",
+          },
+          {
+            title: "Verify the raw fields",
+            detail:
+              "Switch to the tag view and check og:title, og:description and og:image. This is where a missing image shows up first.",
+          },
+          {
+            title: "Fix the source and re-run",
+            detail:
+              "Change the meta tags on the actual page, then inspect the same URL again. Cached previews can take a moment to refresh.",
+          },
+          {
+            title: "Reuse anything useful",
+            detail:
+              "Click a found image to preview it larger and add it to this project's shared asset library.",
+          },
+        ],
+      },
+      {
+        title: "Try a known-good example",
+        summary: "Learn the report layout without needing a URL of your own.",
+        steps: [
+          {
+            title: "Pick an example",
+            detail:
+              "Click one of the sample addresses under the input — a live site, GitHub, or a localhost address.",
+          },
+          {
+            title: "Read the status line",
+            detail:
+              "The report shows which checks passed and failed, so you can see what a healthy result looks like.",
+          },
+          {
+            title: "Compare with your own URL",
+            detail:
+              "Inspect your page next and use the example as the reference for what should be present.",
+          },
+        ],
+      },
+    ],
     controls: [
       {
         keys: ["/"],
@@ -265,6 +417,59 @@ export const HELP_GUIDES: HelpGuide[] = [
       "The visual editor lets you drag layers, use templates and save your own as a global template.",
       "Custom social-card designs are stored as project assets and reused on regeneration.",
       "The same generation is available to agents through MCP.",
+    ],
+    workflows: [
+      {
+        title: "Build a complete kit from one logo",
+        summary: "One source mark becomes every file a web app usually needs.",
+        steps: [
+          {
+            title: "Choose the source mark",
+            detail:
+              "Click Choose and pick a transparent SVG or PNG from your files. It is stored in this project so other tools can use it.",
+          },
+          {
+            title: "Set the brand colours",
+            detail:
+              "Fill the plate, theme and background colours. Use the pickers or type hex values — the preview updates as you go.",
+          },
+          {
+            title: "Fine-tune the social card",
+            detail:
+              "Open the visual editor. Drag layers into place, try a template, or save your layout as a global template for later projects.",
+          },
+          {
+            title: "Generate the set",
+            detail:
+              "Click Generate. Favicons, the app icon, the social card and the web manifest are written into the project asset library.",
+          },
+          {
+            title: "Check the outputs",
+            detail:
+              "Click any generated preview to open it in the zoomable gallery, then use Copy config to take the manifest into your app.",
+          },
+        ],
+      },
+      {
+        title: "Reuse a design in another project",
+        summary: "Keep a card look you like without rebuilding it.",
+        steps: [
+          {
+            title: "Save the design",
+            detail:
+              "In the visual editor, choose Save as template and give it a name. The design is stored globally, not just in this project.",
+          },
+          {
+            title: "Switch projects",
+            detail: "Use the project switcher in the sidebar and open Brand Assets there.",
+          },
+          {
+            title: "Apply the template",
+            detail:
+              "Open the template gallery in the editor and apply the saved design. Your new project's mark and colours fill it in.",
+          },
+        ],
+      },
     ],
     controls: [
       {
@@ -369,6 +574,60 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Generated files and the form values are stored as a project document.",
       "Agents can call the same generator through MCP.",
     ],
+    workflows: [
+      {
+        title: "Generate a mobile icon set",
+        summary: "From one logo to every size an Expo app asks for.",
+        steps: [
+          {
+            title: "Pick the primary logo",
+            detail:
+              "Click Change next to the primary artwork. If Brand Assets already has a mark in this project, choose it instead of uploading again.",
+          },
+          {
+            title: "Fill optional variants if needed",
+            detail:
+              "The dark and tinted splash logos can be left empty — the generator falls back to the primary mark.",
+          },
+          {
+            title: "Set brand and splash colours",
+            detail:
+              "Choose the icon tint and the background that sits behind the splash logo on both platforms.",
+          },
+          {
+            title: "Generate the assets",
+            detail:
+              "Click Generate. iOS icons, Android adaptive icons, notification icons and splash screens are added to the project library.",
+          },
+          {
+            title: "Inspect and copy config",
+            detail:
+              "Click a preview to zoom into its edges, then copy the generated app.json config into your Expo project.",
+          },
+        ],
+      },
+      {
+        title: "Update icons after a rebrand",
+        summary: "Change the inputs once and regenerate everything together.",
+        steps: [
+          {
+            title: "Reopen this tool",
+            detail:
+              "The form keeps your previous values as an editable project document — nothing is locked in.",
+          },
+          {
+            title: "Swap the mark or colours",
+            detail:
+              "Change the source artwork or the brand colour. Previews update before you generate.",
+          },
+          {
+            title: "Generate again",
+            detail:
+              "New files are written to the library; old ones are still there if you need to compare them.",
+          },
+        ],
+      },
+    ],
     controls: [
       {
         keys: ["Click"],
@@ -463,6 +722,94 @@ export const HELP_GUIDES: HelpGuide[] = [
       "The asset drawer previews images with zoom and arrow-key navigation.",
       "Wheel zooms toward the cursor and dragging pans the canvas.",
       "Store rules can be applied to keep slices within platform requirements.",
+    ],
+    workflows: [
+      {
+        title: "Build one store-ready strip",
+        summary:
+          "A device frame on the board is the final output: its bounds are the image the store will show.",
+        steps: [
+          {
+            title: "Choose a scene size",
+            detail:
+              "Pick phone, tall phone or tablet for the strip. This sets the size of every slice inside it.",
+          },
+          {
+            title: "Add the scenes you need",
+            detail:
+              "Use + to add a slice for each step of your story. A strip can contain several subsections, and each one exports as its own image.",
+          },
+          {
+            title: "Place your screenshots",
+            detail:
+              "Open Assets, import a screenshot, then click it to place it on the board or onto a selected device.",
+          },
+          {
+            title: "Add and tilt devices",
+            detail:
+              "Drop in more device frames, rotate them and arrange several across a single strip. Foldables, desktops and browser windows are all available.",
+          },
+          {
+            title: "Label the story",
+            detail:
+              "Add a headline, subtext, lines and shapes from the element menu to explain what each scene is showing.",
+          },
+          {
+            title: "Export and read the guides",
+            detail:
+              "Click Export board. The dotted lines on the canvas mark exactly where each portrait image lands in the exported file.",
+          },
+        ],
+      },
+      {
+        title: "Make a different board per platform",
+        summary: "iOS and Android often need different device mixes and different moods.",
+        steps: [
+          {
+            title: "Save the board you like",
+            detail:
+              "Use Save board as template in the header and name it. The whole layout is stored globally.",
+          },
+          {
+            title: "Create a second board",
+            detail: "Start another board for iOS with its own device set and copy style.",
+          },
+          {
+            title: "Build an Android / large-screen board",
+            detail:
+              "Use the foldable, tablet and desktop presets — Google Play increasingly expects large-screen support.",
+          },
+          {
+            title: "Reuse the layout elsewhere",
+            detail:
+              "Open Browse board templates in any project and apply your saved template to start from the same composition.",
+          },
+        ],
+      },
+      {
+        title: "Keep the canvas under control",
+        summary: "Small habits that make composing a strip much faster.",
+        steps: [
+          {
+            title: "Fit everything with 0",
+            detail: "Press 0 or click Recenter board to see every strip at once after zooming in.",
+          },
+          {
+            title: "Zoom toward what matters",
+            detail:
+              "Scroll to zoom at the pointer and drag the canvas to pan. This works all the way to the edges of the board.",
+          },
+          {
+            title: "Undo freely",
+            detail: "Ctrl Z steps back through changes; the History panel shows the full sequence.",
+          },
+          {
+            title: "Apply store rules before exporting",
+            detail:
+              "Use the App Store or Google Play presets to check the strip against each platform's requirements.",
+          },
+        ],
+      },
     ],
     controls: [
       {
@@ -575,6 +922,60 @@ export const HELP_GUIDES: HelpGuide[] = [
       "The WAVs view shows only sounds that have been exported.",
       "Press / from anywhere in the tool to start searching.",
     ],
+    workflows: [
+      {
+        title: "Find the right sound",
+        summary: "From a vague idea to a file you can drop into a project.",
+        steps: [
+          {
+            title: "Focus the search",
+            detail:
+              "Press / anywhere in the tool, then type what you are looking for — a name like 'click' or a quality like 'soft'.",
+          },
+          {
+            title: "Preview candidates",
+            detail:
+              "Click a result to hear it immediately. Keep trying until one fits the rhythm of your interface.",
+          },
+          {
+            title: "Star the keepers",
+            detail:
+              "Click the star on a sound. Favorites rise to the top of the list and are saved for this project.",
+          },
+          {
+            title: "Export one or mix several",
+            detail:
+              "Download a single sound as WAV, or select a few and choose Mix to combine them into one file.",
+          },
+          {
+            title: "Check what you exported",
+            detail:
+              "Use WAVs to show only the sounds you have exported in this project, so you can see what is ready to use.",
+          },
+        ],
+      },
+      {
+        title: "Build a shortlist for a project",
+        summary: "Keep a consistent set of interface sounds together.",
+        steps: [
+          {
+            title: "Search by purpose",
+            detail:
+              "Work through the sounds you need — a tap, a success chime, a transition — and preview each one.",
+          },
+          {
+            title: "Star as you go",
+            detail:
+              "Every starred sound floats upward, so your shortlist stays at the top even after new searches.",
+          },
+          {
+            title: "Export the set",
+            detail:
+              "Choose WAVs to export each starred sound, or Mix to render them as one combined file.",
+          },
+        ],
+      },
+    ],
     controls: [
       {
         keys: ["/"],
@@ -641,6 +1042,20 @@ export const HELP_GUIDES: HelpGuide[] = [
   },
 ];
 
+export interface QuickStart {
+  slug: string;
+  workflow: number;
+}
+
+export const QUICK_STARTS: QuickStart[] = [
+  { slug: "compose", workflow: 0 },
+  { slug: "brand", workflow: 0 },
+  { slug: "studio", workflow: 0 },
+  { slug: "inspect", workflow: 0 },
+  { slug: "expo", workflow: 0 },
+  { slug: "sound", workflow: 0 },
+];
+
 export const HELP_TOOL_PACKAGES: Record<string, string> = {
   compose: "svg-compose",
   inspect: "social-inspect",
@@ -658,6 +1073,27 @@ export function searchHelpControl(control: HelpControl, query: string): boolean 
   const needle = query.trim().toLowerCase();
   if (!needle) return true;
   return [control.title, control.detail, ...control.keys].join(" ").toLowerCase().includes(needle);
+}
+
+export function searchHelpGuide(guide: HelpGuide, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return [
+    guide.name,
+    guide.summary,
+    guide.whatItIs,
+    ...guide.features,
+    ...guide.goodFor,
+    ...guide.workflows.flatMap((workflow) => [
+      workflow.title,
+      workflow.summary,
+      ...workflow.steps.flatMap((step) => [step.title, step.detail]),
+    ]),
+    ...guide.controls.flatMap((control) => [control.title, control.detail, ...control.keys]),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(needle);
 }
 
 export function tourStepsFor(guide: HelpGuide): TourStep[] {
