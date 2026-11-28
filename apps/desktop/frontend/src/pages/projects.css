@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  padding-bottom: 24px;
   color: var(--text);
   font-size: 13px;
 }
@@ -481,94 +482,6 @@
   margin: 8px 0;
   font-family: var(--font-sans);
   font-size: 11px;
-}
-
-.studio-templates {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
-.studio-templates-head h2 {
-  margin: 0 0 3px;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.studio-templates-head p {
-  margin: 0;
-  color: var(--text-subtle);
-  font-size: 10px;
-}
-
-.studio-templates-create {
-  display: flex;
-  gap: 8px;
-}
-
-.studio-templates-create input {
-  height: 30px;
-  min-width: 0;
-  max-width: 320px;
-  flex: 1;
-  padding: 0 9px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--canvas);
-  color: var(--text);
-  font: inherit;
-  font-size: 11px;
-}
-
-.studio-templates-message,
-.studio-templates-empty {
-  margin: 0;
-  color: var(--text-subtle);
-  font-size: 10px;
-}
-
-.studio-templates-message {
-  color: var(--accent);
-}
-
-.studio-templates-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.studio-templates-row {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-muted);
-}
-
-.studio-templates-copy {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.studio-templates-copy strong {
-  overflow: hidden;
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.studio-templates-copy span {
-  color: var(--text-subtle);
-  font-family: var(--font-mono);
-  font-size: 9px;
 }
 
 /* Launch screen — compact welcome panel, no hero text or competing inputs. */

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 
 import { ProjectProvider } from "../lib/projects/context";
@@ -6,6 +6,7 @@ import { setActiveProjectId } from "../lib/projects/client";
 import { isProjectId, isToolId, type ToolId } from "../lib/projects/types";
 import { setDesktopModuleActive } from "../lib/desktop";
 import { saveStudioTemplate } from "../lib/studio-templates";
+import { StudioTemplates } from "../components/StudioTemplates";
 import { useFlushRegistry } from "../lib/flush";
 import { ErrorPage } from "../pages/ErrorPage";
 
@@ -75,6 +76,7 @@ function ProjectTool({ tool, projectId }: { tool: ToolId; projectId: `p_${string
 function ProjectStudio({ projectId }: { projectId: `p_${string}` }) {
   const navigate = useNavigate();
   const { register } = useFlushRegistry();
+  const [templateReloadKey, setTemplateReloadKey] = useState(0);
 
   const onReady = useCallback(
     (flush: (() => Promise<boolean>) | null) => register("studio", flush),
@@ -102,6 +104,14 @@ function ProjectStudio({ projectId }: { projectId: `p_${string}` }) {
         onReady={onReady}
         onHome={onHome}
         onSaveTemplate={onSaveTemplate}
+        reloadKey={templateReloadKey}
+        templatesPanel={
+          <StudioTemplates
+            projectId={projectId}
+            panel
+            onApplied={() => setTemplateReloadKey((key) => key + 1)}
+          />
+        }
       />
     </div>
   );

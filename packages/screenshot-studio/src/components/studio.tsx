@@ -15,7 +15,7 @@ import {
   SlidersHorizontal,
   Undo2,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 
 import { downloadSnapshotsZip } from "@/canvas/export-slices";
@@ -23,6 +23,7 @@ import { CanvasHost } from "@/canvas/canvas-host";
 import { completeDesktopFlush, onDesktopFlush, type DesktopFlush } from "@/desktop/runtime";
 import { ScreenshotStudioIcon } from "@/components/brand-icon";
 import { BoardCloneMenu } from "@/components/board-clone-menu";
+import { StudioSheet } from "@/components/studio-sheet";
 import { SettingsDrawer } from "@/components/settings-drawer";
 import { AssetsDrawer } from "@/components/panels/assets-panel";
 import { DevicesPanel } from "@/components/panels/devices-panel";
@@ -120,6 +121,8 @@ export type StudioProps = {
   onReady?: (flush: DesktopFlush | null) => void;
   onHome?: () => void;
   onSaveTemplate?: (name: string) => Promise<void> | void;
+  templatesPanel?: ReactNode;
+  reloadKey?: number;
   embedded?: boolean;
 };
 
@@ -128,6 +131,8 @@ export function Studio({
   onReady,
   onHome,
   onSaveTemplate,
+  templatesPanel,
+  reloadKey,
   embedded = false,
 }: StudioProps) {
   return (
@@ -137,6 +142,8 @@ export function Studio({
         onReady={onReady}
         onHome={onHome}
         onSaveTemplate={onSaveTemplate}
+        templatesPanel={templatesPanel}
+        reloadKey={reloadKey}
         embedded={embedded}
       />
     </HotkeysProvider>
@@ -148,12 +155,16 @@ function StudioShell({
   onReady,
   onHome,
   onSaveTemplate,
+  templatesPanel,
+  reloadKey,
   embedded,
 }: {
   projectId: string;
   onReady?: (flush: DesktopFlush | null) => void;
   onHome?: () => void;
   onSaveTemplate?: (name: string) => Promise<void> | void;
+  templatesPanel?: ReactNode;
+  reloadKey?: number;
   embedded: boolean;
 }) {
   const boardQuery = useLiveQuery((q) => q.from({ board: boardCollection }));
@@ -379,7 +390,7 @@ function StudioShell({
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, reloadKey]);
 
   const seqRef = useRef(0);
   seqRef.current = events[0]?.seq ?? total;
@@ -1290,6 +1301,26 @@ function StudioShell({
               </div>
             ) : null}
           </div>
+        ) : null}
+        {templatesPanel ? (
+          <StudioSheet
+            title="Board templates"
+            description="Saved layouts you can apply to this or any other project."
+            side="right"
+            trigger={
+              <Button
+                variant="ghost"
+                size={embedded ? "icon-xs" : "xs"}
+                title="Browse saved board templates"
+                aria-label="Browse board templates"
+              >
+                <Library />
+                {embedded ? null : "Templates"}
+              </Button>
+            }
+          >
+            {templatesPanel}
+          </StudioSheet>
         ) : null}
         <Button
           variant="ghost"

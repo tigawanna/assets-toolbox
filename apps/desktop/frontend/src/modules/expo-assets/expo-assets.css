@@ -75,6 +75,7 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 16px;
+  padding-bottom: 24px;
 }
 
 /* With no preview to show, the form is the only content — let its panels

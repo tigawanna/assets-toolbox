@@ -10,8 +10,17 @@ import {
 import type { TemplateRecord } from "../lib/templates/types";
 import type { StudioSnapshot } from "@assets/screenshot-studio/lib/studio";
 import { ToolHeaderButton } from "./ToolHeader";
+import "./studio-templates.css";
 
-export function StudioTemplates({ projectId }: { projectId: string }) {
+export function StudioTemplates({
+  projectId,
+  panel = false,
+  onApplied,
+}: {
+  projectId: string;
+  panel?: boolean;
+  onApplied?: () => void;
+}) {
   const [templates, setTemplates] = useState<Array<TemplateRecord<StudioSnapshot>>>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -44,15 +53,16 @@ export function StudioTemplates({ projectId }: { projectId: string }) {
       try {
         await applyStudioTemplate(projectId, template.id);
         setMessage(`Applied “${template.name}” to this project's Studio board.`);
+        onApplied?.();
       } catch (cause) {
         setMessage(cause instanceof Error ? cause.message : "Could not apply the template.");
       }
     },
-    [projectId],
+    [projectId, onApplied],
   );
 
   return (
-    <section className="studio-templates">
+    <section className={`studio-templates${panel ? " studio-templates-panel" : ""}`}>
       <div className="studio-templates-head">
         <h2>Studio templates</h2>
         <p>Global layouts you can reuse in any project.</p>
