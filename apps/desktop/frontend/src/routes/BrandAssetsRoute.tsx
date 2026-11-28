@@ -687,7 +687,11 @@ export function BrandAssetsRoute() {
               </div>
               <div className="brand-custom-og">
                 <div className="brand-og-actions">
-                  <button type="button" onClick={() => setOgEditorOpen(true)}>
+                  <button
+                    type="button"
+                    data-tour="open-og-editor"
+                    onClick={() => setOgEditorOpen(true)}
+                  >
                     Open visual editor
                   </button>
                   {ogDesign ? (

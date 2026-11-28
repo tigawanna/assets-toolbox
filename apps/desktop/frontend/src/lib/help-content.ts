@@ -1260,6 +1260,116 @@ export const INSPECT_TOUR_STEPS: TourStep[] = [
   },
 ];
 
+async function openOgEditor(): Promise<void> {
+  document.querySelector<HTMLButtonElement>('button[data-tour="open-og-editor"]')?.click();
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (document.querySelector(".og-editor-dialog")) return;
+    await wait(150);
+  }
+}
+
+async function addOgRectangle(): Promise<void> {
+  document.querySelector<HTMLButtonElement>('button[aria-label="Add rectangle"]')?.click();
+  await wait(300);
+}
+
+async function closeOgEditor(): Promise<void> {
+  document.querySelector<HTMLButtonElement>('button[aria-label="Close visual editor"]')?.click();
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (!document.querySelector(".og-editor-dialog")) return;
+    await wait(150);
+  }
+}
+
+async function generateBrandKit(): Promise<void> {
+  document.querySelector<HTMLButtonElement>('button[data-tour="generate"]')?.click();
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    if (document.querySelector(".brand-results")) return;
+    if (document.querySelector(".brand-error")) return;
+    await wait(250);
+  }
+}
+
+/** A deliberately short tour: source mark, card editor, generate, done. */
+export const BRAND_TOUR_STEPS: TourStep[] = [
+  {
+    id: "brand-source",
+    title: "Pick the starting mark",
+    content:
+      "Start here. Choose the transparent SVG or PNG that the whole kit is built from — it is stored in this project for the other tools.",
+    target: 'button[data-tour="choose-source"]',
+    placement: "bottom",
+  },
+  {
+    id: "brand-mark-preview",
+    title: "Your mark is ready",
+    content:
+      "The selected mark is previewed here. You can swap it later without rebuilding the rest of the form.",
+    target: ".brand-mark-preview",
+    placement: "bottom",
+  },
+  {
+    id: "brand-colors",
+    title: "Set the colours",
+    content:
+      "Change the plate, theme and background colours here. The social card preview updates as you go.",
+    target: 'input[aria-label="Plate color hex value"]',
+    placement: "bottom",
+  },
+  {
+    id: "brand-og-preview",
+    title: "The social card",
+    content:
+      "This is the Open Graph image people see when your link is shared. Click it to design the card yourself.",
+    target: ".brand-og-preview",
+    placement: "bottom",
+  },
+  {
+    id: "brand-open-editor",
+    title: "Open the visual editor",
+    content:
+      "The visual editor lets you lay out that card by hand. We will open it and add one rectangle.",
+    target: 'button[data-tour="open-og-editor"]',
+    placement: "bottom",
+    before: openOgEditor,
+  },
+  {
+    id: "brand-add-rectangle",
+    title: "Add a rectangle",
+    content:
+      "Layers such as rectangles, text and images can be added here and moved around on the card.",
+    target: 'button[aria-label="Add rectangle"]',
+    placement: "bottom",
+    before: addOgRectangle,
+  },
+  {
+    id: "brand-close-editor",
+    title: "Close the editor",
+    content:
+      "Your design is saved with the project. Closing the editor keeps everything you changed.",
+    target: "body",
+    placement: "center",
+    before: closeOgEditor,
+  },
+  {
+    id: "brand-generate",
+    title: "Generate the kit",
+    content:
+      "Now hit Generate. It builds the favicons, app icons, social card and manifest together.",
+    target: 'button[data-tour="generate"]',
+    placement: "bottom",
+    before: generateBrandKit,
+  },
+  {
+    id: "brand-results",
+    title: "Here are your assets",
+    content:
+      "These files are added to the project library. Save all if you want to keep the whole set together.",
+    target: ".brand-results",
+    placement: "bottom",
+  },
+];
+
 export interface QuickStart {
   slug: string;
   workflow: number;
@@ -1303,6 +1413,7 @@ export function getHelpGuide(slug: string): HelpGuide | undefined {
 export function tourStepsFor(guide: HelpGuide): TourStep[] {
   if (guide.slug === "compose") return COMPOSE_TOUR_STEPS;
   if (guide.slug === "inspect") return INSPECT_TOUR_STEPS;
+  if (guide.slug === "brand") return BRAND_TOUR_STEPS;
 
   const steps: TourStep[] = [
     {
