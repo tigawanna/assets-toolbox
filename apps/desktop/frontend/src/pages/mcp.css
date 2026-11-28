@@ -1,8 +1,9 @@
 .mcp-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding-bottom: 32px;
+  gap: 30px;
+  padding-top: 8px;
+  padding-bottom: 48px;
   color: var(--text);
   font-size: 12px;
 }
@@ -21,7 +22,8 @@
 .mcp-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  scroll-margin-top: 60px;
 }
 
 .mcp-section h2 {
@@ -155,7 +157,7 @@
 .mcp-log {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 7px;
 }
 
 .mcp-toolbar {
@@ -223,16 +225,60 @@
   font-size: 10px;
 }
 
-.mcp-tool,
-.mcp-log-row {
+.mcp-tool {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface-muted);
+}
+
+.mcp-log-row {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  transition: border-color 150ms var(--ease);
+}
+
+.mcp-log-row:hover {
+  border-color: var(--line-strong);
+}
+
+.mcp-log-top {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mcp-log-top time {
+  margin-left: auto;
+}
+
+.mcp-log-detail {
+  max-height: 180px;
+  margin: 0;
+  overflow: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
 }
 
 .mcp-tool code,
@@ -260,23 +306,17 @@
 
 .mcp-log-status {
   min-width: 34px;
+  padding: 2px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
   color: var(--text-subtle);
   font-family: var(--font-mono);
   font-size: 9px;
+  text-align: center;
 }
 
 .mcp-log-status[data-ok="true"] {
   color: var(--accent);
-}
-
-.mcp-log-row > span:nth-last-child(2) {
-  overflow: hidden;
-  flex: 1;
-  color: var(--text-subtle);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .mcp-log-row time {

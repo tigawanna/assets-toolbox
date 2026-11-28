@@ -270,15 +270,17 @@ export function McpPage() {
         ) : (
           <div className="mcp-log">
             {calls.map((call, index) => (
-              <div className="mcp-log-row" key={`${call.at}-${index}`}>
-                <span className="mcp-log-status" data-ok={call.ok}>
-                  {call.ok ? "ok" : "error"}
-                </span>
-                <code>{call.op}</code>
-                <code>{call.tool ?? "—"}</code>
-                <span>{call.error ?? JSON.stringify(call.args ?? {}).slice(0, 120)}</span>
-                <time>{new Date(call.at).toLocaleTimeString()}</time>
-              </div>
+              <article className="mcp-log-row" key={`${call.at}-${index}`}>
+                <div className="mcp-log-top">
+                  <span className="mcp-log-status" data-ok={call.ok}>
+                    {call.ok ? "ok" : "error"}
+                  </span>
+                  <code>{call.op}</code>
+                  <code>{call.tool ?? "—"}</code>
+                  <time>{new Date(call.at).toLocaleTimeString()}</time>
+                </div>
+                <pre className="mcp-log-detail">{call.error ?? snippet(call.args ?? {})}</pre>
+              </article>
             ))}
           </div>
         )}
