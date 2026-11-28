@@ -367,6 +367,19 @@
   content: "—";
 }
 
+.help-list a {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-underline-offset: 3px;
+}
+
+.help-list a:hover {
+  color: var(--text);
+}
+
 .help-list-muted li::before {
   color: var(--text-subtle);
 }

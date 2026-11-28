@@ -406,7 +406,7 @@ export const HELP_GUIDES: HelpGuide[] = [
       "Handing a repeatable recipe to an MCP agent",
     ],
     notGoodFor: [
-      "Designing a logo from scratch — bring a source mark",
+      "Designing a logo from scratch — bring a source mark or draw one in Icon Compose.",
       "Full brand guidelines documents",
       "Photographic or highly textured artwork",
       "Legal trademark checks",
@@ -1055,6 +1055,14 @@ export const QUICK_STARTS: QuickStart[] = [
   { slug: "expo", workflow: 0 },
   { slug: "sound", workflow: 0 },
 ];
+
+/** Sentences in the guides where a tool name should be a live link. */
+export const HELP_TEXT_LINKS: Record<string, { label: string; slug: string }> = {
+  "Designing a logo from scratch — bring a source mark or draw one in Icon Compose.": {
+    label: "Icon Compose",
+    slug: "compose",
+  },
+};
 
 export const HELP_TOOL_PACKAGES: Record<string, string> = {
   compose: "svg-compose",

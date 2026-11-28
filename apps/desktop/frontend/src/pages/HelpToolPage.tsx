@@ -5,7 +5,12 @@ import { ArrowLeft, ExternalLink, Play, Search } from "lucide-react";
 import { PackageIcon } from "../components/PackageIcon";
 import { ToolHeader, ToolHeaderButton } from "../components/ToolHeader";
 import { findPackage } from "../lib/catalog";
-import { getHelpGuide, HELP_TOOL_PACKAGES, searchHelpControl } from "../lib/help-content";
+import {
+  getHelpGuide,
+  HELP_TEXT_LINKS,
+  HELP_TOOL_PACKAGES,
+  searchHelpControl,
+} from "../lib/help-content";
 import { getActiveProjectId } from "../lib/projects/client";
 import { projectToolSlug } from "./ProjectHome";
 import { replayToolTour } from "../lib/tool-tours";
@@ -39,16 +44,42 @@ export function HelpToolPage() {
   const controls = guide.controls.filter((control) => searchHelpControl(control, query));
   const total = workflows.length + features.length + controls.length;
 
-  function openTool() {
+  function openToolFor(targetSlug: string) {
     const projectId = getActiveProjectId();
     if (!projectId) {
       void navigate({ to: "/" });
       return;
     }
+    const targetPackage = findPackage(HELP_TOOL_PACKAGES[targetSlug] ?? "");
     void navigate({
       to: "/projects/$projectId/$tool",
-      params: { projectId, tool: projectToolSlug(pkg?.id ?? "") },
+      params: { projectId, tool: projectToolSlug(targetPackage?.id ?? "") },
     });
+  }
+
+  function openTool() {
+    openToolFor(slug);
+  }
+
+  function HelpLine({ text }: { text: string }) {
+    const link = HELP_TEXT_LINKS[text];
+    if (!link) return <>{text}</>;
+    const at = text.indexOf(link.label);
+    return (
+      <>
+        {text.slice(0, at)}
+        <a
+          href={`#${link.slug}`}
+          onClick={(event) => {
+            event.preventDefault();
+            openToolFor(link.slug);
+          }}
+        >
+          {link.label}
+        </a>
+        {text.slice(at + link.label.length)}
+      </>
+    );
   }
 
   return (
@@ -138,7 +169,9 @@ export function HelpToolPage() {
           </div>
           <ul className="help-list">
             {guide.goodFor.map((item) => (
-              <li key={item}>{item}</li>
+              <li key={item}>
+                <HelpLine text={item} />
+              </li>
             ))}
           </ul>
         </div>
@@ -149,7 +182,9 @@ export function HelpToolPage() {
           </div>
           <ul className="help-list help-list-muted">
             {guide.notGoodFor.map((item) => (
-              <li key={item}>{item}</li>
+              <li key={item}>
+                <HelpLine text={item} />
+              </li>
             ))}
           </ul>
         </div>
@@ -163,7 +198,9 @@ export function HelpToolPage() {
           </div>
           <ul className="help-list help-list-features">
             {features.map((item) => (
-              <li key={item}>{item}</li>
+              <li key={item}>
+                <HelpLine text={item} />
+              </li>
             ))}
           </ul>
         </section>
