@@ -79,7 +79,7 @@ export PKG_CONFIG_PATH="$sysroot/usr/lib/x86_64-linux-gnu/pkgconfig"
 export LD_LIBRARY_PATH="$sysroot/usr/lib/x86_64-linux-gnu"
 ```
 
-`wails doctor` still reports `libwebkit` missing because it checks dpkg rather than `pkg-config`; the staged headers and libraries are sufficient for `wails build`. A normal apt install avoids this workaround. Use `./scripts/wails.sh dev` or `./scripts/wails.sh build ...` to automatically export the staged paths.
+`wails doctor` still reports `libwebkit` missing because it checks dpkg rather than `pkg-config`; the staged headers and libraries are sufficient for `wails build`. A normal apt install avoids this workaround. Use `pnpm desktop:dev` / `pnpm desktop:build` (or `./apps/desktop/wails-dev.sh` for dev). The shared launcher calls `scripts/wails-sysroot.mjs`, which automatically re-stages the packages when `/tmp` has been cleared and exports the `PKG_CONFIG_PATH`, `LD_LIBRARY_PATH` and rpath flags.
 
 ## Architecture
 

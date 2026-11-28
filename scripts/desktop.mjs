@@ -3,6 +3,8 @@ import net from "node:net";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+import { ensureWailsSysroot } from "./wails-sysroot.mjs";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const desktopDirectory = path.join(repositoryRoot, "apps", "desktop");
 const [command, ...args] = process.argv.slice(2);
@@ -30,7 +32,7 @@ function isPortInUse(address) {
   });
 }
 
-const env = { ...process.env };
+const env = { ...process.env, ...ensureWailsSysroot() };
 
 if (env.SKIP_ASSET_PACKAGE_BUILD !== "1") {
   const rootBin = path.join(repositoryRoot, "node_modules", ".bin");
