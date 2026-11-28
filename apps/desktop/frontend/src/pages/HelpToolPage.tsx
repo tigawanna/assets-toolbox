@@ -7,7 +7,6 @@ import { findPackage } from "../lib/catalog";
 import { getHelpGuide, HELP_TEXT_LINKS, HELP_TOOL_PACKAGES } from "../lib/help-content";
 import { getActiveProjectId } from "../lib/projects/client";
 import { projectToolSlug } from "./ProjectHome";
-import { replayToolTour } from "../lib/tool-tours";
 import { ErrorPage } from "./ErrorPage";
 import "./help.css";
 
@@ -40,6 +39,20 @@ export function HelpToolPage() {
 
   function openTool() {
     openToolFor(slug);
+  }
+
+  function replayTour() {
+    const projectId = getActiveProjectId();
+    if (!projectId) {
+      void navigate({ to: "/" });
+      return;
+    }
+    const targetPackage = findPackage(HELP_TOOL_PACKAGES[slug] ?? "");
+    void navigate({
+      to: "/projects/$projectId/$tool",
+      params: { projectId, tool: projectToolSlug(targetPackage?.id ?? "") },
+      search: { replayTour: "1" },
+    });
   }
 
   function HelpLine({ text }: { text: string }) {
@@ -75,7 +88,7 @@ export function HelpToolPage() {
               <ArrowLeft size={13} aria-hidden="true" />
               All guides
             </ToolHeaderButton>
-            <ToolHeaderButton onClick={() => replayToolTour(slug)}>
+            <ToolHeaderButton onClick={replayTour}>
               <Play size={13} aria-hidden="true" />
               Replay tour
             </ToolHeaderButton>

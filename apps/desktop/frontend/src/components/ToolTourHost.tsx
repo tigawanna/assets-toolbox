@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import { hasSeenTour } from "../lib/tour";
 import { hasSeenToolTour, markToolTourSeen, REPLAY_TOOL_TOUR_EVENT } from "../lib/tool-tours";
@@ -6,6 +7,17 @@ import { ToolGuideTour } from "./ToolGuideTour";
 
 export function ToolTourHost({ slug, children }: { slug: string; children: ReactNode }) {
   const [run, setRun] = useState(false);
+  const navigate = useNavigate();
+  const { replayTour } = useSearch({ from: "/projects/$projectId/$tool" });
+
+  // A help guide can open the tool with ?replayTour=1 to start the tour even
+  // when it has already been seen. Clear the flag so a refresh doesn't replay.
+  useEffect(() => {
+    if (replayTour !== "1") return;
+    markToolTourSeen(slug);
+    setRun(true);
+    void navigate({ to: ".", search: {}, replace: true });
+  }, [replayTour, slug, navigate]);
 
   // Wait for the tool to paint before anchoring the first tooltip. Don't stack
   // a tool tour on top of the first-launch workspace tour.

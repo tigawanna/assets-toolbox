@@ -62,6 +62,9 @@ const projectRoute = createRoute({
 const projectToolRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "projects/$projectId/$tool",
+  validateSearch: (search: Record<string, unknown>) => ({
+    replayTour: typeof search.replayTour === "string" ? search.replayTour : undefined,
+  }),
   component: ProjectToolRoutePage,
 });
 
