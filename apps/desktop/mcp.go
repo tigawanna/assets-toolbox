@@ -450,6 +450,43 @@ func (a *App) commitMCPArtifacts(
 	return ids, nil
 }
 
+// applySavedOGArtifact replaces the generated default social card with the
+// custom design saved in the project's brand document.
+func (a *App) applySavedOGArtifact(projectID, jobID string, artifacts []assetgen.Artifact) {
+	hasOG := false
+	for _, artifact := range artifacts {
+		if artifact.Name == "og.png" {
+			hasOG = true
+			break
+		}
+	}
+	if !hasOG {
+		return
+	}
+	documentResult, err := a.projectsCall(http.MethodGet,
+		"/api/projects/"+projectID+"/documents/brand", nil)
+	if err != nil {
+		return
+	}
+	payload, _ := documentResult.(map[string]any)
+	record, _ := payload["document"].(map[string]any)
+	data, _ := record["data"].(map[string]any)
+	assetID, _ := data["ogAssetId"].(string)
+	if assetID == "" {
+		return
+	}
+	blobResult, err := a.projectsCall(http.MethodGet,
+		"/api/projects/"+projectID+"/assets/"+assetID+"/blob", nil)
+	if err != nil {
+		return
+	}
+	blobPayload, _ := blobResult.(map[string]any)
+	encoded, _ := blobPayload["base64"].(string)
+	if encoded != "" {
+		_ = a.ReplaceAssetArtifact(jobID, "og.png", encoded)
+	}
+}
+
 func mcpString(args map[string]any, key string) (string, error) {
 	value, ok := args[key].(string)
 	if !ok || strings.TrimSpace(value) == "" {

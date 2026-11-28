@@ -326,6 +326,7 @@ func (a *App) mcpCatalog() map[string]mcpToolEntry {
 				if err != nil {
 					return nil, err
 				}
+				a.applySavedOGArtifact(projectID, result.JobID, result.Artifacts)
 				outputIDs, err := a.commitMCPArtifacts(projectID, result.JobID, "brand", assetID, result.Artifacts)
 				if err != nil {
 					return nil, err

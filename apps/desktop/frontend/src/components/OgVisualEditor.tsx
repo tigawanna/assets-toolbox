@@ -20,6 +20,7 @@ import {
   ImagePlus,
   LayoutTemplate,
   Redo2,
+  RotateCcw,
   Square,
   Trash2,
   Type,
@@ -1702,6 +1703,15 @@ export function OgVisualEditor(props: OgVisualEditorProps): JSX.Element {
             <span className="og-editor-dimensions" aria-label="Canvas dimensions">
               {designWidth} × {designHeight}
             </span>
+            <button
+              type="button"
+              className="og-editor-button"
+              onClick={clearDesign}
+              aria-label="Reset OG design"
+            >
+              <RotateCcw size={13} aria-hidden="true" />
+              Reset
+            </button>
             <button
               type="button"
               className="og-editor-button primary"

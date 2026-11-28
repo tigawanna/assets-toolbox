@@ -69,6 +69,7 @@ interface BrandDocumentData {
   display: string;
   outDir: string;
   ogDraft: OgEditorDraft | null;
+  ogAssetId: string;
   sourceAssetId: string;
   initialized: boolean;
 }
@@ -91,6 +92,7 @@ const BRAND_DEFAULTS: BrandDocumentData = {
   display: "standalone",
   outDir: "out",
   ogDraft: null,
+  ogAssetId: "",
   sourceAssetId: "",
   initialized: false,
 };
@@ -107,6 +109,7 @@ export function BrandAssetsRoute() {
   const [ogSiteLabel, setOgSiteLabel] = useState("");
   const [ogEditorOpen, setOgEditorOpen] = useState(false);
   const [ogDesign, setOgDesign] = useState<OgDesignResult | null>(null);
+  const [ogAssetId, setOgAssetId] = useState<string>("");
   const [ogPreview, setOgPreview] = useState("");
   const [ogWidth, setOgWidth] = useState(1200);
   const [ogHeight, setOgHeight] = useState(630);
@@ -157,6 +160,21 @@ export function BrandAssetsRoute() {
     setDisplay(form.display);
     setOutDir(form.outDir);
 
+    const savedOG = form.ogAssetId || brandDocument.ogAssetId;
+    setOgAssetId(savedOG ?? "");
+    if (savedOG) {
+      void getProjectClient()
+        .getAssetBlob(projectId, savedOG as AssetId)
+        .then((base64) =>
+          setOgDesign({
+            dataUrl: `data:image/png;base64,${base64}`,
+            width: form.ogWidth,
+            height: form.ogHeight,
+          }),
+        )
+        .catch(() => setOgDesign(null));
+    }
+
     const savedSource = form.sourceAssetId || brandDocument.sourceAssetId;
     setSourceAssetId(savedSource ? (savedSource as AssetId) : null);
     if (savedSource) {
@@ -204,6 +222,7 @@ export function BrandAssetsRoute() {
       display,
       outDir,
       ogDraft: ogDraftRef.current,
+      ogAssetId: ogAssetId ?? "",
       sourceAssetId: sourceAssetId ?? "",
       initialized: true,
     });
@@ -226,6 +245,7 @@ export function BrandAssetsRoute() {
     themeColor,
     updateBrandDocument,
     sourceAssetId,
+    ogAssetId,
   ]);
 
   useEffect(() => {
@@ -500,12 +520,14 @@ export function BrandAssetsRoute() {
     setSourceAssetId(null);
     setSourcePreview("");
     setOgDesign(null);
+    setOgAssetId("");
     setResult(null);
     setPreviews({});
     setError("");
     updateBrandDocument({
       ...BRAND_DEFAULTS,
       ogDraft: null,
+      ogAssetId: "",
       sourceAssetId: "",
       initialized: true,
     });
@@ -852,6 +874,14 @@ export function BrandAssetsRoute() {
           onDraftChange={saveOgDraft}
           onExport={(design) => {
             setOgDesign(design);
+            void getProjectClient()
+              .addAsset(projectId, {
+                name: "og-custom.png",
+                mime: "image/png",
+                base64: design.dataUrl.split(",").at(-1) ?? "",
+              })
+              .then((asset) => setOgAssetId(asset.id))
+              .catch(() => setError("Could not save the custom social card in this project."));
             setOgEditorOpen(false);
           }}
           onClose={() => setOgEditorOpen(false)}
